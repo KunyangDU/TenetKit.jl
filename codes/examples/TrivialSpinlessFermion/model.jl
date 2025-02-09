@@ -29,7 +29,7 @@ end
 
 function ce(β,L)
     lsk = @. (1:L) / (L+1) * pi
-    return β^2/2/L * sum(@. ϵ(lsk)^2/(1 + cosh(β * ϵ(lsk))))
+    return β^2/2 * sum(@. ϵ(lsk)^2/(1 + cosh(β * ϵ(lsk)))) / L
 end
 
 

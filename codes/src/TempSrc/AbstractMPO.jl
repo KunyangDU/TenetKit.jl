@@ -48,7 +48,7 @@ mutable struct DenseMPO{L} <: AbstractMPO
         return new{1}(A,[1,1])        
     end
 
-    function DenseMPO(t::Vector{AbstractTensorMap})
+    function DenseMPO(t::Vector)
         tmp = map(DenseMPOTensor,t)
         A = convert(Vector{DenseMPOTensor},tmp)
         return new{length(A)}(A,[1,length(A)])        
@@ -195,9 +195,7 @@ function _funcDenseMPO(func::Function, PhySpace::ElementarySpace, AuxSpaces::Abs
     return _funcDenseMPO(func, repeat([PhySpace,],length(AuxSpaces)), AuxSpaces)
 end
 
-function IdDenseMPO(PhySpace::ElementarySpace, AuxSpaces::AbstractVector)
-    return _funcDenseMPO(ones, repeat([PhySpace,],length(AuxSpaces)), AuxSpaces)
-end
+
 
 function IdDenseMPO(L::Int64, PhySpace::ElementarySpace = ℂ^1, AuxSpace::ElementarySpace = (ℂ^1)')
     return _funcDenseMPO(ones, map(x -> repeat([x,],L),(PhySpace,AuxSpace))...)

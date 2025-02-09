@@ -9,7 +9,7 @@ function TDVP2!(Env::Environment{3}, lst::AbstractVector, D_MPS::Int64;
     totaltruncerror = 0
     
     for i in 2:length(lst)
-        τ = lst[i]-lst[i-1]
+        τ = (lst[i]-lst[i-1])/2
 
         @time "sweep $i finished, max truncation error = $(totaltruncerror)" begin
             totaltruncerror = TDVP2!(Env, τ, D_MPS, totaltruncerror, LanczosLevel)

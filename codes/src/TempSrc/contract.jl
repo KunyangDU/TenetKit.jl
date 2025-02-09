@@ -165,7 +165,7 @@ end
 function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::DenseMPOTensor{4}, C::SparseMPOTensor{N₁,M₁}, D::SparseMPOTensor{N₂,M₂}, EnvR::SparseRightEnvironmentTensor) where {N₁,M₁,N₂,M₂}
     @assert M₁ == N₂
     tmp = nothing
-    for i in N₁, j in M₁, k in M₂
+    for i in 1:N₁, j in 1:M₁, k in 1:M₂
         isnothing(C.m[i,j]) | isnothing(D.m[j,k]) && continue
         tmp1 = contract(EnvL.A[i], A, C.m[i,j])
         tmp2 = contract(B, D.m[j,k], EnvR.A[k])
@@ -335,7 +335,7 @@ end
 
 function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::SparseMPOTensor{N,M}, C::Union{DenseMPOTensor{4},AdjointMPOTensor{4}}, EnvR::SparseRightEnvironmentTensor) where {N,M}
     tmp = nothing
-    for i in N, j in M
+    for i in 1:N, j in 1:M
         isnothing(B.m[i,j]) && continue
         tmp1 = contract(EnvL.A[i], A, B.m[i,j], C, EnvR.A[j])
         if isnothing(tmp)
@@ -349,4 +349,22 @@ end
 
 function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, B::DenseMPOTensor{2}, C::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
     return @tensor EnvL.A[3,1] * A.A[2,1,6,5] * B.A[4,2] * C.A[7,5,4,3] * EnvR.A[6,7]
+end
+
+function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::SparseMPOTensor{N,M}, C::AdjointMPSTensor{3}, EnvR::SparseRightEnvironmentTensor) where {N,M}
+    tmp = nothing
+    for i in 1:N, j in 1:M
+        isnothing(B.m[i,j]) && continue
+        tmp1 = contract(EnvL.A[i], A, B.m[i,j], C, EnvR.A[j])
+        if isnothing(tmp)
+            tmp = tmp1
+        else
+            tmp += tmp1
+        end
+    end
+    return tmp
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2},A::MPSTensor{3},B::DenseMPOTensor{2},C::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[3,1] * A.A[1,2,5] * B.A[4,2] * C.A[6,3,4] * EnvR.A[5,6]
 end

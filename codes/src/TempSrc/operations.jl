@@ -18,12 +18,6 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
     L = length(A)
 
     tmp = deepcopy(C)'
-#=     @time "Initialize A,B,C Environment" begin
-        EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
-        EnvC = Environment([deepcopy(C),tmp])
-        initialize!(EnvAB)
-        initialize!(EnvC)
-    end =#
     EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
     EnvC = Environment([deepcopy(C),tmp])
     initialize!(EnvAB)
@@ -33,7 +27,8 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
         totaltruncerror = 0
         for site in 1:L-1
             tl, tr, temptruncerr = tsvd(let 
-                axpby!(α, β, map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])...)
+                ts = map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])
+                axpby!(α, β, ts...)
             end; direction=:right,trunc = truncdim(D))
             map(z -> pushright!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
@@ -45,24 +40,6 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
             map(z -> pushleft!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
-#=         @time "sweep $i finished, max truncation error = $(totaltruncerror)" begin
-            #println(">>>>>> Right >>>>>>")
-            for site in 1:L-1
-                tl, tr, temptruncerr = tsvd(let 
-                    axpby!(α, β, map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])...)
-                end; direction=:right,trunc = truncdim(D_MPO))
-                map(z -> pushright!(z,map(DenseMPOTensor, [tl, tr])...),[EnvAB,EnvC])
-                totaltruncerror = max(totaltruncerror,temptruncerr)
-            end
-            #println("<<<<<< Left <<<<<<")
-            for site in L:-1:2
-                tl, tr, temptruncerr = tsvd(let 
-                    axpby!(α, β,map(z -> contract(z.envs[site-1], vcat(map(u -> z.layer[u].ts[site-1:site],1:length(z.layer)-1)...)..., z.envs[site+1]),[EnvAB,EnvC])...)
-                end; direction=:left,trunc = truncdim(D_MPO))
-                map(z -> pushleft!(z,map(DenseMPOTensor, [tl, tr])...),[EnvAB,EnvC])
-                totaltruncerror = max(totaltruncerror,temptruncerr)
-            end
-        end =#
     end
 
     @assert EnvAB.layer[end] == EnvC.layer[end]
@@ -153,7 +130,11 @@ function xpy!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO}
 end
 
 function tr(ρ::DenseMPO)
-    Env = Environment([deepcopy(ρ),ρ'])
+    return tr(ρ,ρ')
+end
+
+function tr(ρ1::DenseMPO,ρ2::AdjointMPO)
+    Env = Environment([deepcopy(ρ1),deepcopy(ρ2)])
     initialize!(Env)
     return _scalar(Env)
 end
@@ -163,6 +144,7 @@ function tr(ρ::DenseMPO, Opr::SparseMPO)
     initialize!(Env)
     return _scalar(Env)
 end
+
 
 function _scalar(Env::Environment{N}) where N
     @assert (site = Env.center[1]) == Env.center[2]
