@@ -3,7 +3,7 @@
 ## short range
 ### code
 - mul!和SETTN有误
-- check对称性
+- check对称性，写isometry
 - 写有限温度的calObs
 - 每次计算输出纠缠熵
 
