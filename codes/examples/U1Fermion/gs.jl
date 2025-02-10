@@ -21,7 +21,7 @@ D = 2^6
 ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel=30)
 showQuantSweep(lsE)
 
-@time "calculate observables" begin
+#= @time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = U₁Fermion
 
@@ -33,5 +33,5 @@ showQuantSweep(lsE)
 end
 
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values
+Obs.values =#
 
