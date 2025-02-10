@@ -3,7 +3,7 @@ include("../../src/iMPS.jl")
 include("model.jl")
 # some problems left (up and down's anticommutation)
 
-Lx = 4
+Lx = 8
 Ly = 1
 
 ψ = let 
@@ -12,7 +12,6 @@ Ly = 1
 end
 
 Latt = YCSqua(Lx,Ly)
-
 
 t = 1
 U = 0
@@ -35,7 +34,7 @@ H = let
 
     AutomataSparseMPO(InteractionTree(Root),size(Latt))
 end
-D = 2^6
+D = 2^8
 
 ψ,lsE = DMRG2!(ψ,H,D;LanczosLevel = 30)
 showQuantSweep(lsE)

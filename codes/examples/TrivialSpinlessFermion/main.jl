@@ -2,8 +2,8 @@ using TensorKit,CairoMakie
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 8
-Ly = 1
+Lx = 4
+Ly = 4
 
 ψ = let 
     AuxSpace = repeat([ℂ^1,], Lx*Ly)
@@ -11,12 +11,12 @@ Ly = 1
 end
 
 Latt = YCSqua(Lx,Ly)
-D = 2^3
+D = 16
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 
-ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel = 30,Nsweep = 1)
-#showQuantSweep(lsE .- sum(@. -2cos(pi*(1:div(Lx,2))/(Lx+1))))
+ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel = 15,Nsweep = 5)
+showQuantSweep(lsE)
 #@time "calculate observables" 
 begin
     Obs = MPSObservable()

@@ -368,3 +368,10 @@ end
 function contract(EnvL::LeftEnvironmentTensor{2},A::MPSTensor{3},B::DenseMPOTensor{2},C::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
     return @tensor EnvL.A[3,1] * A.A[1,2,5] * B.A[4,2] * C.A[6,3,4] * EnvR.A[5,6]
 end
+
+function contract(EnvL::DenseLeftEnvironmentTensor{3}, A::DenseMPOTensor{4}, B::DenseMPOTensor{4}, C::DenseMPOTensor{4}, D::DenseMPOTensor{4}, EnvR::DenseRightEnvironmentTensor{3})
+    @tensor tmp1[-1 -2;-3 -4 -5] ≔ EnvL.A.A[-1,1,2] * A.A[-2,1,-3,3] * C.A[3,2,-4,-5]
+    @tensor tmp2[-1 -2 -3;-4 -5] ≔ B.A[3,-1,1,-5] * D.A[-3,-2,2,3] * EnvR.A.A[1,2,-4]
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ tmp1[-3,-2,2,1,-6] * tmp2[1,2,-1,-4,-5]
+    return CompositeMPOTensor(tmp)
+end

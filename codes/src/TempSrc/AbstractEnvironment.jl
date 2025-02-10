@@ -228,8 +228,12 @@ function setdefault!(env::Environment{3})
 end
 
 function setdefault!(env::Environment{2})
-    if !issparse(env.layer[2])
+    if !issparse(env.layer[1]) && !issparse(env.layer[2])
         env.envs[1] = DenseLeftEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[1])[1],1:2)...))
         env.envs[end] = DenseRightEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[end])[2],1:2)...))
+    elseif issparse(env.layer[1]) && !issparse(env.layer[2])
+        env.envs[1] = SparseLeftEnvironmentTensor(isometry((getAuxSpace(env.layer[2].ts[1])[1] |> y -> (trivial(y),y))...))
+        env.envs[end] = SparseLeftEnvironmentTensor(isometry((getAuxSpace(env.layer[2].ts[end])[2] |> y -> (y,trivial(y)))...))
+        #env.envs[end] = SparseRightEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[end])[2],[2,])...))
     end
 end

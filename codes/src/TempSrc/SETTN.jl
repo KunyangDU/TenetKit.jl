@@ -35,19 +35,24 @@ function SETTN!(lsβ::Vector, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     F_tol = get(kwargs,:F_tol,1e-8)
     F = zeros(max_order)
     lsρ = Vector(undef,length(lsβ))
-    lsρ = repeat([deepcopy(ρ),],length(lsβ))
+    for i in 1:length(lsβ)-1
+        lsρ[i] = deepcopy(ρ)
+    end
 
     β = lsβ[end]
 
     Hn = deepcopy(ρ)
     dF = 2*F_tol # make sure dF > F_tol
     for i in 1:max_order 
+        println("SETTN order = $i")
         mul!(Hn,deepcopy(Hn),H,1.,0.; D = D)
         axpy!((-β)^i / factorial(i),Hn ,ρ ; D = D)
 
         F[i] = - log(tr(ρ)) /2/β
-        i ≠ 1 && (dF = abs((F[i] - F[i-1]) / F[i]))
-
+        if i ≠ 1
+            dF = abs((F[i] - F[i-1]) / F[i])
+            println("dF = $dF")
+        end
         for (iβ,βi) in enumerate(lsβ[1:end-1])
             lsρ[iβ] = axpy!((-βi)^i / factorial(i),Hn ,lsρ[iβ] ; D = D)
         end

@@ -18,14 +18,13 @@ params = (μ=0,)
 
 H = Hamiltonian(Latt;params...)
 ρ = let 
-    AuxSpaces = vcat(Rep[U₁](Ndop // 2 => 1), repeat([Rep[U₁](i => 1 for i in -(abs(Ndop) + 1):1//2:(abs(Ndop)+1)),], size(Latt) - 1))
+    AuxSpaces = repeat([Rep[U₁](0 => 1),],size(Latt)+1)
     ρ = IdDenseMPO(U₁Fermion.PhySpace, AuxSpaces)
     canonicalize!(ρ,1)
-    normalize!(ρ)
     ρ
 end
 
-lsβ = vcat(2. .^ (-10:2:-1), 1:10)
+lsβ = vcat(2. .^ (-5:2:-1), 1:10)
 
 SETTN!(lsβ[1], H, ρ;D=D)
 lsρ = tanTRG2!(ρ, H, lsβ, D;LanczosLevel = 15,TruncErr=1e-2)
