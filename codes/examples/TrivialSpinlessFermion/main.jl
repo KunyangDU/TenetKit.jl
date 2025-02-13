@@ -2,8 +2,8 @@ using TensorKit,CairoMakie
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 4
-Ly = 4
+Lx = 25
+Ly = 1
 
 ψ = let 
     AuxSpace = repeat([ℂ^1,], Lx*Ly)
@@ -11,14 +11,14 @@ Ly = 4
 end
 
 Latt = YCSqua(Lx,Ly)
-D = 16
+D = 3000
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 
-ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel = 15,Nsweep = 5)
+ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel = 15,Nsweep = 20,return_error = false)
 showQuantSweep(lsE)
 #@time "calculate observables" 
-begin
+#= begin
     Obs = MPSObservable()
     LocalSpace = TrivialSpinlessFermion
 
@@ -32,6 +32,8 @@ begin
     calObs!(Obs,ψ)
 end
 ntotal =  sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values
+Obs.values =#
+
+
 
 

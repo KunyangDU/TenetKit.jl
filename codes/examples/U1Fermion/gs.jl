@@ -3,7 +3,7 @@ include("../../src/iMPS.jl")
 include("model.jl")
 
 Lx = 8
-Ly = 1
+Ly = 4
 
 Latt = YCSqua(Lx,Ly)
 Ndop = 0
@@ -16,7 +16,7 @@ end
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 
-D = 2^6
+D = 2^7
 
 ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel=30)
 showQuantSweep(lsE)

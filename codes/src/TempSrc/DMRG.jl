@@ -1,6 +1,6 @@
 
 function DMRG2!(Env::Environment{3}, D_MPS::Int64;
-    Nsweep::Int64=5, LanczosLevel::Int64=15)
+    Nsweep::Int64=5, LanczosLevel::Int64=15, tol::Float64 = 1e-5, return_error = false)
 
     ψ = Env.layer[1]
     H = Env.layer[2]
@@ -32,9 +32,23 @@ function DMRG2!(Env::Environment{3}, D_MPS::Int64;
         end
         
         GC.gc()
+
+        if totaltruncerror > tol
+            if return_error
+                return lsE,totaltruncerror
+            else
+                return lsE
+            end
+        end
+    end
+
+    
+    if return_error
+        return lsE,totaltruncerror
+    else
+        return lsE
     end
     
-    return lsE
 end
 
 function DMRG2!(Env::Environment{3}, lsD::Vector{Int64};kwargs...)

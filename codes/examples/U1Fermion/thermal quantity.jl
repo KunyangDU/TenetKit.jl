@@ -2,17 +2,13 @@ using TensorKit,CairoMakie,JLD2
 include("../../src/iMPS.jl")
 include("model.jl")
 
-function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, B::DenseMPOTensor{3}, C::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{3})
-    return @tensor EnvL.A[3,1] * A.A[2,1,6,5] * B.A[4,7,2] * C.A[8,5,4,3] * EnvR.A[6,7,8]
-end
-
 Lx = 3
 Ly = 3
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @load "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 2^8
+D = 4^4
 params = (μ=0,)
 
 H= Hamiltonian(Latt;params...)

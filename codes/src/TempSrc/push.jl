@@ -86,25 +86,5 @@ function pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnv
     return SparseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL))
 end
 
-# ==============
 
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
-    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,2]
-    return LeftEnvironmentTensor(tmp)
-end
-
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
-    @tensor tmp[-1;-2 -3] ≔ A.A[2,4,-3] * mpot.A[3,-2,4] * B.A[-1,1,3] * EnvL.A[1,2]
-    return LeftEnvironmentTensor(tmp)
-end
-
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
-    @tensor tmp[-1 -2 ; -3] ≔ A.A[2,4,-3] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,-2,2]
-    return LeftEnvironmentTensor(tmp)
-end
-
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
-    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,5,4] * B.A[-1,1,3] * EnvL.A[1,5,2]
-    return LeftEnvironmentTensor(tmp)
-end
 

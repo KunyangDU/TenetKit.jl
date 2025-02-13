@@ -59,14 +59,15 @@ include("TempSrc/canonicalize.jl")
 include("TempSrc/push.jl")
 include("TempSrc/AbstractHamiltonian.jl")
 include("TempSrc/action.jl")
-include("TempSrc/contract.jl")
+include("TempSrc/contract_MPO.jl")
+include("TempSrc/contract_MPS.jl")
 include("TempSrc/Lanczos.jl")
 include("TempSrc/DMRG.jl")
 include("TempSrc/TDVP.jl")
 include("TempSrc/observables.jl")
 include("TempSrc/operations.jl")
 include("TempSrc/SETTN.jl")
-
+include("TempSrc/benchmarktools.jl")
 
 #= 
 MPO data matrix should be the hermitian conjugate of the 

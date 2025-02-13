@@ -117,8 +117,5 @@ function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor
     return ts
 end
 
-function contract(El::LeftCompositeEnvironmentTensor{3,5}, mpo::DenseMPOTensor{2})
-    @tensor tmp[-1 -2 -3;-4 -5] ≔ El.A[-1,-2,1,-4,-5] * mpo.A[-3,1]
-    return LeftCompositeEnvironmentTensor(tmp)
-end
+
 
