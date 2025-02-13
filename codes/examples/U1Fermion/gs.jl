@@ -1,12 +1,12 @@
-using TensorKit
+using TensorKit,KrylovKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
 Lx = 8
-Ly = 4
+Ly = 1
 
 Latt = YCSqua(Lx,Ly)
-Ndop = 0
+Ndop = 2
 
 ψ = let
     AuxSpace = vcat(Rep[U₁](Ndop // 2 => 1), repeat([Rep[U₁](i => 1 for i in -(abs(Ndop) + 1):1//2:(abs(Ndop)+1)),], size(Latt) - 1))
@@ -16,12 +16,12 @@ end
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 
-D = 2^7
+D = 2^4
 
-ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel=30)
+lsE = DMRG2!(ψ,H,D,1e-10)
 showQuantSweep(lsE)
 
-#= @time "calculate observables" begin
+@time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = U₁Fermion
 
@@ -33,5 +33,5 @@ showQuantSweep(lsE)
 end
 
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values =#
+Obs.values
 

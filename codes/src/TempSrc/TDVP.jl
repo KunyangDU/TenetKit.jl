@@ -90,7 +90,7 @@ function evolve!(
     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     O::SparseProjectiveHamiltonian{N}, τ::Number, LanczosLevel::Int64) where N
     tmp = normalize!(obj)
-    T, Q = Lanczos(O,obj,LanczosLevel)
+    T, Q = MPLanczos(O,obj,LanczosLevel)
     obj.A = sum(tmp * exp(-1im*τ*T)[:,1] .* map(x->x.A, Q))
     return obj
 end
