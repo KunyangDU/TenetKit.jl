@@ -3,14 +3,14 @@ include("../../src/iMPS.jl")
 include("model.jl")
 
 
-Lx = 8
+Lx = 6
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 #@load "examples/TrivialSpinlessFermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
 params = (μ = 0,)
-D = 2^8
+D = 2^6
 
 tailname = "_tanTRG"
 

@@ -2,7 +2,7 @@ using TensorKit,CairoMakie
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 25
+Lx = 16
 Ly = 1
 
 ψ = let 
@@ -11,7 +11,7 @@ Ly = 1
 end
 
 Latt = YCSqua(Lx,Ly)
-D = 3000
+D = 200
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 
@@ -34,6 +34,12 @@ end
 ntotal =  sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
 Obs.values =#
 
-
-
+ψ.ts[1]
+ρ = let 
+    AuxSpaces = repeat([ℂ^1,], Lx*Ly+1)
+    ρ = IdDenseMPO(TrivialSpinlessFermion.PhySpace, AuxSpaces)
+    canonicalize!(ρ,1)
+    ρ
+end
+ρ.ts[1]
 
