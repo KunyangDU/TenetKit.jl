@@ -2,13 +2,13 @@ using TensorKit,CairoMakie,JLD2
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 3
-Ly = 3
+Lx = 6
+Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @load "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 4^4
+D = 64
 params = (μ=0,)
 
 H= Hamiltonian(Latt;params...)

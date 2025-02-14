@@ -20,3 +20,7 @@ end
 function easyinterp10(v,N=100)
     return 10. .^ (range(log10.(extrema(v))..., N))
 end
+
+function diag(A::AbstractMatrix)
+    return [A[i,i] for i in 1:min(size(A)...)]
+end

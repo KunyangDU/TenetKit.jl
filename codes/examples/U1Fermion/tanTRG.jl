@@ -6,13 +6,13 @@ include("model.jl")
 Fermion complexity
 =#
 
-Lx = 3
-Ly = 3
+Lx = 6
+Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 4^4
+D = 64
 params = (μ=0,)
 
 H = Hamiltonian(Latt;params...)
@@ -26,7 +26,7 @@ end
 lsβ = vcat(2. .^ (-10:1:-1), 1:10)
 
 SETTN!(lsβ[1], H, ρ;D=D)
-lsρ = tanTRG2!(ρ, H, lsβ, D;LanczosLevel = 20,TruncErr=1e-2)
+lsρ = tanTRG2!(ρ, H, lsβ, D;LanczosInfo = 1e-4,TruncErr=1e-1)
 
 @save "examples/U1Fermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 @save "examples/U1Fermion/data/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ

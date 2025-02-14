@@ -89,6 +89,7 @@ end
 function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
     U,S,V,ϵ = tsvd(A.A,(2,3,6),(1,4,5);kwargs...)
+    ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
     if direction == :center
         return permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4)),ϵ
     elseif direction == :left 

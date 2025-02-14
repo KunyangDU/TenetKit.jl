@@ -1,4 +1,4 @@
-using TensorKit,KrylovKit
+using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 

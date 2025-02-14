@@ -59,7 +59,7 @@ function MPLanczos(O::SparseProjectiveHamiltonian{N},
     q1::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     tol::Float64
     ;kwargs...) where N
-    maxlevel = get(kwargs,:maxlevel,30)
+    maxlevel = get(kwargs,:maxlevel,50)
     Q = []
     α = []
     β = []
