@@ -92,14 +92,14 @@ end
 
 
 mutable struct SparseLeftEnvironmentTensor <: AbstractLeftEnvironmentTensor
-    A::Vector{LeftEnvironmentTensor}
+    A::Union{Vector{LeftEnvironmentTensor},Vector{LeftCompositeEnvironmentTensor}}
     D::Int64
 
     function SparseLeftEnvironmentTensor(t::Vector{LeftEnvironmentTensor},D::Int64)
         return new(t,D)
     end
 
-    function SparseLeftEnvironmentTensor(t::Vector{LeftEnvironmentTensor})
+    function SparseLeftEnvironmentTensor(t::Union{Vector{LeftEnvironmentTensor},Vector{LeftCompositeEnvironmentTensor}})
         return new(t,length(t))
     end
 
@@ -117,14 +117,14 @@ mutable struct SparseLeftEnvironmentTensor <: AbstractLeftEnvironmentTensor
 end
 
 mutable struct SparseRightEnvironmentTensor <: AbstractRightEnvironmentTensor
-    A::Vector{RightEnvironmentTensor}
+    A::Union{Vector{RightEnvironmentTensor},Vector{RightCompositeEnvironmentTensor}}
     D::Int64
 
     function SparseRightEnvironmentTensor(t::Vector{RightEnvironmentTensor},D::Int64)
         return new(t,D)
     end
 
-    function SparseRightEnvironmentTensor(t::Vector{RightEnvironmentTensor})
+    function SparseRightEnvironmentTensor(t::Union{Vector{RightEnvironmentTensor},Vector{RightCompositeEnvironmentTensor}})
         return new(t,length(t))
     end
 

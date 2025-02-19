@@ -77,6 +77,7 @@ end
 function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
     @assert direction in [:center,:left,:right]
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
+    ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
     if direction == :center
         return U,S,V,ϵ
     elseif direction == :left 
@@ -99,6 +100,22 @@ function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, k
     end
 end
 
+function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, kwargs...)
+    @assert direction in [:center,:left,:right]
+    if direction == :center
+        U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
+        ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+        return U,S,V,ϵ
+    elseif direction == :left 
+        U,S,V,ϵ = tsvd(A.A,(1,),(2,3);kwargs...)
+        ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ
+    elseif direction == :right 
+        U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
+        ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+        return map(MPSTensor,(U,S*V))...,ϵ
+    end
+end
 
 function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},sl::Int64,sr::Int64) where {L}
     @assert 1 ≤ sl ≤ sr ≤ L 

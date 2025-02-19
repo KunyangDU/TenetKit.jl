@@ -144,7 +144,9 @@ function tr(ρ::DenseMPO, Opr::SparseMPO)
     return _scalar(Env)
 end
 
-
+"""
+compatible for N-layer Environment
+"""
 function _scalar(Env::Environment{N}) where N
     @assert (site = Env.center[1]) == Env.center[2]
     t1 = map(x -> Env.layer[x].ts[site], 1:length(Env.layer))
