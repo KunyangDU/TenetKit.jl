@@ -157,3 +157,78 @@ function DMRG2!(ψ::DenseMPS, H::SparseMPO, lsD::Vector{Int64};
     return lsinfo
 end
 
+function DMRG1!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64,LanczosInfo::Number = 1e-8;
+    kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ψ,H,adjoint(ψ)])
+        initialize!(Env)
+    end
+    return DMRG1!(Env, D_MPS,LanczosInfo;kwargs...)
+end
+
+function DMRG1!(Env::Environment{3}, 
+                D_MPS::Int64, 
+                LanczosInfo::Number,
+                ;
+                Nsweep::Int64=5, 
+                trunc_tol::Float64 = 1e-5, 
+                return_error = false,
+                cbe::Bool = false,
+    )
+
+    ψ = Env.layer[1]
+    H = Env.layer[2]
+    L = Env.L
+
+    lsE = []
+
+    totaltruncerror = 0
+    temptruncerr = 0
+    totalK = 0
+    for i in 1:Nsweep
+
+        @time "sweep $i finished, max truncation error = $(totaltruncerror), K = $(totalK)" begin
+            Eg = 0
+            println(">>>>>> Right >>>>>>")
+            for site in 1:L-1
+                cbe && CBE!(Env,site+1)
+                Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
+                tl, tr, temptruncerr = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
+                tr = contract(tr,Env.layer[1].ts[site+1])
+                pushright!(Env,tl, tr)
+                totaltruncerror = max(totaltruncerror,temptruncerr)
+                totalK = max(totalK,K)
+            end
+            println("<<<<<< Left <<<<<<")
+            for site in L:-1:2
+                cbe && CBE!(Env,site-1)
+                Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
+                tl, tr, temptruncerr = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
+                tl = contract(Env.layer[1].ts[site-1],tl)
+                pushleft!(Env,tl, tr)
+                totaltruncerror = max(totaltruncerror,temptruncerr)
+                totalK = max(totalK,K)
+            end
+            push!(lsE, Eg)
+        end
+
+        GC.gc()
+
+        if totaltruncerror > trunc_tol
+            if return_error
+                return lsE,totaltruncerror
+            else
+                return lsE
+            end
+        end 
+    end
+
+    if return_error
+        return lsE,totaltruncerror
+    else
+        return lsE
+    end
+
+end
+
+

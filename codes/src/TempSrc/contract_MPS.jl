@@ -165,8 +165,17 @@ function contract(El::LeftCompositeEnvironmentTensor{2,4},Er::RightEnvironmentTe
     @tensor tmp[-1 -2;-3] ≔ El.A[-1,-2,2,1] * Er.A[1,2,-3]
     return MPSTensor(tmp)
 end
+"""
+r3 MPS + r2 MPS
+connect a rank 3 MPS with a rank 2 MPS
+"""
+function contract(tr::MPSTensor{2},obj::MPSTensor{3})
+    return MPSTensor(@tensor tmp[-1,-2;-3] ≔ tr.A[-1,1] * obj.A[1,-2,-3])
+end
+
+function contract(obj::MPSTensor{3},tl::MPSTensor{2})
+    return MPSTensor(@tensor tmp[-1,-2;-3] ≔ obj.A[-1,-2,1] * tl.A[1,-3])
+end
 
 #= ================================================ =#
-
-
 
