@@ -29,17 +29,17 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor{R}
         return new{rank(ts)}(ts)
     end
 
-    function MPSTensor(fc::Function,codomain,domain)
+    function MPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = TensorMap(fc,codomain,domain)
         return new{rank(A)}(A)
     end
 
-    function MPSTensor(data::AbstractMatrix,codomain,domain)
+    function MPSTensor(data::AbstractMatrix,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = TensorMap(data[:],codomain,domain)
         return new{rank(A)}(A)
     end
 
-    function MPSTensor(data::AbstractVector,codomain,domain)
+    function MPSTensor(data::AbstractVector,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = TensorMap(data,codomain,domain)
         return new{rank(A)}(A)
     end
@@ -66,7 +66,7 @@ mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor{R}
         return new{rank(ts)}(ts)
     end
 
-    function AdjointMPSTensor(fc::Function,codomain,domain)
+    function AdjointMPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = TensorMap(fc,codomain,domain)
         return new{rank(A)}(A)
     end

@@ -14,27 +14,27 @@ function DMRG2!(Env::Environment{3},
 
     lsE = []
 
-    totaltruncerror = 0
-    temptruncerr = 0
+    ϵ = 0
+    ϵ1 = 0
     totalK = 0
     for i in 1:Nsweep
 
-        @time "sweep $i finished, max truncation error = $(totaltruncerror), K = $(totalK)" begin
+        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
             Eg = 0
             println(">>>>>> Right >>>>>>")
             for site in 1:L-1
                 Eg,Ev,K = groundEig(projright2(Env,site),LanczosInfo)
-                tl, tr, temptruncerr = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
+                tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
                 pushright!(Env,tl, tr)
-                totaltruncerror = max(totaltruncerror,temptruncerr)
+                ϵ += ϵ1
                 totalK = max(totalK,K)
             end
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
                 Eg,Ev,K = groundEig(projleft2(Env,site),LanczosInfo)
-                tl, tr, temptruncerr = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
+                tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
                 pushleft!(Env,tl, tr)
-                totaltruncerror = max(totaltruncerror,temptruncerr)
+                ϵ += ϵ1
                 totalK = max(totalK,K)
             end
             push!(lsE, Eg)
@@ -42,9 +42,9 @@ function DMRG2!(Env::Environment{3},
         
         GC.gc()
 
-        if totaltruncerror > trunc_tol
+        if ϵ > trunc_tol
             if return_error
-                return lsE,totaltruncerror
+                return lsE,ϵ
             else
                 return lsE
             end
@@ -52,7 +52,7 @@ function DMRG2!(Env::Environment{3},
     end
 
     if return_error
-        return lsE,totaltruncerror
+        return lsE,ϵ
     else
         return lsE
     end
@@ -74,34 +74,34 @@ end
 
     lsE = []
 
-    totaltruncerror = 0
-    temptruncerr = 0
+    ϵ = 0
+    ϵ1 = 0
     for i in 1:Nsweep
 
-        @time "sweep $i finished, max truncation error = $(totaltruncerror), K = $(totalK)" begin
+        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
             Eg = 0
             println(">>>>>> Right >>>>>>")
             for site in 1:L-1
                 Eg,Ev,K = groundEig(projright2(Env,site),LanczosLevel)
-                tl, tr, temptruncerr = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
+                tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
                 pushright!(Env,tl, tr)
-                totaltruncerror = max(totaltruncerror,temptruncerr)
+                ϵ = max(ϵ,ϵ1)
             end
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
                 Eg,Ev,K = groundEig(projleft2(Env,site),LanczosLevel)
-                tl, tr, temptruncerr = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
+                tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
                 pushleft!(Env,tl, tr)
-                totaltruncerror = max(totaltruncerror,temptruncerr)
+                ϵ = max(ϵ,ϵ1)
             end
             push!(lsE, Eg)
         end
         
         GC.gc()
 
-        if totaltruncerror > tol
+        if ϵ > tol
             if return_error
-                return lsE,totaltruncerror
+                return lsE,ϵ
             else
                 return lsE
             end
@@ -109,7 +109,7 @@ end
     end
 
     if return_error
-        return lsE,totaltruncerror
+        return lsE,ϵ
     else
         return lsE
     end
@@ -182,31 +182,37 @@ function DMRG1!(Env::Environment{3},
 
     lsE = []
 
-    totaltruncerror = 0
-    temptruncerr = 0
+    ϵ = 0
+    ϵ1 = 0
     totalK = 0
     for i in 1:Nsweep
 
-        @time "sweep $i finished, max truncation error = $(totaltruncerror), K = $(totalK)" begin
+        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
             Eg = 0
             println(">>>>>> Right >>>>>>")
             for site in 1:L-1
-                cbe && CBE!(Env,site+1)
+                if cbe 
+                    ϵ1 = CBE!(Env,site+1,D)
+                    ϵ += ϵ1
+                end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
-                tl, tr, temptruncerr = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
+                tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
                 tr = contract(tr,Env.layer[1].ts[site+1])
                 pushright!(Env,tl, tr)
-                totaltruncerror = max(totaltruncerror,temptruncerr)
+                ϵ += ϵ1
                 totalK = max(totalK,K)
             end
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
-                cbe && CBE!(Env,site-1)
+                if cbe 
+                    ϵ1 = CBE!(Env,site-1,D)
+                    ϵ += ϵ1 
+                end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
-                tl, tr, temptruncerr = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
+                tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
                 tl = contract(Env.layer[1].ts[site-1],tl)
                 pushleft!(Env,tl, tr)
-                totaltruncerror = max(totaltruncerror,temptruncerr)
+                ϵ += ϵ1 
                 totalK = max(totalK,K)
             end
             push!(lsE, Eg)
@@ -214,9 +220,9 @@ function DMRG1!(Env::Environment{3},
 
         GC.gc()
 
-        if totaltruncerror > trunc_tol
+        if ϵ > trunc_tol
             if return_error
-                return lsE,totaltruncerror
+                return lsE,ϵ
             else
                 return lsE
             end
@@ -224,7 +230,7 @@ function DMRG1!(Env::Environment{3},
     end
 
     if return_error
-        return lsE,totaltruncerror
+        return lsE,ϵ
     else
         return lsE
     end

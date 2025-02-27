@@ -177,5 +177,88 @@ function contract(obj::MPSTensor{3},tl::MPSTensor{2})
     return MPSTensor(@tensor tmp[-1,-2;-3] ≔ obj.A[-1,-2,1] * tl.A[1,-3])
 end
 
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 3}, A::AdjointMPSTensor{3})
+    @tensor tmp[-1;-2] ≔ EnvL.A[1,2,-2] * A.A[-1,1,2] 
+    return LeftEnvironmentTensor(tmp)
+end
+
+function contract(EnvR::RightCompositeEnvironmentTensor{1, 3}, A::AdjointMPSTensor{3})
+    @tensor tmp[-1;-2] ≔ EnvR.A[-1,2,1] * A.A[1,-2,2] 
+    return RightEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2}, EnvR::RightCompositeEnvironmentTensor{1, 3})
+    @tensor tmp[-1,-2;-3] ≔ EnvL.A[-1,1] * EnvR.A[1,-2,-3]
+    return MPSTensor(tmp)
+end
+
+function contract(EnvL::SparseLeftEnvironmentTensor,EnvR::SparseRightEnvironmentTensor)
+    @assert (w = EnvL.D) == EnvR.D
+    mps = nothing 
+
+    for i in 1:w 
+        tmp = contract(EnvL.A[i],EnvR.A[i])
+        if isnothing(mps)
+            mps = tmp 
+        else
+            mps += tmp
+        end
+    end
+
+    return mps
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2,3}, A::MPSTensor{3})
+    LeftCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ EnvL.A[1,2,-3] * A'.A[3,1,2] * A.A[-1,-2,3])
+end
+
+function contract(EnvR::RightCompositeEnvironmentTensor{1,3}, B::MPSTensor{3})
+    RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ EnvR.A[-1,2,1] * B'.A[1,3,2] * B.A[3,-2,-3])
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 3}, Λ::MPSTensor{2})
+    return LeftCompositeEnvironmentTensor(EnvL.A*Λ.A)
+end
+
+function contract(EnvL::RightCompositeEnvironmentTensor{1, 3}, Λ::MPSTensor{2})
+    return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ Λ.A[-1,1]*EnvL.A[1,-2,-3])
+end
+
+function splice(Envorth::SparseLeftEnvironmentTensor,Λ::MPSTensor{2})
+    tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D)
+    for i in 1:Envorth.D
+        tmp[i] = contract(Envorth.A[i],Λ)
+    end
+    return SparseLeftEnvironmentTensor(tmp)
+end
+
+function splice(Envorth::SparseRightEnvironmentTensor,Λ::MPSTensor{2})
+    tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D)
+    for i in 1:Envorth.D
+        tmp[i] = contract(Envorth.A[i],Λ)
+    end
+    return SparseRightEnvironmentTensor(tmp)
+end
+
+function splice(Envorth::SparseLeftEnvironmentTensor,Λ::AdjointMPSTensor{3})
+    tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D)
+    for i in 1:Envorth.D
+        tmp[i] = contract(Envorth.A[i],Λ)
+    end
+    return SparseLeftEnvironmentTensor(tmp)
+end
+
+function splice(Envorth::SparseRightEnvironmentTensor,Λ::AdjointMPSTensor{3})
+    tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D)
+    for i in 1:Envorth.D
+        tmp[i] = contract(Envorth.A[i],Λ)
+    end
+    return SparseRightEnvironmentTensor(tmp)
+end
+
+function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},Λ::Union{MPSTensor{2},AdjointMPSTensor{3}})
+    Envorth.A = splice(Envorth,Λ).A
+end
+
 #= ================================================ =#
 

@@ -71,6 +71,16 @@ function Base.:+(A::RightCompositeEnvironmentTensor,
     return RightCompositeEnvironmentTensor(A.A + B.A)
 end
 
+function Base.:-(A::RightCompositeEnvironmentTensor{N₁, R₁}, B::RightCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
+    @assert N₁ == N₂ && R₁ == R₂
+    return RightCompositeEnvironmentTensor(A.A - B.A)
+end
+
+function Base.:-(A::LeftCompositeEnvironmentTensor{N₁, R₁}, B::LeftCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
+    @assert N₁ == N₂ && R₁ == R₂
+    return LeftCompositeEnvironmentTensor(A.A - B.A)
+end
+
 
 mutable struct SparseEnvironmentTensor <: AbstractEnvironmentTensor
     A::Vector{AbstractEnvironmentTensor}

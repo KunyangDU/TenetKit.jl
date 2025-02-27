@@ -74,6 +74,24 @@ function randMPS(PhySpace::IndexSpace,AuxSpaces::Vector;kwargs...)
     return randMPS([PhySpace for i in eachindex(AuxSpaces)],AuxSpaces;kwargs...)
 end
 
+function AdjointMPSTensor(func, A::MPSTensor{3})
+    cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
+    tmp = AdjointMPSTensor(func,dm,cdm)
+    normalize!(tmp)
+    return tmp
+end
+
+function AdjointMPSTensor(func,A::MPSTensor{3}, λ::Number,direction::Symbol)
+    cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
+    if direction == :left
+        tmp = AdjointMPSTensor(func,ℂ^(round(Int64,λ * dims(dm)[1])),cdm)
+    elseif direction == :right
+        tmp = AdjointMPSTensor(func,dm,ℂ^(round(Int64,λ * dims(cdm)[1])) ⊗ cdm[2])
+    end
+    normalize!(tmp)
+    return tmp
+end
+
 
 function getPhySpace(t::DenseMPS)
     return getPhySpace(t.ts[1])

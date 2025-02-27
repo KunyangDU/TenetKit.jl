@@ -68,6 +68,7 @@ include("TempSrc/observables.jl")
 include("TempSrc/operations.jl")
 include("TempSrc/SETTN.jl")
 include("TempSrc/benchmarktools.jl")
+include("TempSrc/CBE.jl")
 
 #= 
 MPO data matrix should be the hermitian conjugate of the 

@@ -19,7 +19,8 @@ function TensorKit.leftorth!(obj::DenseMPS,site::Int64)
 end
 
 function TensorKit.rightorth(A::MPSTensor{3})
-    return rightorth(A.A,(1,),(2,3))
+    Lm,Q = rightorth(A.A,(1,),(2,3))
+    return Lm,permute(Q,(1,2),(3,))
 end
 
 function TensorKit.rightorth(A::MPSTensor{R}) where R
@@ -30,7 +31,7 @@ end
 
 function TensorKit.rightorth(A::MPSTensor{3}, B::MPSTensor{3})
     Lm,Q = rightorth(B)
-    return map(MPSTensor,[A.A*Lm,permute(Q,(1,2),(3,))])
+    return map(MPSTensor,[A.A*Lm,Q])
 end
 
 function TensorKit.rightorth!(obj::DenseMPS,site::Int64)
@@ -155,6 +156,45 @@ function normalize!(obj::Union{DenseMPOTensor,MPSTensor})
     tmp = norm(obj.A)
     obj.A = obj.A / tmp
     return tmp
+end
+
+function orthogonalize!(env::Environment{3},B::MPSTensor{3},EnvR::SparseRightEnvironmentTensor,osite::Int64)
+    w,w2 = env.layer[2].D[osite]
+    EnvRorth = Vector(undef,w)
+    EnvRorth .= nothing
+
+    for i in 1:w, j in 1:w2
+        Hij = env.layer[2].ts[osite].m[i,j]
+        isnothing(Hij) && continue
+        tmp = contract(B,Hij,EnvR.A[j])
+        if isnothing(EnvRorth[i])
+            EnvRorth[i] = tmp - contract(tmp,B)
+        else
+            EnvRorth[i] += tmp - contract(tmp,B)
+        end
+    end
+
+    return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
+end
+
+function orthogonalize!(env::Environment{3},A::MPSTensor{3},EnvL::SparseLeftEnvironmentTensor,osite::Int64)
+    w1,w = env.layer[2].D[osite]
+    EnvLorth = Vector(undef,w)
+    EnvLorth .= nothing
+    @assert EnvL.D == w1
+
+    for i in 1:w1, j in 1:w
+        Hij = env.layer[2].ts[osite].m[i,j]
+        isnothing(Hij) && continue
+        tmp = contract(EnvL.A[i],A,Hij)
+        if isnothing(EnvLorth[j])
+            EnvLorth[j] = tmp - contract(tmp,A)
+        else
+            EnvLorth[j] += tmp - contract(tmp,A)
+        end
+    end
+
+    return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
 end
 
 #= function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}

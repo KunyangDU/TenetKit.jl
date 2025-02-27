@@ -40,26 +40,9 @@ function contract(Λ::MPSTensor{2},B::MPSTensor{3},H::DenseMPOTensor{2},EnvR::Ri
     return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ Λ.A[-1,3] * B.A[3,2,1] * H.A[-2,2] * EnvR.A[1,-3])
 end
 
-function contract(EnvR::RightCompositeEnvironmentTensor{1,3}, B::MPSTensor{3})
-    RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ EnvR.A[-1,2,1] * B'.A[1,3,2] * B.A[3,-2,-3])
-end
 
 function contract(Λ::MPSTensor{2},A::MPSTensor{3},H::DenseMPOTensor{2},EnvL::LeftEnvironmentTensor{2})
     return LeftCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ EnvL.A[-1,1] * A.A[1,2,3] * H.A[-2,2] * Λ.A[3,-3])
-end
-
-function contract(EnvL::LeftCompositeEnvironmentTensor{2,3}, A::MPSTensor{3})
-    LeftCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ EnvL.A[1,2,-3] * A'.A[3,1,2] * A.A[-1,-2,3])
-end
-
-function Base.:-(A::RightCompositeEnvironmentTensor{N₁, R₁}, B::RightCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
-    @assert N₁ == N₂ && R₁ == R₂
-    return RightCompositeEnvironmentTensor(A.A - B.A)
-end
-
-function Base.:-(A::LeftCompositeEnvironmentTensor{N₁, R₁}, B::LeftCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
-    @assert N₁ == N₂ && R₁ == R₂
-    return LeftCompositeEnvironmentTensor(A.A - B.A)
 end
 
 function TensorKit.tsvd(A::RightCompositeEnvironmentTensor{N,R};kwargs...) where {N,R}
@@ -89,19 +72,6 @@ function TensorKit.tsvd(A::Union{SparseLeftEnvironmentTensor,SparseRightEnvironm
     return Ls,Rs,ϵs
 end
 
-function contract(EnvL::LeftCompositeEnvironmentTensor{2, 3}, Λ::MPSTensor{2})
-    return LeftCompositeEnvironmentTensor(EnvL.A*Λ.A)
-end
-
-function contract(EnvL::RightCompositeEnvironmentTensor{1, 3}, Λ::MPSTensor{2})
-    return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ Λ.A[-1,1]*EnvL.A[1,-2,-3])
-end
-
-function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},Λ::MPSTensor{2})
-    for i in 1:Envorth.D
-        Envorth.A[i] = contract(Envorth.A[i],Λ)
-    end
-end
 
 function bisect(envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},D::Int64)
     envs = []
