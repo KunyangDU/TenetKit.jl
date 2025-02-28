@@ -2,11 +2,14 @@
 
 ## short range
 ### code
+- siege for D-benchmark (check contract complexity?)
+- 计算输出纠缠熵
+
 - 🌟D-benchmark
 - 🌟写有限温度的calObs
 - 🌟计算二维Hubbard降温热容，和ED对比
-- CBE直和
-- 计算输出纠缠熵
+
+- TDVP, tanTRG cbe
 
 ## long range
 ### code

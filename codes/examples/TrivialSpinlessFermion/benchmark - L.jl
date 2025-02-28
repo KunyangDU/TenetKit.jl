@@ -17,7 +17,7 @@ for (iLx,Lx) in enumerate(lsLx)
         randMPS(TrivialSpinlessFermion.PhySpace ,AuxSpace)
     end
 
-    lsE,btrial = bDMRG2!(ψ,H,D;LanczosLevel = 30,Nsweep = 16)
+    lsE,btrial = bDMRG2!(ψ,H,D,1e-8;Nsweep = 16)
     Eerr = norm((lsE .- sum(@. -2 * cos.(pi*(1:div(Lx*Ly,2))/(Lx*Ly+1)))) ./ lsE)
     @show Eerr
     push!(lsEerr,Eerr)

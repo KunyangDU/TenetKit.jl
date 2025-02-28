@@ -26,7 +26,7 @@ function DMRG2!(Env::Environment{3},
                 Eg,Ev,K = groundEig(projright2(Env,site),LanczosInfo)
                 tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
                 pushright!(Env,tl, tr)
-                ϵ += ϵ1
+                ϵ = max(ϵ,ϵ1)
                 totalK = max(totalK,K)
             end
             println("<<<<<< Left <<<<<<")
@@ -34,7 +34,7 @@ function DMRG2!(Env::Environment{3},
                 Eg,Ev,K = groundEig(projleft2(Env,site),LanczosInfo)
                 tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
                 pushleft!(Env,tl, tr)
-                ϵ += ϵ1
+                ϵ = max(ϵ,ϵ1)
                 totalK = max(totalK,K)
             end
             push!(lsE, Eg)
@@ -193,26 +193,26 @@ function DMRG1!(Env::Environment{3},
             for site in 1:L-1
                 if cbe 
                     ϵ1 = CBE!(Env,site+1,D)
-                    ϵ += ϵ1
+                    ϵ = max(ϵ,ϵ1)
                 end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
                 tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
                 tr = contract(tr,Env.layer[1].ts[site+1])
                 pushright!(Env,tl, tr)
-                ϵ += ϵ1
+                ϵ = max(ϵ,ϵ1)
                 totalK = max(totalK,K)
             end
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
                 if cbe 
                     ϵ1 = CBE!(Env,site-1,D)
-                    ϵ += ϵ1 
+                    ϵ = max(ϵ,ϵ1)
                 end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
                 tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
                 tl = contract(Env.layer[1].ts[site-1],tl)
                 pushleft!(Env,tl, tr)
-                ϵ += ϵ1 
+                ϵ = max(ϵ,ϵ1)
                 totalK = max(totalK,K)
             end
             push!(lsE, Eg)

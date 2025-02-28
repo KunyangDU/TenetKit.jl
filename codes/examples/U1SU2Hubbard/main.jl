@@ -2,8 +2,8 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 8
-Ly = 1
+Lx = 4
+Ly = 4
 
 Latt = YCSqua(Lx,Ly)
 Ndop = 0
@@ -18,12 +18,12 @@ U = 0
 
 H = Hamiltonian(Latt;U=U)
 
-D = 2^6
+D = 500
 
-ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel=30)
+lsE = DMRG2!(ψ,H,D)
 showQuantSweep(lsE)
 
-@time "calculate observables" begin
+#= @time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = U₁SU₂Fermion
 
@@ -35,5 +35,5 @@ showQuantSweep(lsE)
 end
 
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values
+Obs.values =#
 

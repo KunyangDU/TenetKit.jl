@@ -1,6 +1,6 @@
 function CBE!(env::Environment{3},csite::Int64,D::Int64,method::Symbol = :rsvd;kwargs...)
     if method == :rsvd
-        λ = get(kwargs, :λ, 2)
+        λ = get(kwargs, :λ, 1.2)
         ϵ = rsvd!(env,csite,λ,D)
     end
     site = env.center[1]
@@ -12,7 +12,7 @@ function CBE!(env::Environment{3},csite::Int64,D::Int64,method::Symbol = :rsvd;k
     return ϵ
 end
 
-function rsvd!(env::Environment{3},csite::Int64,λ::Int64,D::Int64)
+function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
     site = env.center[1]
     @assert csite in [site + 1, site - 1]
     if csite == site + 1
@@ -32,6 +32,8 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Int64,D::Int64)
         splice!(Lorth,Ω)
         mps = contract(Lorth,Rorth)
         ~,Q,ϵ = tsvd(mps;direction = :left,trunc=truncdim(D))
+        ~,Q = rightorth(catcodomain(map(x -> permute(x.A,(1,),(2,3)),(Q,B))...))
+        Q = MPSTensor(permute(Q,(1,2),(3,)))
     else
         Λ,B = tsvd(env.layer[1].ts[site];direction = :left)
         A = env.layer[1].ts[csite]
@@ -49,6 +51,8 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Int64,D::Int64)
         splice!(Rorth,Ω)
         mps = contract(Lorth,Rorth)
         Q,~,ϵ = tsvd(mps;direction = :right,trunc=truncdim(D))
+        Q,~ = leftorth(catdomain(Q.A,A.A))
+        Q = MPSTensor(Q)
     end
     env.layer[1].ts[csite] = Q
     env.layer[3].ts[csite] = Q'

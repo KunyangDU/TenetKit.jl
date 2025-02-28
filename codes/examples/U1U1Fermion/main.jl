@@ -2,7 +2,7 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 4
+Lx = 8
 Ly = 1
 
 Latt = YCSqua(Lx,Ly)
@@ -13,32 +13,16 @@ Ndop = 0
     randMPS(U₁U₁Fermion.PhySpace, AuxSpace)
 end
 
-t = 1
-U = 0
+params = (U = 0,)
 
-H = let 
-    Root = InteractionTreeNode()
-    LocalSpace = U₁U₁Fermion
+H = Hamiltonian(Latt;params...)
 
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.nd,i,"nd",U,nothing)
-    end
-    
-    for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.F₊⁺F₊,pair,("F₊⁺","F₊"),-t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.F₊F₊⁺,pair,("F₊","F₊⁺"),t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.F₋⁺F₋,pair,("F₋⁺","F₋"),-t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.F₋F₋⁺,pair,("F₋","F₋⁺"),t,LocalSpace.Z)
-    end
+D = 200
 
-    AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-D = 2^6
-
-ψ, lsE = DMRG2!(ψ,H,D)
+lsE = DMRG2!(ψ,H,D)
 showQuantSweep(lsE)
 
+#= 
 @time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = U₁U₁Fermion
@@ -51,5 +35,5 @@ showQuantSweep(lsE)
 end
 
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values
+Obs.values =#
 
