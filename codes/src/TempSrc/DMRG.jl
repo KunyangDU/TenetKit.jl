@@ -173,7 +173,7 @@ function DMRG1!(Env::Environment{3},
                 Nsweep::Int64=5, 
                 trunc_tol::Float64 = 1e-5, 
                 return_error = false,
-                cbe::Bool = false,
+                cbe::Bool = true,
     )
 
     ψ = Env.layer[1]

@@ -9,8 +9,8 @@
 - 🌟写有限温度的calObs
 - 🌟计算二维Hubbard降温热容，和ED对比
 
-- TDVP, tanTRG cbe
-
+- tanTRG cbe
+- AUTOMATA 单点项只加上最后一个
 ## long range
 ### code
 - t-J模型

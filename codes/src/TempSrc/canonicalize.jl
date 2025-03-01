@@ -78,7 +78,8 @@ end
 function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
     @assert direction in [:center,:left,:right]
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
-    ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+    d = sqrt(@tensor S[1,2] * S'[2,1])
+    d != 0 && (ϵ /= d)
     if direction == :center
         return U,S,V,ϵ
     elseif direction == :left 
@@ -91,7 +92,8 @@ end
 function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
     U,S,V,ϵ = tsvd(A.A,(2,3,6),(1,4,5);kwargs...)
-    ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+    d = sqrt(@tensor S[1,2] * S'[2,1])
+    d != 0 && (ϵ /= d)
     if direction == :center
         return permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4)),ϵ
     elseif direction == :left 
@@ -105,15 +107,18 @@ function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
     if direction == :center
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
-        ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+        d = sqrt(@tensor S[1,2] * S'[2,1])
+        d != 0 && (ϵ /= d)
         return U,S,V,ϵ
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(1,),(2,3);kwargs...)
-        ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+        d = sqrt(@tensor S[1,2] * S'[2,1])
+        d != 0 && (ϵ /= d)
         return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
-        ϵ /= sqrt(@tensor S[1,2] * S'[2,1])
+        d = sqrt(@tensor S[1,2] * S'[2,1])
+        d != 0 && (ϵ /= d)
         return map(MPSTensor,(U,S*V))...,ϵ
     end
 end

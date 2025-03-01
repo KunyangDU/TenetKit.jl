@@ -260,5 +260,18 @@ function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironme
     Envorth.A = splice(Envorth,Λ).A
 end
 
+function splice!(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
+    site = obj.center[1]
+    if csite == site + 1
+        @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[-1,-2,1] * A.A[1,3,2] * obj.ts[csite]'.A[2,-3,3]
+        obj.ts[site] = MPSTensor(tmp)
+    elseif csite == site - 1
+        @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[1,-2,-3] * A.A[2,3,1] * obj.ts[csite]'.A[-1,2,3]
+        obj.ts[site] = MPSTensor(tmp)
+    else
+        @error "index out of range"
+    end
+end
+
 #= ================================================ =#
 

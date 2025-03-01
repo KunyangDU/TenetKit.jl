@@ -2,11 +2,11 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 8
-Ly = 1
+Lx = 4
+Ly = 4
 
 Latt = YCSqua(Lx,Ly)
-Ndop = 2
+Ndop = 0
 
 ψ = let
     AuxSpace = vcat(Rep[U₁](Ndop // 2 => 1), repeat([Rep[U₁](i => 1 for i in -(abs(Ndop) + 1):1//2:(abs(Ndop)+1)),], size(Latt) - 1))
@@ -18,7 +18,7 @@ H = Hamiltonian(Latt;μ=μ)
 
 D = 2^4
 
-lsE = DMRG2!(ψ,H,D,1e-10)
+lsE = DMRG2!(ψ,H,D,1e-5)
 showQuantSweep(lsE)
 
 @time "calculate observables" begin
@@ -32,6 +32,5 @@ showQuantSweep(lsE)
     calObs!(Obs,ψ)
 end
 
-@show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values
+density = [Obs.values["n"][(i,)] for i in 1:size(Latt)]
 

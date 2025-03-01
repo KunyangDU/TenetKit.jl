@@ -91,11 +91,11 @@ mutable struct AdjointMPO{L} <: AbstractMPO
 end
 
 function Base.adjoint(A::DenseMPO{L}) where {L}
-    return AdjointMPO(adjoint(A.ts), A.center)
+    return AdjointMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
 end
 
 function Base.adjoint(A::AdjointMPO{L}) where {L}
-    return DenseMPO(adjoint(A.ts), A.center)
+    return DenseMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
 end
 
 issparse(::Union{DenseMPO,AdjointMPO}) = false

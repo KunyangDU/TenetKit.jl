@@ -2,7 +2,7 @@ using TensorKit,CairoMakie
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 4
+Lx = 8
 Ly = 4
 D = 200
 
@@ -15,7 +15,6 @@ Latt = YCSqua(Lx,Ly)
 H = Hamiltonian(Latt;μ=μ)
 
 lsE = DMRG1!(ψ,H,D,1e-8;Nsweep = 5,return_error = false,cbe = true)
-showQuantSweep(lsE .- sum(@. -2cos(pi*(1:div(Lx*Ly,2))/(Lx*Ly+1))))
-
+showQuantSweep(lsE .- ue(100,Lx,Ly)*Lx*Ly)
 
 

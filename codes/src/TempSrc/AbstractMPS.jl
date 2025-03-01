@@ -45,7 +45,7 @@ function Base.length(::DenseMPS{L,T}) where {L,T}
 end
 
 function Base.adjoint(A::DenseMPS{L,T}) where {L,T}
-    return AdjointMPS{L,T}(adjoint(A.ts), A.center)
+    return AdjointMPS{L,T}(deepcopy(adjoint(A.ts)), deepcopy(A.center))
 end
 
 """
