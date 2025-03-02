@@ -67,10 +67,14 @@ end
 
 function randntensor(func,A::MPSTensor{3}, λ::Number,direction::Symbol)
     cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
-    if direction == :left
-        tmp = AdjointMPSTensor(func,ℂ^(round(Int64,λ * dims(dm)[1])),cdm)
-    elseif direction == :right
-        tmp = AdjointMPSTensor(func,dm,ℂ^(round(Int64,λ * dims(cdm)[1])) ⊗ cdm[2])
+    if λ != 1
+        if direction == :left
+            tmp = AdjointMPSTensor(func,ℂ^(round(Int64,λ * dims(dm)[1])),cdm)
+        elseif direction == :right
+            tmp = AdjointMPSTensor(func,dm,ℂ^(round(Int64,λ * dims(cdm)[1])) ⊗ cdm[2])
+        end
+    else
+        tmp = tmp = AdjointMPSTensor(func,dm,cdm)
     end
     normalize!(tmp)
     return tmp

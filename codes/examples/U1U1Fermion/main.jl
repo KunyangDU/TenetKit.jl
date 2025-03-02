@@ -19,7 +19,7 @@ H = Hamiltonian(Latt;params...)
 
 D = 200
 
-lsE = DMRG2!(ψ,H,D)
+lsE = DMRG1!(ψ,H,D)
 showQuantSweep(lsE)
 
 #= 

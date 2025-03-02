@@ -139,7 +139,6 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
 
             localMPOdims = length.((lastnode["roots"], nextnode["roots"])) .+ (lastnode["inverse_root"], nextnode["inverse_root"])
             localMPO = SparseMPOTensor(nothing,localMPOdims...)
-            localMPO.m[1,1] = DenseMPOTensor(lastnode["inverse_root"]*idtensor)
 
             map([("leaves_inds","leaves"),("roots_inds","roots")]) do (x,y)
                 for inds in nextnode[x]
@@ -153,6 +152,10 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
                         end
                     end)
                 end
+            end
+
+            if isnothing(localMPO.m[1,1])
+                localMPO.m[1,1] = DenseMPOTensor(lastnode["inverse_root"]*idtensor)
             end
             
             lastnode["leaves"] = nextnode["leaves"]

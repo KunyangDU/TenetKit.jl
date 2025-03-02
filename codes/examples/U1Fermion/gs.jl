@@ -2,8 +2,8 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 8
-Ly = 1
+Lx = 4
+Ly = 4
 
 Latt = YCSqua(Lx,Ly)
 Ndop = 0
@@ -16,10 +16,10 @@ end
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 
-D = 2^4
+D = 2^6
 
-lsE = DMRG2!(ψ,H,D,1e-5)
-showQuantSweep(lsE)
+lsE = DMRG1!(ψ,H,D,1e-8)
+showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 
 @time "calculate observables" begin
     Obs = MPSObservable()
