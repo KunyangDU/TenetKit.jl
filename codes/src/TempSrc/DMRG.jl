@@ -59,63 +59,6 @@ function DMRG2!(Env::Environment{3},
     
 end
 
-#= function DMRG2!(Env::Environment{3}, 
-                D_MPS::Int64,
-                LanczosLevel::Int64=15
-                 ;
-                 Nsweep::Int64=5, 
-                 tol::Float64 = 1e-5, 
-                 return_error = false
-    )
-
-    ψ = Env.layer[1]
-    H = Env.layer[2]
-    L = Env.L
-
-    lsE = []
-
-    ϵ = 0
-    ϵ1 = 0
-    for i in 1:Nsweep
-
-        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
-            Eg = 0
-            println(">>>>>> Right >>>>>>")
-            for site in 1:L-1
-                Eg,Ev,K = groundEig(projright2(Env,site),LanczosLevel)
-                tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
-                pushright!(Env,tl, tr)
-                ϵ = max(ϵ,ϵ1)
-            end
-            println("<<<<<< Left <<<<<<")
-            for site in L:-1:2
-                Eg,Ev,K = groundEig(projleft2(Env,site),LanczosLevel)
-                tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
-                pushleft!(Env,tl, tr)
-                ϵ = max(ϵ,ϵ1)
-            end
-            push!(lsE, Eg)
-        end
-        
-        GC.gc()
-
-        if ϵ > tol
-            if return_error
-                return lsE,ϵ
-            else
-                return lsE
-            end
-        end
-    end
-
-    if return_error
-        return lsE,ϵ
-    else
-        return lsE
-    end
-    
-end
- =#
 function pushright!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     @assert (site = Env.center[1] ) == Env.center[2]
     Env.layer[1].ts[site:site+1] = [tl,tr]
@@ -209,7 +152,6 @@ function DMRG1!(Env::Environment{3},
                     ϵ = max(ϵ,ϵ1)
                 end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
-                #tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
                 tl,tr = rightorth(Ev)
                 tl = contract(Env.layer[1].ts[site-1],tl)
                 pushleft!(Env,tl, tr)

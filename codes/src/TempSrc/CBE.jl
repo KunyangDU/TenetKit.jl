@@ -27,7 +27,7 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         mps = contract(Lorth,Rorth)
         ~,Q,ϵ = tsvd(mps;direction = :left,trunc=truncdim(D))
         orthogonalize!(Q,B,:right)
-        @show site, Q*Q'
+        #@show site, Q*Q'
         Q = dsum(Q,B,:right)
 
         env.layer[1].ts[csite] = Q
@@ -53,7 +53,7 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         mps = contract(Lorth,Rorth)
         Q,~,ϵ = tsvd(mps;direction = :right,trunc=truncdim(D))
         orthogonalize!(Q,A,:left)
-        @show site, Q*Q'
+        #@show site, Q*Q'
         Q = dsum(Q,A,:left)
 
         env.layer[1].ts[csite] = Q

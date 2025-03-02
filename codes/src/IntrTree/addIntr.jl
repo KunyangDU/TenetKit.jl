@@ -4,7 +4,7 @@ function addIntr!(Root::InteractionTreeNode,
     name::String,
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-
+    strength == 0 && return nothing
     addIntr1!(Root,Opri,site,name,strength,Z)
 end
 
@@ -14,7 +14,7 @@ function addIntr!(Root::InteractionTreeNode,
     name::NTuple{1,String},
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-
+    strength == 0 && return nothing
     addIntr1!(Root,Opri[1],site[1],name[1],strength,Z)
 end
 
@@ -24,7 +24,7 @@ function addIntr!(Root::InteractionTreeNode,
     name::NTuple{2,String},
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-
+    strength == 0 && return nothing
     addIntr2!(Root,Opri,site,name,strength,Z)
 end
 
@@ -34,7 +34,7 @@ function addIntr!(Tree::InteractionTree,
     name::String,
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-
+    strength == 0 && return nothing
     addIntr1!(Tree.Root.children[1],Opri,site,name,strength,Z)
 end
 
@@ -44,7 +44,7 @@ function addIntr!(Tree::InteractionTree,
     name::NTuple{1,String},
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-
+    strength == 0 && return nothing
     addIntr1!(Tree.Root.children[1],Opri[1],site[1],name[1],strength,Z)
 end
 
@@ -54,7 +54,7 @@ function addIntr!(Tree::InteractionTree,
     name::NTuple{2,String},
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-
+    strength == 0 && return nothing
     addIntr2!(Tree.Root.children[1],Opri,site,name,strength,Z)
 end
 
@@ -66,6 +66,7 @@ function addIntr!(Root::InteractionTreeNode,
     name::String,
     strength::Number,
     string::Union{Nothing,AbstractTensorMap})
+    strength == 0 && return nothing
     L = size(Latt)
     for site in 1:L
         addIntr1!(Root,Opri,site,name,strength*exp(-1im*dot(k,coordinate(Latt,site))) / sqrt(L),string)
@@ -78,5 +79,6 @@ function addIntr!(Tree::InteractionTree,
     name::String,
     strength::Number,
     string::Union{Nothing,AbstractTensorMap})
+    strength == 0 && return nothing
     addIntr!(Tree.Root.children[1],Opri,Latt,k,name,strength,string)
 end

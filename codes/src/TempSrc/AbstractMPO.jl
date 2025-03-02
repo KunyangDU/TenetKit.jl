@@ -104,71 +104,60 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
     MPO = let 
         tempMPO = Vector{SparseMPOTensor}(undef,L)
 
-        last_leaves = []
-        last_roots = Root.children
-        #idtensor =isometry((codomain(last_roots[1].children[1].Opr.Opri)[1] |> x -> (x,x))...)
-        idtensor = getIdTensor(last_roots[1].children[1].Opr)
-        
-        last_inverse_root = 0
-        next_inverse_root = 0
+        idtensor = getIdTensor(Root.children[1].children[1].Opr)
+
+        lastnode = Dict(
+            "leaves" => [],
+            "roots" => [],
+            "inverse_root" => 0,
+        )
+        nextnode = deepcopy(lastnode)
+        lastnode["roots"] = Root.children
         
         for iL in 1:L
 
-            if next_inverse_root == 0 && !isempty(findall(x -> isempty(x.children),vcat([lastroot.children for lastroot in last_roots]...)))
-                next_inverse_root = 1
+            nextnode["leaves"] = []
+            nextnode["roots"] = []
+            nextnode["leaves_inds"] = []
+            nextnode["roots_inds"] = []
+
+            if nextnode["inverse_root"] == 0 && !isempty(findall(x -> isempty(x.children),vcat([lastroot.children for lastroot in lastnode["roots"]]...)))
+                nextnode["inverse_root"] = 1
             end
 
-            next_leaves = []
-            leaves_inds = []
-
-            next_roots = []
-            roots_inds = []
-
-            for (lastind,last_root) in enumerate(last_roots)
+            for (lastind,last_root) in enumerate(lastnode["roots"])
                 for next_subtree in last_root.children
                     if isempty(next_subtree.children)
-                        push!(next_leaves,next_subtree)
-                        push!(leaves_inds,(lastind + last_inverse_root, next_inverse_root, length(next_leaves)))
+                        push!(nextnode["leaves"],next_subtree)
+                        push!(nextnode["leaves_inds"],((lastind + lastnode["inverse_root"], nextnode["inverse_root"]), length(nextnode["leaves"])))
                     else
-                        push!(next_roots,next_subtree)
-                        push!(roots_inds,(lastind + last_inverse_root, length(next_roots) + next_inverse_root, length(next_roots)))
+                        push!(nextnode["roots"],next_subtree)
+                        push!(nextnode["roots_inds"],((lastind + lastnode["inverse_root"], length(nextnode["roots"]) + nextnode["inverse_root"]), length(nextnode["roots"])))
                     end
                 end
             end
 
-            localMPOdims = length.((last_roots,next_roots)) .+ (last_inverse_root,next_inverse_root)
+            localMPOdims = length.((lastnode["roots"], nextnode["roots"])) .+ (lastnode["inverse_root"], nextnode["inverse_root"])
             localMPO = SparseMPOTensor(nothing,localMPOdims...)
-            #localMPO .= DenseMPOTensor(0*idtensor)
-            localMPO.m[1,1] = DenseMPOTensor(last_inverse_root*idtensor)
+            localMPO.m[1,1] = DenseMPOTensor(lastnode["inverse_root"]*idtensor)
 
-
-            for inds in leaves_inds
-                localMPO.m[inds[1:2]...] = DenseMPOTensor(let 
-                    localOpr = next_leaves[inds[3]].Opr.Opri
-                    strength = next_leaves[inds[3]].Opr.strength
-                    if isnan(strength)
-                        localOpr
-                    else
-                        localOpr*strength
-                    end
-                end)
-            end
-
-            for inds in roots_inds
-                localMPO.m[inds[1:2]...] = DenseMPOTensor(let 
-                    localOpr = next_roots[inds[3]].Opr.Opri
-                    strength = next_roots[inds[3]].Opr.strength
-                    if isnan(strength)
-                        localOpr
-                    else
-                        localOpr*strength
-                    end
-                end)
+            map([("leaves_inds","leaves"),("roots_inds","roots")]) do (x,y)
+                for inds in nextnode[x]
+                    localMPO.m[inds[1]...] += DenseMPOTensor(let 
+                        localOpr = nextnode[y][inds[2]].Opr.Opri
+                        strength = nextnode[y][inds[2]].Opr.strength
+                        if isnan(strength)
+                            localOpr
+                        else
+                            localOpr*strength
+                        end
+                    end)
+                end
             end
             
-            last_leaves = next_leaves
-            last_roots = next_roots
-            last_inverse_root = next_inverse_root
+            lastnode["leaves"] = nextnode["leaves"]
+            lastnode["roots"] = nextnode["roots"]
+            lastnode["inverse_root"] = nextnode["inverse_root"]
 
             tempMPO[iL] = localMPO
         end
@@ -183,6 +172,13 @@ function AutomataSparseMPO(Tree::InteractionTree,L::Int64 = treeheight(Tree.Root
     return AutomataSparseMPO(Tree.Root,L)
 end
 
+function Base.:+(::Nothing,A::DenseMPOTensor)
+    return A
+end
+
+function Base.:+(A::DenseMPOTensor,::Nothing)
+    return A
+end
 
 function _funcDenseMPO(func::Function, PhySpaces::AbstractVector, AuxSpaces::AbstractVector)
     length(PhySpaces) == length(AuxSpaces) && push!(AuxSpaces, trivial(PhySpaces[1]))
