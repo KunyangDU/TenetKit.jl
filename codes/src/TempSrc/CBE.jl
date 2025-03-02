@@ -1,6 +1,6 @@
 function CBE!(env::Environment{3},csite::Int64,D::Int64,method::Symbol = :rsvd;kwargs...)
     if method == :rsvd
-        λ = get(kwargs, :λ, 1.2)
+        λ = get(kwargs, :λ, 1)
         ϵ = rsvd!(env,csite,λ,D)
     end
     return ϵ
@@ -10,7 +10,7 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
     site = env.center[1]
     @assert csite in [site + 1, site - 1]
     if csite == site + 1
-        A,Λ = tsvd(env.layer[1].ts[site];direction = :right)
+        A,Λ = leftorth(env.layer[1].ts[site])
         B = env.layer[1].ts[csite]
         
         EnvL = env.envs[site]
@@ -19,15 +19,16 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         Lorth = orthogonalize!(env,A,EnvL,site)
         Rorth = orthogonalize!(env,B,EnvR,csite)
 
-        Ω = AdjointMPSTensor(randn,B,λ,:right)
+        Ω = randntensor(randn,B,λ,:right)
         splice!(Lorth,Λ)
         ~,Q = rightorth(contract(Lorth,splice(Rorth,Ω)))
-        Ω = AdjointMPSTensor(Q')
+        Ω = Q'
         splice!(Lorth,Ω)
         mps = contract(Lorth,Rorth)
         ~,Q,ϵ = tsvd(mps;direction = :left,trunc=truncdim(D))
-        ~,Q = rightorth(catcodomain(map(x -> permute(x.A,(1,),(2,3)),(Q,B))...))
-        Q = MPSTensor(permute(Q,(1,2),(3,)))
+        orthogonalize!(Q,B,:right)
+        @show site, Q*Q'
+        Q = dsum(Q,B,:right)
 
         env.layer[1].ts[csite] = Q
         env.layer[3].ts[csite] = Q'
@@ -44,15 +45,16 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         Lorth = orthogonalize!(env,A,EnvL,csite)
         Rorth = orthogonalize!(env,B,EnvR,site)
 
-        Ω = AdjointMPSTensor(randn,A,λ,:left)
+        Ω = randntensor(randn,A,λ,:left)
         splice!(Rorth,Λ)
         Q,~ = leftorth(contract(splice(Lorth,Ω),Rorth))
-        Ω = AdjointMPSTensor(Q')
+        Ω = Q'
         splice!(Rorth,Ω)
         mps = contract(Lorth,Rorth)
         Q,~,ϵ = tsvd(mps;direction = :right,trunc=truncdim(D))
-        Q,~ = leftorth(catdomain(Q.A,A.A))
-        Q = MPSTensor(Q)
+        orthogonalize!(Q,A,:left)
+        @show site, Q*Q'
+        Q = dsum(Q,A,:left)
 
         env.layer[1].ts[csite] = Q
         env.layer[3].ts[csite] = Q'
@@ -63,4 +65,47 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
     return ϵ
 end
 
+function randntensor(func,A::MPSTensor{3}, λ::Number,direction::Symbol)
+    cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
+    if direction == :left
+        tmp = AdjointMPSTensor(func,ℂ^(round(Int64,λ * dims(dm)[1])),cdm)
+    elseif direction == :right
+        tmp = AdjointMPSTensor(func,dm,ℂ^(round(Int64,λ * dims(cdm)[1])) ⊗ cdm[2])
+    end
+    normalize!(tmp)
+    return tmp
+end
+
+function randntensor(func,A::DenseMPOTensor{4}, λ::Number,direction::Symbol)
+    cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
+    if direction == :left
+        tmp = AdjointMPOTensor(func,ℂ^(round(Int64,λ * dims(dm)[1])) ⊗ dm[2],cdm)
+    elseif direction == :right
+        tmp = AdjointMPOTensor(func,dm,cdm[1] ⊗ ℂ^(round(Int64,λ * dims(cdm)[2])))
+    end
+    normalize!(tmp)
+    return tmp
+end
+
+function dsum(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol)
+    if direction == :right
+        ~,Q = rightorth(catcodomain(map(x -> permute(x.A,(1,),(2,3)),(Q,A))...))
+        Q = MPSTensor(permute(Q,(1,2),(3,)))
+    elseif direction == :left 
+        Q,~ = leftorth(catdomain(Q.A,A.A))
+        Q = MPSTensor(Q)
+    end
+    return Q
+end
+
+function dsum(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol)
+    if direction == :right
+        ~,Q = rightorth(catcodomain(map(x -> permute(x.A,(2,),(1,3,4)),(Q,A))...))
+        Q = DenseMPOTensor(permute(Q,(2,1),(3,4)))
+    elseif direction == :left 
+        Q,~ = leftorth(catdomain(map(x -> permute(x.A,(1,2,4),(3,)),(Q,A))...))
+        Q = DenseMPOTensor(permute(Q,(1,2),(4,3)))
+    end
+    return Q
+end
 

@@ -40,17 +40,17 @@ axf = Axis(fig[1,1];xscale=log10,figsize...,
 title = "Spinless free fermion",
 ylabel = L"F\ /\ N" )
 scatter!(axf, 1 ./ lsβ, f / L)
-lines!(axf, 1 ./ easyinterp10(lsβ), fe.(easyinterp10(lsβ),L);color = :red)
+lines!(axf, 1 ./ easyinterp10(lsβ), fe.(easyinterp10(lsβ),Lx,Ly);color = :red)
 
 axu = Axis(fig[2,1];xscale=log10,figsize...,
 ylabel = L"U\ /\ N")
 scatter!(axu, 1 ./ lsβ, u / L)
-lines!(axu, 1 ./ cβ, ue.(cβ,L);color = :red)
+lines!(axu, 1 ./ cβ, ue.(cβ,Lx,Ly);color = :red)
 
 axce = Axis(fig[3,1];xscale=log10,figsize...,
 xlabel = L"T",ylabel =L"C_e\ /\ N")
 scatter!(axce, 1 ./ lsβ, Ce / L)
-lines!(axce, 1 ./ cβ, ce.(cβ,L);color = :red)
+lines!(axce, 1 ./ cβ, ce.(cβ,Lx,Ly);color = :red)
 
 hidexdecorations!(axf;ticks = false,grid = false)
 hidexdecorations!(axu;ticks = false,grid = false)
@@ -62,5 +62,5 @@ display(fig)
 
 save("examples/TrivialSpinlessFermion/figures/thermal quantity_SETTN.png",fig)
 
-f .- fe.(lsβ,L) * L
+f .- fe.(lsβ,Lx,Ly) * L
 

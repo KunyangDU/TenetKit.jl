@@ -398,6 +398,58 @@ function contract(EnvL::DenseLeftEnvironmentTensor, A::DenseMPOTensor, B::Adjoin
     return contract(EnvL.A, A, B, EnvR.A)
 end
 
+function contract(EnvL::LeftCompositeEnvironmentTensor{2,4}, A::DenseMPOTensor{4})
+    LeftCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4] ≔ EnvL.A[1,2,-3,-4] * A'.A[3,4,2,1] * A.A[-2,-1,3,4])
+end
+
+function contract(EnvR::RightCompositeEnvironmentTensor{2,4}, B::DenseMPOTensor{4})
+    RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4] ≔ EnvR.A[-1,2,1,-4] * B'.A[1,4,2,3] * B.A[-2,3,-3,4])
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 4}, Λ::DenseMPOTensor{2})
+    return LeftCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4] ≔ EnvL.A[-1,-2,1,-4]*Λ.A[1,-3])
+end
+
+function contract(EnvL::RightCompositeEnvironmentTensor{2, 4}, Λ::DenseMPOTensor{2})
+    return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4] ≔ Λ.A[-1,1]*EnvL.A[1,-2,-3,-4])
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 4}, A::AdjointMPOTensor{4})
+    @tensor tmp[-1;-2] ≔ EnvL.A[1,2,-2,3] * A.A[-1,3,2,1] 
+    return LeftEnvironmentTensor(tmp)
+end
+
+function contract(EnvR::RightCompositeEnvironmentTensor{2, 4}, A::AdjointMPOTensor{4})
+    @tensor tmp[-1;-2] ≔ EnvR.A[-1,2,1,3] * A.A[1,3,2,-2] 
+    return RightEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2}, EnvR::RightCompositeEnvironmentTensor{2, 4})
+    @tensor tmp[-1,-2;-3,-4] ≔ EnvL.A[-2,1] * EnvR.A[1,-1,-3,-4]
+    return DenseMPOTensor(tmp)
+end
+
+function contract(tr::DenseMPOTensor{2},obj::DenseMPOTensor{4})
+    return DenseMPOTensor(@tensor tmp[-1,-2;-3,-4] ≔ tr.A[-2,1] * obj.A[-1,1,-3,-4])
+end
+
+function contract(obj::DenseMPOTensor{4},tl::DenseMPOTensor{2})
+    return DenseMPOTensor(@tensor tmp[-1,-2;-3,-4] ≔ obj.A[-1,-2,1,-4] * tl.A[1,-3])
+end
+
+function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
+    site = obj.center[1]
+    if csite == site + 1
+        @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,-2,1,-4] * A.A[3,1,2,4] * obj.ts[csite]'.A[2,4,3,-3]
+        obj.ts[site] = DenseMPOTensor(tmp)
+    elseif csite == site - 1
+        @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,1,-3,-4] * A.A[3,2,1,4] * obj.ts[csite]'.A[-2,4,3,2]
+        obj.ts[site] = DenseMPOTensor(tmp)
+    else
+        @error "index out of range"
+    end
+end
+
 
 #= ================================================ =#
 

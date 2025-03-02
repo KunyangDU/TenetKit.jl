@@ -16,12 +16,11 @@ D = 2^10
     AuxSpace = vcat(Rep[SU₂](0 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:1),], Lx*Ly-1))
     randMPS(SU₂Spin.PhySpace ,AuxSpace)
 end
-#@load "examples/SU2Spin/data/gsψ_$(Lx)x$(Ly)_$(D).jld2" gsψ
 
 T = 2/J
 Nt = 20
 
-lsψ, lst = TDVP2!(gsψ, H, T, Nt, D)
+lsψ, lst = TDVP1!(gsψ, H, T, Nt, D)
 
 
 Obs = MPSObservable()

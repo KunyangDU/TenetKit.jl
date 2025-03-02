@@ -112,10 +112,11 @@ function TDVP1!(Env::Environment{3}, τ::Number, D::Int64, ϵ::Number, LanczosIn
             B = deepcopy(Env.layer[1].ts[site+1])
             ϵ1 = CBE!(Env,site+1,D)
             splice!(Env.layer[1],B,site+1)
+            Env.layer[3].ts[site] = Env.layer[1].ts[site]'
             ϵ += ϵ1
         end
         tmp,K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ, LanczosInfo)
-        tl,tr = map(MPSTensor,leftorth(tmp))
+        tl,tr = leftorth(tmp)
         tr = contract(tr,Env.layer[1].ts[site+1])
         K2 = pushright!(Env, tl, tr, τ, LanczosInfo)
         totalK = max(totalK,K1,K2)
@@ -128,10 +129,11 @@ function TDVP1!(Env::Environment{3}, τ::Number, D::Int64, ϵ::Number, LanczosIn
             A = deepcopy(Env.layer[1].ts[site-1])
             ϵ1 = CBE!(Env,site-1,D)
             splice!(Env.layer[1],A,site-1)
+            Env.layer[3].ts[site] = Env.layer[1].ts[site]'
             ϵ += ϵ1
         end
         tmp, K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ, LanczosInfo)
-        tl,tr = map(MPSTensor,rightorth(tmp))
+        tl,tr = rightorth(tmp)
         tl = contract(Env.layer[1].ts[site-1],tl)
         K2 = pushleft!(Env, tl, tr, τ, LanczosInfo)
         ϵ += ϵ1

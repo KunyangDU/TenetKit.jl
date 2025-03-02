@@ -3,13 +3,9 @@ using TensorKit,CairoMakie
 include("../../src/iMPS.jl")
 include("model.jl")
 
-
-
-
-
-Lx = 17
+Lx = 11
 Ly = 1
-D = 250
+D = 50
 
 Latt = YCSqua(Lx,Ly)
 
@@ -41,9 +37,9 @@ params = (J=1,h=1.,hz=0)
 
 H,r = Hamiltonian(Latt;params...)
 T = 6/params.J
-Nt = 10
+Nt = 20
 
-lsψ, lst = TDVP2!(ψ, H, T, Nt, D)
+lsψ, lst = TDVP1!(ψ, H, T, Nt, D)
 Szm = zeros(length(lst),size(Latt))
 for ind in eachindex(lsψ)
     begin

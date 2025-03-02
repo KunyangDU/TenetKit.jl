@@ -224,7 +224,7 @@ function contract(EnvL::RightCompositeEnvironmentTensor{1, 3}, Λ::MPSTensor{2})
     return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ Λ.A[-1,1]*EnvL.A[1,-2,-3])
 end
 
-function splice(Envorth::SparseLeftEnvironmentTensor,Λ::MPSTensor{2})
+function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
     tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D)
     for i in 1:Envorth.D
         tmp[i] = contract(Envorth.A[i],Λ)
@@ -232,7 +232,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,Λ::MPSTensor{2})
     return SparseLeftEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseRightEnvironmentTensor,Λ::MPSTensor{2})
+function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
     tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D)
     for i in 1:Envorth.D
         tmp[i] = contract(Envorth.A[i],Λ)
@@ -240,7 +240,7 @@ function splice(Envorth::SparseRightEnvironmentTensor,Λ::MPSTensor{2})
     return SparseRightEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseLeftEnvironmentTensor,Λ::AdjointMPSTensor{3})
+function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D)
     for i in 1:Envorth.D
         tmp[i] = contract(Envorth.A[i],Λ)
@@ -248,7 +248,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,Λ::AdjointMPSTensor{3})
     return SparseLeftEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseRightEnvironmentTensor,Λ::AdjointMPSTensor{3})
+function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D)
     for i in 1:Envorth.D
         tmp[i] = contract(Envorth.A[i],Λ)
@@ -256,7 +256,8 @@ function splice(Envorth::SparseRightEnvironmentTensor,Λ::AdjointMPSTensor{3})
     return SparseRightEnvironmentTensor(tmp)
 end
 
-function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},Λ::Union{MPSTensor{2},AdjointMPSTensor{3}})
+function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},
+    Λ::Union{MPSTensor{2},AdjointMPSTensor{3},DenseMPOTensor{2},AdjointMPOTensor{4}})
     Envorth.A = splice(Envorth,Λ).A
 end
 

@@ -1,53 +1,53 @@
 function TensorKit.leftorth(elm::MPSTensor{3})
-    return leftorth(elm.A,(1,2),(3,))
+    Q,Rm = leftorth(elm.A,(1,2),(3,))
+    return map(MPSTensor,(Q,Rm))
 end
 
 function TensorKit.leftorth(A::MPSTensor{R}) where R
     @assert R > 3
     Q,Rm = leftorth(A.A,(1,2),tuple(3:R...))
-    return map(MPSTensor,(Q,permute(Rm,(1,),tuple(2:R-1...))))
+    return Q,Rm
 end
 
 function TensorKit.leftorth(A::MPSTensor{3}, B::MPSTensor{3})
     Q, Rm = leftorth(A)
-    @tensor tmp[-1 -2;-3] ≔ Rm[-1,1]*B.A[1,-2,-3]
-    return map(MPSTensor,[Q,tmp])
+    @tensor tmp[-1 -2;-3] ≔ Rm.A[-1,1]*B.A[1,-2,-3]
+    return Q,MPSTensor(tmp)
 end
 
 function TensorKit.leftorth!(obj::DenseMPS,site::Int64)
-    obj.ts[site:site+1] = leftorth(obj.ts[site:site+1]...)
+    obj.ts[site:site+1] = collect(leftorth(obj.ts[site:site+1]...))
 end
 
 function TensorKit.rightorth(A::MPSTensor{3})
     Lm,Q = rightorth(A.A,(1,),(2,3))
-    return Lm,permute(Q,(1,2),(3,))
+    return map(MPSTensor,(Lm,permute(Q,(1,2),(3,))))
 end
 
 function TensorKit.rightorth(A::MPSTensor{R}) where R
     @assert R > 3
     Lm,Q = rightorth(A.A,(1,2),tuple(3:R...))
-    return map(MPSTensor,(Lm, permute(Q,(1,),tuple(2:R-1...))))
+    return Lm, Q
 end
 
 function TensorKit.rightorth(A::MPSTensor{3}, B::MPSTensor{3})
     Lm,Q = rightorth(B)
-    return map(MPSTensor,[A.A*Lm,Q])
+    return MPSTensor(A.A*Lm.A),Q
 end
 
 function TensorKit.rightorth!(obj::DenseMPS,site::Int64)
-    obj.ts[site-1:site] = rightorth(obj.ts[site-1:site]...)
+    obj.ts[site-1:site] = collect(rightorth(obj.ts[site-1:site]...))
 end
 
-
-
 function TensorKit.leftorth(elm::DenseMPOTensor{4})
-    return leftorth(elm.A,(1,2,4),(3,))
+    Q,R = leftorth(elm.A,(1,2,4),(3,))
+    return map(DenseMPOTensor,(permute(Q,(1,2),(4,3)),R))
 end
 
 function TensorKit.leftorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
     Q, Rm = leftorth(A)
-    @tensor tmp[-1 -2;-3 -4] ≔ Rm[-2,1]*B.A[-1,1,-3,-4]
-    A.A = permute(Q,(1,2),(4,3))
+    @tensor tmp[-1 -2;-3 -4] ≔ Rm.A[-2,1]*B.A[-1,1,-3,-4]
+    A.A = Q.A
     B.A = tmp
     #return map(DenseMPOTensor,[Q,tmp])
 end
@@ -58,14 +58,15 @@ function TensorKit.leftorth!(obj::DenseMPO,site::Int64)
 end
 
 function TensorKit.rightorth(A::DenseMPOTensor{4})
-    return rightorth(A.A,(2,),(1,3,4))
+    L,Q = rightorth(A.A,(2,),(1,3,4))
+    return map(DenseMPOTensor,(L,permute(Q,(2,1),(3,4))))
 end
 
 function TensorKit.rightorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
     Lm,Q = rightorth(B)
-    @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,-2,1,-4]*Lm[1,-3]
+    @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,-2,1,-4]*Lm.A[1,-3]
     A.A = tmp
-    B.A = permute(Q,(2,1),(3,4))
+    B.A = Q.A
     #return map(DenseMPOTensor,[,])
 end
 
@@ -163,7 +164,7 @@ function normalize!(obj::Union{DenseMPOTensor,MPSTensor})
     return tmp
 end
 
-function orthogonalize!(env::Environment{3},B::MPSTensor{3},EnvR::SparseRightEnvironmentTensor,osite::Int64)
+function orthogonalize!(env::Environment{3},B::Union{DenseMPOTensor{4},MPSTensor{3}},EnvR::SparseRightEnvironmentTensor,osite::Int64)
     w,w2 = env.layer[2].D[osite]
     EnvRorth = Vector(undef,w)
     EnvRorth .= nothing
@@ -182,7 +183,7 @@ function orthogonalize!(env::Environment{3},B::MPSTensor{3},EnvR::SparseRightEnv
     return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
 end
 
-function orthogonalize!(env::Environment{3},A::MPSTensor{3},EnvL::SparseLeftEnvironmentTensor,osite::Int64)
+function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor{3}},EnvL::SparseLeftEnvironmentTensor,osite::Int64)
     w1,w = env.layer[2].D[osite]
     EnvLorth = Vector(undef,w)
     EnvLorth .= nothing
@@ -200,6 +201,49 @@ function orthogonalize!(env::Environment{3},A::MPSTensor{3},EnvL::SparseLeftEnvi
     end
 
     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
+end
+
+function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, kwargs...)
+    @assert direction in [:left,:right]
+    if direction == :left 
+        U,S,V,ϵ = tsvd(A.A,(2,),(1,3,4);kwargs...)
+        d = sqrt(@tensor S[1,2] * S'[2,1])
+        d != 0 && (ϵ /= d)
+        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ
+    elseif direction == :right 
+        U,S,V,ϵ = tsvd(A.A,(1,2,4),(3,);kwargs...)
+        d = sqrt(@tensor S[1,2] * S'[2,1])
+        d != 0 && (ϵ /= d)
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ
+    end
+end
+
+function orthogonalize!(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol;tol::Number=1e-12)
+    space(Q.A) != space(A.A) && return nothing
+    if abs(Q*A') > tol
+        if direction == :right 
+            @tensor tmp[-1,-2;-3] ≔ Q.A[-1,2,1] * A'.A[1,3,2] * A.A[3,-2,-3]
+            Q.A -= tmp
+        elseif direction == :left
+            @tensor tmp[-1,-2;-3] ≔ Q.A[1,2,-3] * A'.A[3,1,2] * A.A[-1,-2,3]
+            Q.A -= tmp
+        end
+    end
+    @assert abs(Q*A') < tol
+end
+
+function orthogonalize!(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol;tol::Number=1e-12)
+    space(Q.A) != space(A.A) && return nothing
+    if abs(Q*A') > tol
+        if direction == :right 
+            @tensor tmp[-1,-2;-3,-4] ≔ Q.A[2,-2,1,3] * A'.A[1,3,2,4] * A.A[-1,4,-3,-4]
+            Q.A -= tmp
+        elseif direction == :left
+            @tensor tmp[-1,-2;-3,-4] ≔ Q.A[2,1,-3,3] * A'.A[4,3,2,1] * A.A[-1,-2,4,-4]
+            Q.A -= tmp
+        end
+    end
+    @assert abs(Q*A') < tol
 end
 
 #= function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}

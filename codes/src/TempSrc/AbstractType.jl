@@ -174,6 +174,11 @@ mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
     function AdjointMPOTensor(t::AbstractTensorMap)
         return new{rank(t)}(t)
     end
+
+    function AdjointMPOTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
+        A = TensorMap(fc,codomain,domain)
+        return new{rank(A)}(A)
+    end
 end
 
 function composite(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})

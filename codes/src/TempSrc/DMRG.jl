@@ -192,11 +192,11 @@ function DMRG1!(Env::Environment{3},
             println(">>>>>> Right >>>>>>")
             for site in 1:L-1
                 if cbe 
-                    ϵ1 = CBE!(Env,site+1,D)
+                    ϵ1 = CBE!(Env,site+1,D_MPS)
                     ϵ = max(ϵ,ϵ1)
                 end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
-                tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
+                tl,tr = leftorth(Ev)
                 tr = contract(tr,Env.layer[1].ts[site+1])
                 pushright!(Env,tl, tr)
                 ϵ = max(ϵ,ϵ1)
@@ -205,11 +205,12 @@ function DMRG1!(Env::Environment{3},
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
                 if cbe 
-                    ϵ1 = CBE!(Env,site-1,D)
+                    ϵ1 = CBE!(Env,site-1,D_MPS)
                     ϵ = max(ϵ,ϵ1)
                 end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
-                tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
+                #tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
+                tl,tr = rightorth(Ev)
                 tl = contract(Env.layer[1].ts[site-1],tl)
                 pushleft!(Env,tl, tr)
                 ϵ = max(ϵ,ϵ1)
