@@ -1,6 +1,6 @@
 function CBE!(env::Environment{3},csite::Int64,D::Int64,method::Symbol = :rsvd;kwargs...)
     if method == :rsvd
-        λ = get(kwargs, :λ, 1)
+        λ = get(kwargs, :λ, 1.5)
         ϵ = rsvd!(env,csite,λ,D)
     end
     return ϵ
@@ -18,25 +18,22 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
 
         Lorth = orthogonalize!(env,A,EnvL,site)
         Rorth = orthogonalize!(env,B,EnvR,csite)
-
         Ω = randntensor(randn,B,λ,:right)
         splice!(Lorth,Λ)
-        ~,Q = rightorth(contract(Lorth,splice(Rorth,Ω)))
+        Q,~ = leftorth(contract(Lorth,splice(Rorth,Ω)))
         Ω = Q'
         splice!(Lorth,Ω)
-        mps = contract(Lorth,Rorth)
-        ~,Q,ϵ = tsvd(mps;direction = :left,trunc=truncdim(D))
+        obj = contract(Lorth,Rorth)
+        ~,Q,ϵ = tsvd(obj;direction = :left,trunc=truncdim(round(Int64,D*λ)))
         orthogonalize!(Q,B,:right)
-        #@show site, Q*Q'
         Q = dsum(Q,B,:right)
 
         env.layer[1].ts[csite] = Q
         env.layer[3].ts[csite] = Q'
 
         env.envs[csite] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[csite+1],csite)
-
     else
-        Λ,B = tsvd(env.layer[1].ts[site];direction = :left)
+        Λ,B = rightorth(env.layer[1].ts[site])
         A = env.layer[1].ts[csite]
         
         EnvL = env.envs[csite]
@@ -47,19 +44,18 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
 
         Ω = randntensor(randn,A,λ,:left)
         splice!(Rorth,Λ)
-        Q,~ = leftorth(contract(splice(Lorth,Ω),Rorth))
+        ~,Q = rightorth(contract(splice(Lorth,Ω),Rorth))
         Ω = Q'
         splice!(Rorth,Ω)
-        mps = contract(Lorth,Rorth)
-        Q,~,ϵ = tsvd(mps;direction = :right,trunc=truncdim(D))
+        obj = contract(Lorth,Rorth)
+        Q,~,ϵ = tsvd(obj;direction = :right,trunc=truncdim(round(Int64,D*λ)))
         orthogonalize!(Q,A,:left)
-        #@show site, Q*Q'
         Q = dsum(Q,A,:left)
 
         env.layer[1].ts[csite] = Q
         env.layer[3].ts[csite] = Q'
 
-        env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[csite],csite)
+        env.envs[csite + 1] = pushright(map(x -> env.layer[x],1:3)...,env.envs[csite],csite)
     end
     
     return ϵ
@@ -67,17 +63,18 @@ end
 
 function randntensor(func,A::MPSTensor{3}, λ::Number,direction::Symbol)
     cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
+    tmp = MPSTensor(func,cdm,dm)
     if λ != 1
+        @assert 0 ≤ λ ≤ 2
         if direction == :left
-            tmp = AdjointMPSTensor(func,ℂ^(round(Int64,λ * dims(dm)[1])),cdm)
+            tmp,~ = tsvd(MPSTensor(catdomain(tmp.A,tmp.A));direction = :right,trunc = truncdim(round(Int64,λ * dims(dm)[1])))
         elseif direction == :right
-            tmp = AdjointMPSTensor(func,dm,ℂ^(round(Int64,λ * dims(cdm)[1])) ⊗ cdm[2])
+            tmpt = permute(tmp.A,(1,),(2,3))
+            ~,tmp = tsvd(MPSTensor(permute(catcodomain(tmpt,tmpt),(1,2),(3,)));direction = :left,trunc = truncdim(round(Int64,λ * dims(cdm)[1])))
         end
-    else
-        tmp = tmp = AdjointMPSTensor(func,dm,cdm)
     end
     normalize!(tmp)
-    return tmp
+    return tmp'
 end
 
 function randntensor(func,A::DenseMPOTensor{4}, λ::Number,direction::Symbol)

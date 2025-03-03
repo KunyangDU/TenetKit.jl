@@ -2,7 +2,7 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 4
+Lx = 8
 Ly = 4
 
 Latt = YCSqua(Lx,Ly)
@@ -16,12 +16,12 @@ end
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 
-D = 2^6
+D = 600
 
-lsE = DMRG1!(ψ,H,D,1e-8)
+lsE = DMRG1!(ψ,H,D,1e-6;Nsweep=10)
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 
-@time "calculate observables" begin
+#= @time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = U₁Fermion
 
@@ -33,4 +33,4 @@ showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 end
 
 density = [Obs.values["n"][(i,)] for i in 1:size(Latt)]
-
+ =# 

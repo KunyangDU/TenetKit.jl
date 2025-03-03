@@ -3,7 +3,7 @@ include("../../src/iMPS.jl")
 include("model.jl")
 # some problems left (up and down's anticommutation)
 
-Lx = 8
+Lx = 6
 Ly = 1
 
 ψ = let 
@@ -13,33 +13,14 @@ end
 
 Latt = YCSqua(Lx,Ly)
 
-t = 1
-U = 0
-μ = 0
-H = let 
-    Root = InteractionTreeNode()
-    LocalSpace = TrivialSpinfulFermion
+params = (t = 1,U = 0,μ = 0)
+H = Hamiltonian(Latt;params...)
+D = 100
 
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.n,i,"n",-μ,nothing)
-        addIntr!(Root,LocalSpace.nd,i,"nd",U,nothing)
-    end
-    
-    for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.F₊⁺F₊,pair,("F₊⁺","F₊"),-t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.F₊F₊⁺,pair,("F₊","F₊⁺"),t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.F₋⁺F₋,pair,("F₋⁺","F₋"),-t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.F₋F₋⁺,pair,("F₋","F₋⁺"),t,LocalSpace.Z)
-    end
+lsE = DMRG2!(ψ,H,D)
+showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 
-    AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-D = 2^8
-
-ψ,lsE = DMRG2!(ψ,H,D;LanczosLevel = 30)
-showQuantSweep(lsE)
-
-@time "calculate observables" begin
+#= @time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = TrivialSpinfulFermion
 
@@ -55,4 +36,4 @@ showQuantSweep(lsE)
     calObs!(Obs,ψ)
 end
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values
+Obs.values =#

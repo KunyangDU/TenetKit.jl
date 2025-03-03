@@ -116,7 +116,7 @@ function DMRG1!(Env::Environment{3},
                 Nsweep::Int64=5, 
                 trunc_tol::Float64 = 1e-5, 
                 return_error = false,
-                cbe::Bool = true,
+                cbe::Bool = true,kwargs...
     )
 
     ψ = Env.layer[1]
@@ -135,7 +135,7 @@ function DMRG1!(Env::Environment{3},
             println(">>>>>> Right >>>>>>")
             for site in 1:L-1
                 if cbe 
-                    ϵ1 = CBE!(Env,site+1,D_MPS)
+                    ϵ1 = CBE!(Env,site+1,D_MPS;kwargs...)
                     ϵ = max(ϵ,ϵ1)
                 end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
@@ -148,7 +148,7 @@ function DMRG1!(Env::Environment{3},
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
                 if cbe 
-                    ϵ1 = CBE!(Env,site-1,D_MPS)
+                    ϵ1 = CBE!(Env,site-1,D_MPS;kwargs...)
                     ϵ = max(ϵ,ϵ1)
                 end
                 Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
