@@ -29,6 +29,10 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor{R}
         return new{rank(ts)}(ts)
     end
 
+    function MPSTensor{r}(ts::TrivialTensorMap) where r
+        return new{r}(ts)
+    end
+
     function MPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = TensorMap(fc,codomain,domain)
         return new{rank(A)}(A)
@@ -131,6 +135,9 @@ mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
     function CompositeMPSTensor(A::AbstractTensorMap)
         return new{length(codomain(A))-1, rank(A)}(A)
     end
+    function CompositeMPSTensor{n,r}(A::AbstractTensorMap) where {n,r}
+        return new{n,r}(A)
+    end
 
     function CompositeMPSTensor(fc::Function, codom, dom)
         A = TensorMap(fc,codom,dom)
@@ -223,7 +230,7 @@ function Base.:/(A::CompositeMPSTensor, n::Number)
 end
 
 function Base.iterate(t::Union{AbstractMPSTensor, AbstractMPOTensor})
-    return (t,nothing)
+    return (t.A,nothing)
 end
 
 function Base.iterate(::Union{AbstractMPSTensor, AbstractMPOTensor},::Nothing)

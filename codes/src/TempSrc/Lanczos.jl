@@ -1,10 +1,4 @@
 
-function groundEig(O::SparseProjectiveHamiltonian{N}, LanczosInfo::Number) where N
-    T, Q, K = MPLanczos(O,_initialMPS(O),LanczosInfo)
-    λ, v = eigen(T)
-    Eg,Ev = argmin(real.(λ)) |> x -> (real.(λ)[x], sum(v[:, x] .* Q))
-    return Eg, Ev / norm(Ev), K
-end
 
 function _initialMPS(O::SparseProjectiveHamiltonian{1})
     codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, O.H.ts[1].m[1,1].A])...)
@@ -103,4 +97,17 @@ function MPLanczos(O::SparseProjectiveHamiltonian{N},
     return T, Q, maxlevel
 end
 
+function groundEig(O::SparseProjectiveHamiltonian{N}, LanczosInfo::Number) where N
+    #alg = Lanczos(;krylovdim = 8, maxiter = 10, tol = 1.0e-6, orth = ModifiedGramSchmidt(), eager = true, verbosity = 0)
+    alg = DMRGDefaultLanczos
+    Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR,alg)
+    return ApproxReal(Eg[1]), normalize(Ev[1]), info.numiter
+end
+
+#= function groundEig(O::SparseProjectiveHamiltonian{N}, LanczosInfo::Number) where N
+    T, Q, K = MPLanczos(O,_initialMPS(O),LanczosInfo)
+    λ, v = eigen(T)
+    Eg,Ev = argmin(real.(λ)) |> x -> (real.(λ)[x], sum(v[:, x] .* Q))
+    return Eg, Ev / norm(Ev), K
+end =#
 

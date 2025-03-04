@@ -3,6 +3,7 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
+
 Lx = 11
 Ly = 1
 D = 50
@@ -23,8 +24,8 @@ lsE = DMRG1!(ψ,H,D,1e-6;cbe=true,Nsweep=3)
 params = (J=1,h=1.,hz=0)
 
 H,r = Hamiltonian(Latt;params...)
-T = 6/params.J
-Nt = 20
+T = 3/params.J
+Nt = 40
 
 lsψ, lst = TDVP1!(deepcopy(ψ), H, T, Nt, D)
 Szm = zeros(length(lst),size(Latt),2)
@@ -41,3 +42,4 @@ for ind in eachindex(lsψ)
     Szm[ind,:,1] = Szs
 end
 
+Szm[:,:,1]

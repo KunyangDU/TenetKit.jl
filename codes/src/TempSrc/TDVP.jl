@@ -192,13 +192,23 @@ function pushleft!(Env::Environment{3}, tl::Union{AbstractMPSTensor, AbstractMPO
 end
 
 
-function evolve!(
+#= function evolve!(
     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     O::SparseProjectiveHamiltonian{N}, τ::Number, LanczosInfo::Number) where N
     tmp = normalize!(obj)
     T, Q, K = MPLanczos(O,obj,LanczosInfo)
     obj.A = sum(tmp * exp(-1im*τ*T)[:,1] .* map(x->x.A, Q))
     return obj, K
+end =#
+
+function evolve!(
+    obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+    O::SparseProjectiveHamiltonian{N}, τ::Number, LanczosInfo::Number) where N
+    tmp = normalize!(obj)
+    obj,info = exponentiate(x -> action(O,x),-1im * τ,obj,TDVPDefaultLanczos)
+    rmul!(obj,tmp)
+    @assert info.residual ≈ 0
+    return obj, info.numiter
 end
 
 function tanTRG2!(ρ::DenseMPO, H::SparseMPO, lsβ::AbstractVector, D::Int64, LanczosInfo::Number=1e-5;kwargs...)
