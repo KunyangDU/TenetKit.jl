@@ -13,32 +13,44 @@ function DMRG2!(Env::Environment{3},
     L = Env.L
 
     lsE = []
-
-    ϵ = 0
-    ϵ1 = 0
-    totalK = 0
+    
     for i in 1:Nsweep
+        ϵ = 0
+        ϵ1 = 0
+        totalK = 0
+        vns = zeros(L-1)
 
-        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
-            Eg = 0
-            println(">>>>>> Right >>>>>>")
-            for site in 1:L-1
-                Eg,Ev,K = groundEig(projright2(Env,site),LanczosInfo)
-                tl, tr, ϵ1 = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
-                pushright!(Env,tl, tr)
-                ϵ = max(ϵ,ϵ1)
-                totalK = max(totalK,K)
-            end
-            println("<<<<<< Left <<<<<<")
-            for site in L:-1:2
-                Eg,Ev,K = groundEig(projleft2(Env,site),LanczosInfo)
-                tl, tr, ϵ1 = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
-                pushleft!(Env,tl, tr)
-                ϵ = max(ϵ,ϵ1)
-                totalK = max(totalK,K)
-            end
-            push!(lsE, Eg)
+        Eg = 0
+        to = TimerOutput()
+        for site in 1:L-1
+            @timeit to "Krylov" begin
+                @timeit to "projection" projH = projright2(Env,site)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+            end                 
+            @timeit to "SVD" tl, tr, ϵ1, vns[site] = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
+            @timeit to "pushright" pushright!(Env,tl, tr)
+            ϵ = max(ϵ,ϵ1)
+            totalK = max(totalK,K)
         end
+        show(to;title=">>> DMRG >>>")
+        filter!(!isnan,vns)
+        println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+        
+        to = TimerOutput()
+        for site in L:-1:2
+            @timeit to "Krylov" begin
+                @timeit to "projection" projH = projleft2(Env,site)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+            end 
+            @timeit to "SVD" tl, tr, ϵ1, vns[site-1] = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
+            @timeit to "pushleft" pushleft!(Env,tl, tr)
+            ϵ = max(ϵ,ϵ1)
+            totalK = max(totalK,K)
+        end
+        show(to;title="<<< DMRG <<<")
+        filter!(!isnan,vns)
+        println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+        push!(lsE, Eg)
         
         GC.gc()
 
@@ -125,41 +137,59 @@ function DMRG1!(Env::Environment{3},
 
     lsE = []
 
-    ϵ = 0
-    ϵ1 = 0
-    totalK = 0
+    
     for i in 1:Nsweep
+        ϵ = 0
+        ϵ1 = 0
+        totalK = 0
+        vns = zeros(L-1)
 
-        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
-            Eg = 0
-            println(">>>>>> Right >>>>>>")
-            for site in 1:L-1
-                if cbe 
-                    ϵ1 = CBE!(Env,site+1,D_MPS;kwargs...)
-                    ϵ = max(ϵ,ϵ1)
-                end
-                Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
+        Eg = 0
+        to = TimerOutput()
+        for site in 1:L-1
+            if cbe 
+                @timeit to "CBE" ϵ1 = CBE!(Env,site+1,D_MPS;kwargs...)
+                ϵ = max(ϵ,ϵ1)
+            end
+            @timeit to "Krylov" begin
+                @timeit to "projection" projH = proj1(Env,site)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+            end
+            @timeit to "orthogonalize" begin
                 tl,tr = leftorth(Ev)
+                vns[site] = vonNeumann(tr.A)
                 tr = contract(tr,Env.layer[1].ts[site+1])
-                pushright!(Env,tl, tr)
-                ϵ = max(ϵ,ϵ1)
-                totalK = max(totalK,K)
             end
-            println("<<<<<< Left <<<<<<")
-            for site in L:-1:2
-                if cbe 
-                    ϵ1 = CBE!(Env,site-1,D_MPS;kwargs...)
-                    ϵ = max(ϵ,ϵ1)
-                end
-                Eg,Ev,K = groundEig(proj1(Env,site),LanczosInfo)
-                tl,tr = rightorth(Ev)
-                tl = contract(Env.layer[1].ts[site-1],tl)
-                pushleft!(Env,tl, tr)
-                ϵ = max(ϵ,ϵ1)
-                totalK = max(totalK,K)
-            end
-            push!(lsE, Eg)
+            @timeit to "pushright" pushright!(Env,tl, tr)
+            ϵ = max(ϵ,ϵ1)
+            totalK = max(totalK,K)
         end
+        show(to;title=">>> DMRG >>>")
+        filter!(!isnan,vns)
+        println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+        to = TimerOutput()
+        for site in L:-1:2
+            if cbe 
+                @timeit to "CBE" ϵ1 = CBE!(Env,site-1,D_MPS;kwargs...)
+                ϵ = max(ϵ,ϵ1)
+            end
+            @timeit to "Krylov" begin
+                @timeit to "projection" projH = proj1(Env,site)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+            end
+            @timeit to "orthogonalize" begin
+                tl,tr = rightorth(Ev)
+                vns[site-1] = vonNeumann(tl.A)
+                tl = contract(Env.layer[1].ts[site-1],tl)
+            end
+            @timeit to "pushleft" pushleft!(Env,tl, tr)
+            ϵ = max(ϵ,ϵ1)
+            totalK = max(totalK,K)
+        end
+        show(to;title="<<< DMRG <<<")
+        filter!(!isnan,vns)
+        println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+        push!(lsE, Eg)
 
         GC.gc()
 

@@ -1,4 +1,4 @@
-using TensorKit, CairoMakie, LaTeXStrings
+using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
@@ -32,35 +32,14 @@ end
 
 Ce = @. (u2 - u^2) * lsβ^2
 
-cβ = easyinterp10(lsβ)
+data = Dict(
+    "f" => f,
+    "u" => u,
+    "Ce" => Ce
+)
 
-figsize = (height=150,width=300)
-fig = Figure()
-axf = Axis(fig[1,1];xscale=log10,figsize...,
-title = "Spinless free fermion",
-ylabel = L"F\ /\ N" )
-scatter!(axf, 1 ./ lsβ, f / L)
-lines!(axf, 1 ./ easyinterp10(lsβ), fe.(easyinterp10(lsβ),Lx,Ly);color = :red)
-
-axu = Axis(fig[2,1];xscale=log10,figsize...,
-ylabel = L"U\ /\ N")
-scatter!(axu, 1 ./ lsβ, u / L)
-lines!(axu, 1 ./ cβ, ue.(cβ,Lx,Ly);color = :red)
-
-axce = Axis(fig[3,1];xscale=log10,figsize...,
-xlabel = L"T",ylabel =L"C_e\ /\ N")
-scatter!(axce, 1 ./ lsβ, Ce / L)
-lines!(axce, 1 ./ cβ, ce.(cβ,Lx,Ly);color = :red)
-
-hidexdecorations!(axf;ticks = false,grid = false)
-hidexdecorations!(axu;ticks = false,grid = false)
-
-resize_to_layout!(fig)
-display(fig)
-
-
-
-save("examples/TrivialSpinlessFermion/figures/thermal quantity_SETTN.png",fig)
+@save "examples/TrivialSpinlessFermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsβ
+@save "examples/TrivialSpinlessFermion/data/data_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" data
 
 f .- fe.(lsβ,Lx,Ly) * L
 

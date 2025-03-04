@@ -1,5 +1,5 @@
 
-using TensorKit,CairoMakie,LaTeXStrings
+using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 

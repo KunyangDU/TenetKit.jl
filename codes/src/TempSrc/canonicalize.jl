@@ -78,49 +78,67 @@ end
 
 function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
     @assert direction in [:center,:left,:right]
+    vns = nothing
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
     d = sqrt(@tensor S[1,2] * S'[2,1])
-    d != 0 && (ϵ /= d)
+    if d != 0
+        ϵ /= d
+        vns = vonNeumann(S)
+    end
     if direction == :center
-        return U,S,V,ϵ
+        return U,S,V,ϵ,vns
     elseif direction == :left 
-        return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ
+        return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
     elseif direction == :right 
-        return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ
+        return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
     end
 end
 
 function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
+    vns = nothing
     U,S,V,ϵ = tsvd(A.A,(2,3,6),(1,4,5);kwargs...)
     d = sqrt(@tensor S[1,2] * S'[2,1])
-    d != 0 && (ϵ /= d)
+    if d != 0
+        ϵ /= d
+        vns = vonNeumann(S)
+    end
     if direction == :center
-        return permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4)),ϵ
+        return permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4)),ϵ,vns
     elseif direction == :left 
-        return map(DenseMPOTensor,(permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4))))...,ϵ
+        return map(DenseMPOTensor,(permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4))))...,ϵ,vns
     elseif direction == :right 
-        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4))))...,ϵ
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4))))...,ϵ,vns
     end
 end
 
 function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
+    vns = nothing
     if direction == :center
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
         d = sqrt(@tensor S[1,2] * S'[2,1])
-        d != 0 && (ϵ /= d)
-        return U,S,V,ϵ
+        if d != 0
+            ϵ /= d
+            vns = vonNeumann(S)
+        end
+        return U,S,V,ϵ,vns
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(1,),(2,3);kwargs...)
         d = sqrt(@tensor S[1,2] * S'[2,1])
-        d != 0 && (ϵ /= d)
-        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ
+        if d != 0
+            ϵ /= d
+            vns = vonNeumann(S)
+        end
+        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ,vns
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
         d = sqrt(@tensor S[1,2] * S'[2,1])
-        d != 0 && (ϵ /= d)
-        return map(MPSTensor,(U,S*V))...,ϵ
+        if d != 0
+            ϵ /= d
+            vns = vonNeumann(S)
+        end
+        return map(MPSTensor,(U,S*V))...,ϵ,vns
     end
 end
 
@@ -205,16 +223,23 @@ end
 
 function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, kwargs...)
     @assert direction in [:left,:right]
+    vns = nothing
     if direction == :left 
         U,S,V,ϵ = tsvd(A.A,(2,),(1,3,4);kwargs...)
         d = sqrt(@tensor S[1,2] * S'[2,1])
-        d != 0 && (ϵ /= d)
-        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ
+        if d != 0
+            ϵ /= d
+            vns = vonNeumann(S)
+        end
+        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ,vns
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2,4),(3,);kwargs...)
         d = sqrt(@tensor S[1,2] * S'[2,1])
-        d != 0 && (ϵ /= d)
-        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ
+        if d != 0
+            ϵ /= d
+            vns = vonNeumann(S)
+        end
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ,vns
     end
 end
 

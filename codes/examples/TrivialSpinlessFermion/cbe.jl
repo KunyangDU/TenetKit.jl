@@ -1,4 +1,4 @@
-using TensorKit,CairoMakie,JLD2
+using TensorKit,JLD2
 include("../../src/iMPS.jl")
 include("model.jl")
 

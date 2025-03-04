@@ -12,11 +12,9 @@ function TDVP2!(Env::Environment{3}, lst::AbstractVector, D_MPS::Int64;
     for i in 2:length(lst)
         τ = (lst[i]-lst[i-1])/2
 
-        println("β = $(abs(lst[i]))")
+        println("t = $(abs(lst[i]))")
 
-        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
-            ϵ,totalK = TDVP2!(Env, τ, D_MPS, ϵ, LanczosInfo)
-        end
+        ϵ,totalK = TDVP2!(Env, τ, D_MPS, ϵ, LanczosInfo)
 
         ϵ > TruncErr && break
         push!(lsobj,deepcopy(Env.layer[1]))
@@ -41,26 +39,34 @@ function TDVP2!(Env::Environment{3}, τ::Number, D::Int64, ϵ::Number, LanczosIn
     L = Env.L
     ϵ1 = 0
     totalK = 0
-    println(">>>>>> Right >>>>>>")
+    vns = zeros(L-1)
+    to = TimerOutput()
     for site in 1:L-1
-        tmp,K1 = evolve!(composite(Env.layer[1].ts[site:site+1]...), projright2(Env,site), τ, LanczosInfo)
-        tl, tr, ϵ1 = tsvd(tmp; direction=:right,trunc = truncdim(D))
-        K2 = pushright!(Env, tl, tr, τ, LanczosInfo)
+        @timeit to "evolve" tmp,K1 = evolve!(composite(Env.layer[1].ts[site:site+1]...), projright2(Env,site), τ, LanczosInfo)
+        @timeit to "SVD" tl, tr, ϵ1, vns[site] = tsvd(tmp; direction=:right,trunc = truncdim(D))
+        @timeit to "pushright" K2 = pushright!(Env, tl, tr, τ, LanczosInfo)
         ϵ += ϵ1
         totalK = max(totalK,K1,K2)
     end
-    ~,K = evolve!(Env.layer[1].ts[L], proj1(Env,L), τ, LanczosInfo)
+    @timeit to "backevolve" ~,K = evolve!(Env.layer[1].ts[L], proj1(Env,L), τ, LanczosInfo)
     totalK = max(totalK,K)
-    println("<<<<<< Left <<<<<<")
+    show(to;title=">>> TDVP >>>")
+    filter!(!isnan,vns)
+    println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+    to = TimerOutput()
     for site in L:-1:2
-        tmp, K1 = evolve!(composite(Env.layer[1].ts[site-1:site]...), projleft2(Env,site), τ, LanczosInfo)
-        tl, tr, ϵ1 = tsvd(tmp; direction=:left,trunc = truncdim(D))
-        K2 = pushleft!(Env, tl, tr, τ, LanczosInfo)
+        @timeit to "evolve" tmp, K1 = evolve!(composite(Env.layer[1].ts[site-1:site]...), projleft2(Env,site), τ, LanczosInfo)
+        @timeit to "SVD" tl, tr, ϵ1, vns[site-1] = tsvd(tmp; direction=:left,trunc = truncdim(D))
+        @timeit to "pushright" K2 = pushleft!(Env, tl, tr, τ, LanczosInfo)
         ϵ += ϵ1
         totalK = max(totalK,K1,K2)
     end
-    ~,K = evolve!(Env.layer[1].ts[1], proj1(Env,1), τ, LanczosInfo)
+    @timeit to "backevolve" ~,K = evolve!(Env.layer[1].ts[1], proj1(Env,1), τ, LanczosInfo)
     totalK = max(totalK,K)
+    show(to;title="<<< TDVP <<<")
+    filter!(!isnan,vns)
+    println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+
     GC.gc()
     return ϵ, totalK
 end
@@ -79,9 +85,7 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector, D_MPS::Int64;
 
         println("β = $(abs(lst[i]))")
 
-        @time "sweep $i finished, max truncation error = $(ϵ), K = $(totalK)" begin
-            ϵ,totalK = TDVP1!(Env, τ, D_MPS, ϵ, LanczosInfo;kwargs...)
-        end
+        ϵ,totalK = TDVP1!(Env, τ, D_MPS, ϵ, LanczosInfo;kwargs...)
 
         ϵ > TruncErr && break
         push!(lsobj,deepcopy(Env.layer[1]))
@@ -106,41 +110,57 @@ function TDVP1!(Env::Environment{3}, τ::Number, D::Int64, ϵ::Number, LanczosIn
     L = Env.L
     ϵ1 = 0
     totalK = 0
-    println(">>>>>> Right >>>>>>")
+    vns = zeros(L-1)
+    to = TimerOutput()
     for site in 1:L-1
         if cbe 
-            B = deepcopy(Env.layer[1].ts[site+1])
-            ϵ1 = CBE!(Env,site+1,D)
-            splice!(Env.layer[1],B,site+1)
-            Env.layer[3].ts[site] = Env.layer[1].ts[site]'
-            ϵ += ϵ1
+            @timeit to "CBE" begin
+                B = deepcopy(Env.layer[1].ts[site+1])
+                ϵ1 = CBE!(Env,site+1,D)
+                splice!(Env.layer[1],B,site+1)
+                Env.layer[3].ts[site] = Env.layer[1].ts[site]'
+                ϵ += ϵ1
+            end
         end
-        tmp,K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ, LanczosInfo)
-        tl,tr = leftorth(tmp)
-        tr = contract(tr,Env.layer[1].ts[site+1])
-        K2 = pushright!(Env, tl, tr, τ, LanczosInfo)
+        @timeit to "evolve" tmp,K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ, LanczosInfo)
+        @timeit to "orthogonalize" begin
+            tl,tr = leftorth(tmp)
+            vns[site] = vonNeumann(tr.A)
+            tr = contract(tr,Env.layer[1].ts[site+1])
+        end 
+        @timeit to "pushright" K2 = pushright!(Env, tl, tr, τ, LanczosInfo)
         totalK = max(totalK,K1,K2)
     end
-    ~,K = evolve!(Env.layer[1].ts[L], proj1(Env,L), τ, LanczosInfo)
+    @timeit to "backevolve" ~,K = evolve!(Env.layer[1].ts[L], proj1(Env,L), τ, LanczosInfo)
     totalK = max(totalK,K)
-    println("<<<<<< Left <<<<<<")
+    show(to;title=">>> TDVP >>>")
+    filter!(!isnan,vns)
+    println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
     for site in L:-1:2
         if cbe 
-            A = deepcopy(Env.layer[1].ts[site-1])
-            ϵ1 = CBE!(Env,site-1,D)
-            splice!(Env.layer[1],A,site-1)
-            Env.layer[3].ts[site] = Env.layer[1].ts[site]'
-            ϵ += ϵ1
+            @timeit to "CBE" begin
+                A = deepcopy(Env.layer[1].ts[site-1])
+                ϵ1 = CBE!(Env,site-1,D)
+                splice!(Env.layer[1],A,site-1)
+                Env.layer[3].ts[site] = Env.layer[1].ts[site]'
+                ϵ += ϵ1
+            end
         end
-        tmp, K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ, LanczosInfo)
-        tl,tr = rightorth(tmp)
-        tl = contract(Env.layer[1].ts[site-1],tl)
-        K2 = pushleft!(Env, tl, tr, τ, LanczosInfo)
+        @timeit to "evolve" tmp, K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ, LanczosInfo)
+        @timeit to "orthogonalize" begin
+            tl,tr = rightorth(tmp)
+            vns[site-1] = vonNeumann(tl.A)
+            tl = contract(Env.layer[1].ts[site-1],tl)
+        end
+        @timeit to "pushleft" K2 = pushleft!(Env, tl, tr, τ, LanczosInfo)
         ϵ += ϵ1
         totalK = max(totalK,K1,K2)
     end
-    ~,K = evolve!(Env.layer[1].ts[1], proj1(Env,1), τ, LanczosInfo)
+    @timeit to "backevolve" ~,K = evolve!(Env.layer[1].ts[1], proj1(Env,1), τ, LanczosInfo)
     totalK = max(totalK,K)
+    show(to;title="<<< TDVP <<<")
+    filter!(!isnan,vns)
+    println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
     GC.gc()
     return ϵ, totalK
 end

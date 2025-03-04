@@ -26,3 +26,11 @@ end
 function diag(A::AbstractMatrix)
     return [A[i,i] for i in 1:min(size(A)...)]
 end
+
+function vonNeumann(S::AbstractTensorMap{sp,1,1}) where sp
+    VNtrace(x) = @tensor x[1,1]
+    d = VNtrace(S*S')
+    @assert d != 0
+    A = S/d |> x -> x*x'
+    return real(VNtrace(-A*log(A)))
+end
