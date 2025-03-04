@@ -26,7 +26,7 @@ yminorticksvisible = true, yminorgridvisible = true,
 yminorticks = IntervalsBetween(5),
 figsize...,
 ylabel = L"\mathrm{Time}\ t\ /\ \mathrm{s}",
-title="Benchmark by free fermion (energy error < 1e-3)")
+title="Benchmark by free fermion (energy error < 1e-4)")
 
 axm = Axis(fig[2,1];xscale = log10,yscale=log10,
 xticks = (10:10:100,string.(10:10:100)),
