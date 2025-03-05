@@ -307,3 +307,10 @@ end
 
 #= ================================================ =#
 
+function contract(EnvL::LeftEnvironmentTensor{2},A::Union{DenseMPOTensor{2},MPSTensor{2}})
+    return LeftEnvironmentTensor(@tensor tmp[-1;-2] ≔ EnvL.A[-1,1] * A.A[1,-2])
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2}, EnvR::RightEnvironmentTensor{2})
+    return @tensor tmp[-1;-2] ≔ EnvL.A[-1,1] * EnvR.A[1,-2]
+end

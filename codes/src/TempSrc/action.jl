@@ -71,6 +71,23 @@ end =#
     return CompositeMPSTensor(ref)
 end =#
 
+function action(O::SparseProjectiveHamiltonian{0}, obj::T) where T <: Union{MPSTensor{2},DenseMPOTensor{2}}
+    N = O.EnvL.D
+    M = O.EnvR.D
+    ts = nothing
+
+    for i in 1:N, j in 1:M
+        tmp = contract(O.EnvL.A[i], obj)
+        if isnothing(ts)
+            ts = T(contract(tmp,O.EnvR.A[j]))
+        else
+            ts += T(contract(tmp,O.EnvR.A[j]))
+        end
+    end
+
+    return ts
+end
+
 function action(O::SparseProjectiveHamiltonian{1}, obj::Union{MPSTensor{3},DenseMPOTensor{4}})
     N,M = O.H.D[1]
     ts = obj.A * 0

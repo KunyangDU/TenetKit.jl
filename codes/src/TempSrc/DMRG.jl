@@ -24,7 +24,7 @@ function DMRG2!(Env::Environment{3},
         to = TimerOutput()
         for site in 1:L-1
             @timeit to "Krylov" begin
-                @timeit to "projection" projH = projright2(Env,site)
+                @timeit to "projection" projH = proj2(Env,site,site+1)
                 @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
             end                 
             @timeit to "SVD" tl, tr, ϵ1, vns[site] = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
@@ -39,7 +39,7 @@ function DMRG2!(Env::Environment{3},
         to = TimerOutput()
         for site in L:-1:2
             @timeit to "Krylov" begin
-                @timeit to "projection" projH = projleft2(Env,site)
+                @timeit to "projection" projH = proj2(Env,site-1,site)
                 @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
             end 
             @timeit to "SVD" tl, tr, ϵ1, vns[site-1] = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))

@@ -1,7 +1,5 @@
 
-abstract type AbstractEnvironmentTensor end
-abstract type AbstractLeftEnvironmentTensor <: AbstractEnvironmentTensor end
-abstract type AbstractRightEnvironmentTensor <: AbstractEnvironmentTensor end
+
 
 mutable struct LocalEnvironmentTensor{R} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
@@ -176,7 +174,6 @@ mutable struct DenseRightEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
     end
 end
 
-abstract type AbstractEnvironment end
 """
 Monolayer Environment, i.e., only one layer MPO is considered.
 """

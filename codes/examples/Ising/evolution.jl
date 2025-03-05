@@ -6,7 +6,7 @@ include("model.jl")
 
 Lx = 11
 Ly = 1
-D = 50
+D = 30
 
 Latt = YCSqua(Lx,Ly)
 
@@ -19,16 +19,16 @@ end
 params = (J=0,h=0,hz=1)
 
 H,r = Hamiltonian(Latt;params...)
-lsE = DMRG1!(ψ,H,D,1e-6;cbe=true,Nsweep=3)
+lsE = DMRG2!(ψ,H,D,1e-6;Nsweep=3)
 
-params = (J=1,h=1.,hz=0)
+params = (J=1,h=1,hz=0)
 
 H,r = Hamiltonian(Latt;params...)
 T = 3/params.J
-Nt = 40
+Nt = 10
 
 lsψ, lst = TDVP1!(deepcopy(ψ), H, T, Nt, D)
-Szm = zeros(length(lst),size(Latt),2)
+Szm = zeros(length(lst),size(Latt))
 for ind in eachindex(lsψ)
     begin
         Obs = MPSObservable()
@@ -37,9 +37,13 @@ for ind in eachindex(lsψ)
             addObs!(Obs,LocalSpace.Sz,i,"Sz",nothing)
         end
         calObs!(Obs, lsψ[ind])
-    end
+    end   
     Szs = [Obs.values["Sz"][(i,)] for i in 1:size(Latt)]
-    Szm[ind,:,1] = Szs
+    Szm[ind,:] = Szs
 end
+data = Dict(
+    "Szm" => Szm,
+    "lst" => lst,
+)
+@save "examples/Ising/data/data_evolve_D=$(D)_$(Lx)x$(Ly).jld2" data
 
-Szm[:,:,1]

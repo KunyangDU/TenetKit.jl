@@ -70,7 +70,7 @@ function MPLanczos(O::SparseProjectiveHamiltonian{N},
             w = action(O, Q[j]) - β[j-1] * Q[j-1]
         end
 
-        push!(α,ApproxReal((w*adjoint(Q[j]))[1]))
+        push!(α,ApproxReal((w * adjoint(Q[j]))[1]))
         w -= α[j] * Q[j]
 
         if j != 1 

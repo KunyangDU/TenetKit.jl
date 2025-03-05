@@ -51,6 +51,7 @@ include("Algorithm/tanTRG.jl")
 
 
 include("TempSrc/AbstractType.jl")
+include("TempSrc/AbstractTensor.jl")
 include("TempSrc/AbstractMPS.jl")
 include("TempSrc/AbstractMPO.jl")
 include("TempSrc/AbstractEnvironment.jl")

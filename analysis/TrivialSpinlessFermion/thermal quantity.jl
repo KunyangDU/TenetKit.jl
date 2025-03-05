@@ -47,3 +47,5 @@ resize_to_layout!(fig)
 display(fig)
 
 save("TrivialSpinlessFermion/figures/thermal quantity$(tailname).png",fig)
+
+f - fe.(lsβ,Lx,Ly)*size(Latt)

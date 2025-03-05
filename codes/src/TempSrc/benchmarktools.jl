@@ -21,12 +21,12 @@ function bDMRG2!(Env::Environment{3}, D_MPS::Int64, LanczosInfo::Number=1e-8)
     btrial = @benchmark begin
         Eg = 0
         for site in 1:$L-1
-            Eg,Ev = groundEig(projright2($Env,site),$LanczosInfo)
+            Eg,Ev = groundEig(proj2($Env,site,site+1),$LanczosInfo)
             tl, tr, ~ = tsvd(Ev; direction=:right,trunc = truncdim($D_MPS))
             pushright!($Env,tl, tr)
         end
         for site in $L:-1:2
-            Eg,Ev = groundEig(projleft2($Env,site),$LanczosInfo)
+            Eg,Ev = groundEig(proj2($Env,site-1,site),$LanczosInfo)
             tl, tr, ~ = tsvd(Ev; direction=:left,trunc = truncdim($D_MPS))
             pushleft!($Env,tl, tr)
         end
