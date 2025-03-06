@@ -8,11 +8,12 @@ function SETTN!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
 
     Hn = deepcopy(ρ)
     dF[1] = 2*F_tol # make sure dF > F_tol
+    to = TimerOutput()
     for i in 1:max_order 
-        mul!(Hn,deepcopy(Hn),H,1.,0.; D = D)
-        axpy!((-β)^i / factorial(i),Hn ,ρ ; D = D)
+        @timeit to "MPO mul!" mul!(Hn,deepcopy(Hn),H,1.,0.; D = D)
+        @timeit to "MPO axpy!" axpy!((-β)^i / factorial(i),Hn ,ρ ; D = D)
 
-        F[i] = - log(tr(ρ)) / 2 / β
+        @timeit to "calculate F" F[i] = - log(tr(ρ)) / 2 / β
 
         if i ≠ 1
             dF[i] = abs((F[i] - F[i-1]) / F[i])
@@ -24,6 +25,9 @@ function SETTN!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
 
         i == max_order && println("SETTN not converged at max $(i)th order with dF = $(dF)") 
     end
+
+    show(to;title = "SETTN")
+    print("\n")
 
     return ρ
 end

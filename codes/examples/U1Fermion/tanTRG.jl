@@ -26,8 +26,8 @@ end
 lsβ = vcat(2. .^ (-10:1:-1), 1:10)
 
 SETTN!(lsβ[1], H, ρ;D=D)
-lsρ = tanTRG2!(ρ, H, lsβ, D;LanczosInfo = 1e-4,TruncErr=1e-1)
+lsρ = tanTRG2!(ρ, H, lsβ, D)
 
 @save "examples/U1Fermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 @save "examples/U1Fermion/data/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
-1
+

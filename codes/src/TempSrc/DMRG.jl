@@ -49,7 +49,7 @@ function DMRG2!(Env::Environment{3},
         end
         show(to;title="<<< DMRG <<<")
         filter!(!isnan,vns)
-        println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+        println("\nTruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns)), Eg = $(Eg)")
         push!(lsE, Eg)
         
         GC.gc()

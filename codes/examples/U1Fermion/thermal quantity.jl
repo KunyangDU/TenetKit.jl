@@ -1,4 +1,4 @@
-using TensorKit,CairoMakie,JLD2
+using TensorKit,JLD2
 include("../../src/iMPS.jl")
 include("model.jl")
 
@@ -29,7 +29,7 @@ end
 Ce = @. (u2 - u^2) * lsβ ^ 2
 cβ = easyinterp10(lsβ)
 
-figsize = (height=150,width=300)
+#= figsize = (height=150,width=300)
 fig = Figure()
 axf = Axis(fig[1,1];xscale=log10,figsize...,
 title = "U1 fermion",
@@ -54,6 +54,6 @@ resize_to_layout!(fig)
 display(fig)
 
 save("examples/U1Fermion/figures/thermal_quant_$(Lx)x$(Ly)_D=$(D).pdf",fig)
-save("examples/U1Fermion/figures/thermal_quant_$(Lx)x$(Ly)_D=$(D).png",fig)
+save("examples/U1Fermion/figures/thermal_quant_$(Lx)x$(Ly)_D=$(D).png",fig) =#
 
 f / L .- fe.(lsβ,Lx,Ly)
