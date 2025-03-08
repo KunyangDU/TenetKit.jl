@@ -1,7 +1,7 @@
 
 
 function Hamiltonian(Latt::AbstractLattice;J::Number=1,h::Number=0.2,hz::Number=0)
-    r,H = let 
+    H = let 
         Root = InteractionTreeNode()
         LocalSpace = TrivialSpinOneHalf
     
@@ -17,9 +17,8 @@ function Hamiltonian(Latt::AbstractLattice;J::Number=1,h::Number=0.2,hz::Number=
         for pair in neighbor(Latt)
             addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),J,nothing)
         end
-        tree = InteractionTree(Root)
-        tree,AutomataSparseMPO(tree,size(Latt))
+        AutomataSparseMPO(InteractionTree(Root),size(Latt))
     end
 
-    return H,r
+    return H
 end

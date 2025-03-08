@@ -17,14 +17,14 @@ end
 
 params = (J=0,h=0,hz=1)
 
-H,r = Hamiltonian(Latt;params...)
-lsE = DMRG1!(ψ,H,D,1e-6;cbe=true,Nsweep=3)
+H = Hamiltonian(Latt;params...)
+lsE = DMRG1!(ψ,H,D;cbe=true,Nsweep=3)
 
 params = (J=1,h=1,hz=0)
 
-H,r = Hamiltonian(Latt;params...)
+H = Hamiltonian(Latt;params...)
 T = 6/params.J
-Nt = 20
+Nt = 10
 
 lsψ, lst = TDVP1!(deepcopy(ψ), H, T, Nt, D)
 Szm = zeros(length(lst),size(Latt),2)

@@ -26,6 +26,7 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         obj = contract(Lorth,Rorth)
         ~,Q,ϵ = tsvd(obj;direction = :left,trunc=truncdim(round(Int64,D*λ)))
         orthogonalize!(Q,B,:right)
+        @show norm(Q)
         Q = dsum(Q,B,:right)
 
         env.layer[1].ts[csite] = Q
@@ -50,6 +51,7 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         obj = contract(Lorth,Rorth)
         Q,~,ϵ = tsvd(obj;direction = :right,trunc=truncdim(round(Int64,D*λ)))
         orthogonalize!(Q,A,:left)
+        @show norm(Q)
         Q = dsum(Q,A,:left)
 
         env.layer[1].ts[csite] = Q

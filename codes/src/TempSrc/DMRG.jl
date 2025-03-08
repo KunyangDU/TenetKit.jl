@@ -1,10 +1,9 @@
 
 function DMRG2!(Env::Environment{3}, 
-                D_MPS::Int64, 
-                LanczosInfo::Number,
+                D_MPS::Int64
                  ;
                  Nsweep::Int64=5, 
-                 trunc_tol::Float64 = 1e-5, 
+                 trunc_tol::Float64 = 1e-4, 
                  return_error = false
     )
 
@@ -25,7 +24,7 @@ function DMRG2!(Env::Environment{3},
         for site in 1:L-1
             @timeit to "Krylov" begin
                 @timeit to "projection" projH = proj2(Env,site,site+1)
-                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH)
             end                 
             @timeit to "SVD" tl, tr, ϵ1, vns[site] = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
             @timeit to "pushright" pushright!(Env,tl, tr)
@@ -40,7 +39,7 @@ function DMRG2!(Env::Environment{3},
         for site in L:-1:2
             @timeit to "Krylov" begin
                 @timeit to "projection" projH = proj2(Env,site-1,site)
-                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH)
             end 
             @timeit to "SVD" tl, tr, ϵ1, vns[site-1] = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
             @timeit to "pushleft" pushleft!(Env,tl, tr)
@@ -55,20 +54,11 @@ function DMRG2!(Env::Environment{3},
         GC.gc()
 
         if ϵ > trunc_tol
-            if return_error
-                return lsE,ϵ
-            else
-                return lsE
-            end
+            return lsE
         end 
     end
 
-    if return_error
-        return lsE,ϵ
-    else
-        return lsE
-    end
-    
+    return lsE
 end
 
 function pushright!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
@@ -85,13 +75,13 @@ function pushleft!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     pushleft!(Env)
 end
 
-function DMRG2!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64,LanczosInfo::Number = 1e-8;
+function DMRG2!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64;
     kwargs...)
     @time "Initialize Environment" begin
         Env = Environment([ψ,H,adjoint(ψ)])
         initialize!(Env)
     end
-    return DMRG2!(Env, D_MPS,LanczosInfo;kwargs...)
+    return DMRG2!(Env, D_MPS;kwargs...)
 end
 
 function DMRG2!(Env::Environment{3}, lsD::Vector{Int64};kwargs...)
@@ -112,18 +102,17 @@ function DMRG2!(ψ::DenseMPS, H::SparseMPO, lsD::Vector{Int64};
     return lsinfo
 end
 
-function DMRG1!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64,LanczosInfo::Number = 1e-8;
+function DMRG1!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64;
     kwargs...)
     @time "Initialize Environment" begin
         Env = Environment([ψ,H,adjoint(ψ)])
         initialize!(Env)
     end
-    return DMRG1!(Env, D_MPS,LanczosInfo;kwargs...)
+    return DMRG1!(Env, D_MPS;kwargs...)
 end
 
 function DMRG1!(Env::Environment{3}, 
-                D_MPS::Int64, 
-                LanczosInfo::Number,
+                D_MPS::Int64
                 ;
                 Nsweep::Int64=5, 
                 trunc_tol::Float64 = 1e-5, 
@@ -153,7 +142,7 @@ function DMRG1!(Env::Environment{3},
             end
             @timeit to "Krylov" begin
                 @timeit to "projection" projH = proj1(Env,site)
-                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH)
             end
             @timeit to "orthogonalize" begin
                 tl,tr = leftorth(Ev)
@@ -175,7 +164,7 @@ function DMRG1!(Env::Environment{3},
             end
             @timeit to "Krylov" begin
                 @timeit to "projection" projH = proj1(Env,site)
-                @timeit to "lanczos" Eg,Ev,K = groundEig(projH,LanczosInfo)
+                @timeit to "lanczos" Eg,Ev,K = groundEig(projH)
             end
             @timeit to "orthogonalize" begin
                 tl,tr = rightorth(Ev)

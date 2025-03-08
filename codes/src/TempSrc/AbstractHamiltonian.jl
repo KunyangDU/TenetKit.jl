@@ -1,6 +1,5 @@
 
-abstract type AbstractHamiltonian end
-abstract type AbstractProjectiveHamiltonian <: AbstractHamiltonian end
+
 mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     EnvL::SparseLeftEnvironmentTensor
     EnvR::SparseRightEnvironmentTensor

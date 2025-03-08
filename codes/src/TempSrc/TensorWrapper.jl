@@ -69,3 +69,20 @@ showdomain(A::AbstractTensorWrapper) = showdomain(A.A)
 
 Base.:*(A::AbstractTensorWrapper,B::AbstractTensorWrapper) = A.A * B.A
 Base.isapprox(A::AbstractTensorWrapper,B::AbstractTensorWrapper) = isapprox(A.A , B.A)
+TensorKit.space(A::AbstractTensorWrapper) = space(A.A)
+
+#= function Base.:*(A::CompositeMPSTensor{2, 4}, B::AdjointCompositeMPSTensor{2, 4})
+    return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
+end
+
+function Base.:*(A::MPSTensor{3}, Ad::AdjointMPSTensor{3})
+    return @tensor A.A[1,2,3] * Ad.A[3,1,2]
+end
+
+function Base.:*(A::CompositeMPOTensor{2,6}, B::AdjointCompositeMPOTensor{2,6})
+    return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
+end
+
+function Base.:*(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4})
+    return  @tensor A.A[1,2,3,4] * B.A[3,4,1,2]
+end =#

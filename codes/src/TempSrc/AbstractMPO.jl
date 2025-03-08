@@ -224,14 +224,6 @@ function Base.adjoint(ts::Vector{AdjointCompositeMPOTensor})
     return convert(Vector{CompositeMPOTensor},[CompositeMPOTensor(t.A') for t in ts])
 end
 
-function Base.:*(A::CompositeMPOTensor{2,6}, B::AdjointCompositeMPOTensor{2,6})
-    return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
-end
-
-function Base.:*(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4})
-    return  @tensor A.A[1,2,3,4] * B.A[3,4,1,2]
-end
-
 function Base.:*(α::Number, A::CompositeMPOTensor)
     return  CompositeMPOTensor(α*A.A)
 end

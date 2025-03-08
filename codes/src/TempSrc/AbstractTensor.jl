@@ -89,9 +89,7 @@ function Base.adjoint(ts::Vector{AdjointMPSTensor})
 end
 
 
-function Base.:*(A::MPSTensor{3}, Ad::AdjointMPSTensor{3})
-    return @tensor A.A[1,2,3] * Ad.A[3,1,2]
-end
+
 
 function Base.:*(n::Number, A::MPSTensor)
     return MPSTensor(A.A*n)
@@ -205,9 +203,7 @@ function Base.adjoint(ts::Vector{AdjointCompositeMPSTensor})
     return convert(Vector{CompositeMPSTensor},[CompositeMPSTensor(t.A') for t in ts])
 end
 
-function Base.:*(A::CompositeMPSTensor{2, 4}, B::AdjointCompositeMPSTensor{2, 4})
-    return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
-end
+
 
 function Base.:+(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
     return CompositeMPSTensor(A.A + B.A)

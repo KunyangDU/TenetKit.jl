@@ -245,7 +245,7 @@ end
 
 function orthogonalize!(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol;tol::Number=1e-12)
     space(Q.A) != space(A.A) && return nothing
-    if abs(Q*A') > tol
+    if abs(contract(Q',A)) > tol
         if direction == :right 
             @tensor tmp[-1,-2;-3] ≔ Q.A[-1,2,1] * A'.A[1,3,2] * A.A[3,-2,-3]
             Q.A -= tmp
@@ -254,12 +254,12 @@ function orthogonalize!(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol;tol::N
             Q.A -= tmp
         end
     end
-    @assert abs(Q*A') < tol
+    @assert abs(contract(Q',A)) < tol
 end
 
 function orthogonalize!(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol;tol::Number=1e-12)
     space(Q.A) != space(A.A) && return nothing
-    if abs(Q*A') > tol
+    if abs(contract(Q',A)) > tol
         if direction == :right 
             @tensor tmp[-1,-2;-3,-4] ≔ Q.A[2,-2,1,3] * A'.A[1,3,2,4] * A.A[-1,4,-3,-4]
             Q.A -= tmp
@@ -268,7 +268,7 @@ function orthogonalize!(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Sym
             Q.A -= tmp
         end
     end
-    @assert abs(Q*A') < tol
+    @assert abs(contract(Q',A)) < tol
 end
 
 #= function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}

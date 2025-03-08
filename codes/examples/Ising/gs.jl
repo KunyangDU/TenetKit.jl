@@ -3,23 +3,28 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 20
+Lx = 8
 Ly = 1
 
-AuxSpace = repeat([ℂ^1,], Lx*Ly)
-PhySpace = TrivialSpinOneHalf.PhySpace 
 
-ψ = randMPS(PhySpace,AuxSpace)
+ψ = let 
+    AuxSpace = repeat([ℂ^1,], Lx*Ly)
+    randMPS(TrivialSpinOneHalf.PhySpace     ,AuxSpace)
+end 
 
 Latt = YCSqua(Lx,Ly)
-J = 1
-h = 0
+
 D = 2^8
+params = (J=1,h=0.2,hz=0)
 
-H = Hamiltonian(Latt,J,h,0)
+H = Hamiltonian(Latt;params...)
 
-ψ, lsE = DMRG2!(ψ,H,D)
-showQuantSweep(lsE ./(J*Lx) .-0.25)
+lsE = DMRG2!(ψ,H,D)
+Eg = lsE[end]
+@save "examples/Ising/data/ψ.jld2" ψ
+@save "examples/Ising/data/Eg.jld2" Eg
+
+#= showQuantSweep(lsE ./(J*Lx) .-0.25)
 @time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = TrivialSpinOneHalf
@@ -41,4 +46,4 @@ showQuantSweep(lsE ./(J*Lx) .-0.25)
 end
 
 #@show sum(map(y -> Obs.values[y][round(Int64,Lx/2) |> x -> (x,x+1)],["SxSx","SySy","SzSz"]))
-Obs.values
+Obs.values =#

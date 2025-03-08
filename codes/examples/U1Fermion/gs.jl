@@ -2,7 +2,7 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 6
+Lx = 8
 Ly = 1
 
 Latt = YCSqua(Lx,Ly)
@@ -10,6 +10,7 @@ Ndop = 0
 
 ψ = let
     AuxSpace = vcat(Rep[U₁](Ndop // 2 => 1), repeat([Rep[U₁](i => 1 for i in -(abs(Ndop) + 1):1//2:(abs(Ndop)+1)),], size(Latt) - 1))
+    #AuxSpace = repeat([Rep[U₁](Ndop // 2 => 1),],size(Latt))
     randMPS(U₁Fermion.PhySpace, AuxSpace)
 end
 
@@ -18,8 +19,10 @@ H = Hamiltonian(Latt;μ=μ)
 
 D = 600
 
-lsE = DMRG2!(ψ,H,D,1e-6;Nsweep=5)
+lsE = DMRG1!(ψ,H,D;Nsweep=5)
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
+Eg = lsE[end]
+
 
 #= @time "calculate observables" begin
     Obs = MPSObservable()
@@ -34,3 +37,5 @@ end
 
 density = [Obs.values["n"][(i,)] for i in 1:size(Latt)]
  =# 
+
+

@@ -70,7 +70,7 @@ function MPLanczos(O::SparseProjectiveHamiltonian{N},
             w = action(O, Q[j]) - β[j-1] * Q[j-1]
         end
 
-        push!(α,ApproxReal((w * adjoint(Q[j]))[1]))
+        push!(α,ApproxReal(contract(w',Q[j])))
         w -= α[j] * Q[j]
 
         if j != 1 
@@ -97,17 +97,29 @@ function MPLanczos(O::SparseProjectiveHamiltonian{N},
     return T, Q, maxlevel
 end
 
-function groundEig(O::SparseProjectiveHamiltonian{N}, LanczosInfo::Number) where N
-    #alg = Lanczos(;krylovdim = 8, maxiter = 10, tol = 1.0e-6, orth = ModifiedGramSchmidt(), eager = true, verbosity = 0)
-    alg = DMRGDefaultLanczos
+function groundEig(O::SparseProjectiveHamiltonian{N},alg::KrylovKit.KrylovAlgorithm = DMRGDefaultLanczos) where N
     Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR,alg)
     return ApproxReal(Eg[1]), normalize(Ev[1]), info.numiter
 end
 
-#= function groundEig(O::SparseProjectiveHamiltonian{N}, LanczosInfo::Number) where N
-    T, Q, K = MPLanczos(O,_initialMPS(O),LanczosInfo)
-    λ, v = eigen(T)
-    Eg,Ev = argmin(real.(λ)) |> x -> (real.(λ)[x], sum(v[:, x] .* Q))
-    return Eg, Ev / norm(Ev), K
+
+#= function evolve!(
+    obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+    O::SparseProjectiveHamiltonian{N}, τ::Number, LanczosInfo::Number=1e-6) where N
+    tmp = normalize!(obj)
+    T, Q, K = MPLanczos(O,obj,LanczosInfo)
+    obj.A = sum(tmp * exp(-1im*τ*T)[:,1] .* map(x->x.A, Q))
+    return obj, K
 end =#
 
+function evolve!(
+    obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+    O::SparseProjectiveHamiltonian{N}, τ::Number,
+    alg::KrylovKit.KrylovAlgorithm = TDVPDefaultLanczos) where N
+    nm = normalize!(obj)
+    tmp,info = exponentiate(x -> action(O,x),-1im * τ,obj,alg)
+    rmul!(tmp,nm)
+    obj.A = tmp.A
+    @assert info.residual ≈ 0
+    return obj, info.numiter
+end

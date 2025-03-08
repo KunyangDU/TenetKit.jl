@@ -18,12 +18,12 @@ end
 
 params = (J=0,h=0,hz=1)
 
-H,r = Hamiltonian(Latt;params...)
-lsE = DMRG2!(ψ,H,D,1e-6;Nsweep=3)
+H = Hamiltonian(Latt;params...)
+lsE = DMRG2!(ψ,H,D;Nsweep=3)
 
 params = (J=1,h=1,hz=0)
 
-H,r = Hamiltonian(Latt;params...)
+H = Hamiltonian(Latt;params...)
 T = 3/params.J
 Nt = 10
 

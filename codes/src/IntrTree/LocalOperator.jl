@@ -1,4 +1,3 @@
-abstract type AbstractLocalOperator end
 
 mutable struct IdentityOperator <: AbstractLocalOperator
     Opri::Union{Nothing, AbstractTensorMap}

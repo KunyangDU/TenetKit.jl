@@ -14,3 +14,9 @@ abstract type AbstractMPO <: AbstractMPWrapper end
 
 abstract type AbstractEnvironment end
 
+abstract type AbstractHamiltonian end
+abstract type AbstractProjectiveHamiltonian <: AbstractHamiltonian end
+
+abstract type AbstractObservable end
+abstract type AbstractLocalOperator end
+

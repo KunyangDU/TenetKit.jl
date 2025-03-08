@@ -314,3 +314,60 @@ end
 function contract(EnvL::LeftEnvironmentTensor{2}, EnvR::RightEnvironmentTensor{2})
     return @tensor tmp[-1;-2] ≔ EnvL.A[-1,1] * EnvR.A[1,-2]
 end
+
+function contract(A::AdjointMPSTensor{2},B::MPSTensor{2})
+    return @tensor A.A[1,2] * B.A[2,1]
+end
+
+function contract(A::AdjointMPSTensor{3},B::MPSTensor{3})
+    return @tensor A.A[1,2,3] * B.A[2,3,1]
+end
+
+function contract(B::AdjointCompositeMPOTensor{2,6}, A::CompositeMPOTensor{2,6})
+    return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
+end
+
+function contract(B::AdjointCompositeMPSTensor{2, 4}, A::CompositeMPSTensor{2, 4})
+    return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
+end
+
+function contract(A::MPSTensor{3}, B::MPSTensor{3})
+    return _inproduct(A,adjoint(B))
+end
+
+function contract(A::MPSTensor{3}, B::AdjointMPSTensor{3})
+    return @tensor A.A[1,2,3] * B.A[3,1,2]
+end
+
+function contract(B::AdjointMPOTensor{4}, A::DenseMPOTensor{4})
+    return @tensor A.A[3,1,2,4] * B.A[2,4,3,1]
+end
+
+"""
+sparse ENVL + MPOs + sparse ENVR
+make scalar
+"""
+function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::SparseMPOTensor{N,M}, C::AdjointMPSTensor{3}, EnvR::SparseRightEnvironmentTensor) where {N,M}
+    tmp = 0
+    for i in 1:N, j in 1:M
+        isnothing(B.m[i,j]) && continue
+        tmp += contract(EnvL.A[i], A, B.m[i,j], C, EnvR.A[j])
+    end
+    return tmp
+end
+
+"""
+ENVL + MPO + ENVR
+make scalar
+"""
+function contract(EnvL::LeftEnvironmentTensor{2},A::MPSTensor{3},B::DenseMPOTensor{2},C::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[3,1] * A.A[1,2,5] * B.A[4,2] * C.A[6,3,4] * EnvR.A[5,6]
+end
+
+function contract(EnvL::LeftEnvironmentTensor{3},A::Union{DenseMPOTensor{2},MPSTensor{2}})
+    return LeftEnvironmentTensor(@tensor tmp[-1;-2 -3] ≔ EnvL.A[-1,-2,1] * A.A[1,-3])
+end
+
+function contract(EnvL::LeftEnvironmentTensor{3},EnvR::RightEnvironmentTensor{3})
+    return @tensor tmp[-1;-2] ≔ EnvL.A[-1,2,1] * EnvR.A[1,2,-2]
+end

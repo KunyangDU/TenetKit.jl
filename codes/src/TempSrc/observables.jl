@@ -1,4 +1,4 @@
-abstract type AbstractObservable end
+
 
 mutable struct MPSObservable <: AbstractObservable
     forest::Union{Nothing, AbstractObservableForest}
@@ -83,18 +83,6 @@ end
 function scalar(Env::Environment{3})
     @assert Env.center[1] == Env.center[2]
     contract(action(proj1(Env, Env.center[1]), Env.layer[1].ts[Env.center[1]]), Env.layer[3].ts[Env.center[1]])
-end
-
-function contract(A::MPSTensor{3}, B::MPSTensor{3})
-    return _inproduct(A,adjoint(B))
-end
-
-function contract(A::MPSTensor{3}, B::AdjointMPSTensor{3})
-    return @tensor A.A[1,2,3] * B.A[3,1,2]
-end
-
-function contract(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4})
-    return @tensor A.A[3,1,2,4] * B.A[2,4,3,1]
 end
 
 # c⁺ᵢcⱼ, cᵢc⁺ⱼ, c⁺ᵢcᵢ

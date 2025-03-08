@@ -2,8 +2,8 @@ using TensorKit,JLD2,KrylovKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 4
-Ly = 4
+Lx = 8
+Ly = 1
 D = 400
 
 ψ = let 
@@ -14,7 +14,7 @@ end
 Latt = YCSqua(Lx,Ly)
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
-lsE = DMRG1!(ψ,H,D,1e-8;Nsweep = 5)
+lsE = DMRG1!(ψ,H,D;Nsweep = 3)
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 #A = ψ.ts[1]
 #zerovector(ψ.ts[1],Float64)

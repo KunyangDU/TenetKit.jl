@@ -24,7 +24,7 @@ end
 
 lsβ = vcat(2. .^ (-10:1:-1),1:10)
 ρ = SETTN!(lsβ[1],H,deepcopy(ρ);D = D)
-lsρ = tanTRG1!(ρ, H, lsβ, D, 1e-8)
+lsρ = tanTRG1!(ρ, H, lsβ, D)
 
 @save "examples/TrivialSpinlessFermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params)_tanTRG.jld2" lsβ
 @save "examples/TrivialSpinlessFermion/data/lsρ_$(Lx)x$(Ly)_$(D)_$(params)_tanTRG.jld2" lsρ

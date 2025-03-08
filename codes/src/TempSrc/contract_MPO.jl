@@ -354,31 +354,6 @@ function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, B::Dense
     return @tensor EnvL.A[3,1] * A.A[2,1,6,5] * B.A[4,2] * C.A[7,5,4,3] * EnvR.A[6,7]
 end
 """
-sparse ENVL + MPOs + sparse ENVR
-make scalar
-"""
-function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::SparseMPOTensor{N,M}, C::AdjointMPSTensor{3}, EnvR::SparseRightEnvironmentTensor) where {N,M}
-    tmp = nothing
-    for i in 1:N, j in 1:M
-        isnothing(B.m[i,j]) && continue
-        tmp1 = contract(EnvL.A[i], A, B.m[i,j], C, EnvR.A[j])
-        if isnothing(tmp)
-            tmp = tmp1
-        else
-            tmp += tmp1
-        end
-    end
-    return tmp
-end
-"""
-ENVL + MPO + ENVR
-make scalar
-"""
-function contract(EnvL::LeftEnvironmentTensor{2},A::MPSTensor{3},B::DenseMPOTensor{2},C::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
-    return @tensor EnvL.A[3,1] * A.A[1,2,5] * B.A[4,2] * C.A[6,3,4] * EnvR.A[5,6]
-end
-
-"""
 ENVL + MPO + ENVR
 make scalar
 """
