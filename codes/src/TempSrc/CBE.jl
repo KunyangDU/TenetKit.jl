@@ -26,7 +26,6 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         obj = contract(Lorth,Rorth)
         ~,Q,ϵ = tsvd(obj;direction = :left,trunc=truncdim(round(Int64,D*λ)))
         orthogonalize!(Q,B,:right)
-        @show norm(Q)
         Q = dsum(Q,B,:right)
 
         env.layer[1].ts[csite] = Q
@@ -51,7 +50,6 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,D::Int64)
         obj = contract(Lorth,Rorth)
         Q,~,ϵ = tsvd(obj;direction = :right,trunc=truncdim(round(Int64,D*λ)))
         orthogonalize!(Q,A,:left)
-        @show norm(Q)
         Q = dsum(Q,A,:left)
 
         env.layer[1].ts[csite] = Q
@@ -65,14 +63,14 @@ end
 
 function randntensor(func,A::MPSTensor{3}, λ::Number,direction::Symbol)
     cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
-    tmp = MPSTensor(func,cdm,dm)
     if λ != 1
         @assert 0 ≤ λ ≤ 2
         if direction == :left
+            tmp = MPSTensor(func,cdm,fuse(cdm))
             tmp,~ = tsvd(MPSTensor(catdomain(tmp.A,tmp.A));direction = :right,trunc = truncdim(round(Int64,λ * dims(dm)[1])))
         elseif direction == :right
-            tmpt = permute(tmp.A,(1,),(2,3))
-            ~,tmp = tsvd(MPSTensor(permute(catcodomain(tmpt,tmpt),(1,2),(3,)));direction = :left,trunc = truncdim(round(Int64,λ * dims(cdm)[1])))
+            tmp = MPSTensor(func,fuse(cdm[2] ⊗ dm),cdm[2]' ⊗ dm)
+            ~,tmp = tsvd(MPSTensor(permute(catcodomain(tmp.A,tmp.A),(1,2),(3,)));direction = :left,trunc = truncdim(round(Int64,λ * dims(cdm)[1])))
         end
     end
     normalize!(tmp)
@@ -81,6 +79,25 @@ end
 
 function randntensor(func,A::DenseMPOTensor{4}, λ::Number,direction::Symbol)
     cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
+    if λ != 1
+        @assert 0 ≤ λ ≤ 2
+        if direction == :left
+            tmp = DenseMPOTensor(func,cdm,(fuse(cdm)⊕dm[1])⊗dm[2])
+            #tmp.A = permute(tmp.A,(1,2,4),(3,))
+            #tmp,~ = tsvd(DenseMPOTensor(permute(catdomain(tmp.A,tmp.A),(1,2),(4,3)));direction = :right,trunc = truncdim(round(Int64,λ * dims(dm)[1])))
+        elseif direction == :right
+            tmp = DenseMPOTensor(func,cdm[1]⊗(fuse(dm)⊕cdm[2]),dm)
+            #tmp.A = permute(tmp.A,(2,),(1,3,4))
+            #showdomain(permute(catcodomain(tmp.A,tmp.A),(2,1),(3,4)))
+            #~,tmp = tsvd(DenseMPOTensor(permute(catcodomain(tmp.A,tmp.A),(2,1),(3,4)));direction = :left,trunc = truncdim(round(Int64,λ * dims(cdm)[2])))
+        end
+    end
+    normalize!(tmp)
+    return tmp'
+end
+
+#= function randntensor(func,A::DenseMPOTensor{4}, λ::Number,direction::Symbol)
+    cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
     if direction == :left
         tmp = AdjointMPOTensor(func,ℂ^(round(Int64,λ * dims(dm)[1])) ⊗ dm[2],cdm)
     elseif direction == :right
@@ -88,7 +105,7 @@ function randntensor(func,A::DenseMPOTensor{4}, λ::Number,direction::Symbol)
     end
     normalize!(tmp)
     return tmp
-end
+end =#
 
 function dsum(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol)
     if direction == :right

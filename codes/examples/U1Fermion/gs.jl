@@ -2,8 +2,8 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 8
-Ly = 1
+Lx = 4
+Ly = 4
 
 Latt = YCSqua(Lx,Ly)
 Ndop = 0

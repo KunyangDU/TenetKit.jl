@@ -166,6 +166,10 @@ mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
     function DenseMPOTensor{r}(t::AbstractTensorMap) where r
         return new{r}(t)
     end
+    function DenseMPOTensor(fc::Function,codom,dom)
+        A = TensorMap(fc,codom,dom)
+        return new{rank(A)}(A)
+    end
 end
 
 
