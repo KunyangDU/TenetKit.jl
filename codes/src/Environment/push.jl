@@ -62,29 +62,13 @@ function pushleft!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTenso
     pushleft!(env)
 end
 
-function pushleft(A::DenseMPO, B::AdjointMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64)
-    return DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvR.A))
-end
+pushleft(A::DenseMPO, B::AdjointMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvR.A))
+pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR.A))
+pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvL.A))
+pushright(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL.A))
+pushleft(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64) = SparseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR))
+pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64) = SparseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL))
 
-function pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64)
-    return DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR.A))
-end
-
-function pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64)
-    return DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvL.A))
-end
-
-function pushright(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64)
-    return DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL.A))
-end
-
-function pushleft(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64)
-    return SparseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR))
-end
-
-function pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64)
-    return SparseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL))
-end
 
 #= TDVP =#
 

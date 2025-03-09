@@ -21,8 +21,6 @@ Ndop = 0
 H = Hamiltonian(Latt;params...)
 ρ = let 
     AuxSpaces = repeat([Rep[U₁](0 => 1),],size(Latt)+1)
-    #AuxSpaces = vcat(Rep[U₁](Ndop // 2 => 1), repeat([Rep[U₁](i => 1 for i in -(abs(Ndop) + 1):1//2:(abs(Ndop)+1)),], size(Latt) - 1))
-    #randMPS(U₁Fermion.PhySpace, AuxSpace)
     ρ = IdDenseMPO(U₁Fermion.PhySpace, AuxSpaces)
     canonicalize!(ρ,1)
     ρ

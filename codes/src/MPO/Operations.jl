@@ -1,36 +1,64 @@
 
 
-function MonoTrace(Opr1::Vector{Union{AbstractTensorMap{ComplexSpace,2,2},AbstractTensorMap{ComplexSpace,1,3}}})
-    
-    EnvR = RightEnv(Opr1,1)
-    EnvL = LeftEnv(Opr1,1)
-
-    tr = @tensor EnvL[1]*Opr1[1][2,1,2,3]*EnvR[3]
-
-    return ApproxReal(tr[1])
+function TensorKit.leftorth(elm::DenseMPOTensor{4})
+    Q,R = leftorth(elm.A,(1,2,4),(3,))
+    return map(DenseMPOTensor,(permute(Q,(1,2),(4,3)),R))
 end
 
-function Trace(Opr1::Vector{Union{AbstractTensorMap{ComplexSpace,2,2},AbstractTensorMap{ComplexSpace,1,3}}})
-    
-    EnvR = RightEnv(Opr1,Opr1,1)
-    EnvL = LeftEnv(Opr1,Opr1,1)
-
-    tr = @tensor EnvL[1,2]*Opr1[1][4,1,3,5]*Opr1[1]'[2,3,6,4]*EnvR[5,6]
-
-    return ApproxReal(tr[1] / norm(tr[1])) * norm(tr[1])
+function TensorKit.leftorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
+    Q, Rm = leftorth(A)
+    @tensor tmp[-1 -2;-3 -4] ≔ Rm.A[-2,1]*B.A[-1,1,-3,-4]
+    A.A = Q.A
+    B.A = tmp
 end
 
-function Trace(
-    Opr1::Vector{Union{AbstractTensorMap{ComplexSpace,2,2},AbstractTensorMap{ComplexSpace,1,3}}},
-    Opr2::Vector{Union{AbstractTensorMap{ComplexSpace,2,2},AbstractTensorMap{ComplexSpace,1,3}}};
-    Z::Number=1
-    )
-
-    EnvR = RightEnv(Opr1,Opr2,Opr1,1)
-    EnvL = LeftEnv(Opr1,Opr2,Opr1,1)
-
-    tr = @tensor EnvL[1,2,4]*Opr1[1][6,1,3,7]*Opr2[1][3,2,5,8]*Opr1[1]'[4,5,9,6]*EnvR[7,8,9]
-
-    return ApproxReal(tr[1]/Z)
+function TensorKit.leftorth!(obj::DenseMPO,site::Int64)
+    leftorth!(obj.ts[site:site+1]...)
 end
+
+function TensorKit.rightorth(A::DenseMPOTensor{4})
+    L,Q = rightorth(A.A,(2,),(1,3,4))
+    return map(DenseMPOTensor,(L,permute(Q,(2,1),(3,4))))
+end
+
+function TensorKit.rightorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
+    Lm,Q = rightorth(B)
+    @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,-2,1,-4]*Lm.A[1,-3]
+    A.A = tmp
+    B.A = Q.A
+end
+
+function TensorKit.rightorth!(obj::DenseMPO,site::Int64)
+    rightorth!(obj.ts[site-1:site]...)
+end
+
+function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
+    @assert direction in [:center,:left,:right]
+    vns = nothing
+    U,S,V,ϵ = tsvd(A.A,(2,3,6),(1,4,5);kwargs...)
+    d = sqrt(@tensor S[1,2] * S'[2,1])
+    if d != 0
+        ϵ /= d
+        vns = vonNeumann(S)
+    end
+    if direction == :center
+        return permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4)),ϵ,vns
+    elseif direction == :left 
+        return map(DenseMPOTensor,(permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4))))...,ϵ,vns
+    elseif direction == :right 
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4))))...,ϵ,vns
+    end
+end
+
+function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, kwargs...)
+    @assert direction in [:left,:right]
+    if direction == :left 
+        U,S,V,ϵ = tsvd(A.A,(2,),(1,3,4);kwargs...)
+        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ
+    elseif direction == :right 
+        U,S,V,ϵ = tsvd(A.A,(1,2,4),(3,);kwargs...)
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ
+    end
+end
+
 

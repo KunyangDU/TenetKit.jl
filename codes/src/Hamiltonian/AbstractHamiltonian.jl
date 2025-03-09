@@ -17,9 +17,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     end
 end
 
-function proj0(EnvL,EnvR)
-    return SparseProjectiveHamiltonian(EnvL,EnvR)
-end
+proj0(EnvL,EnvR) = SparseProjectiveHamiltonian(EnvL,EnvR)
 
 function projleft0(env::Environment{3})
     !issparse(env.layer[2]) && return nothing
@@ -35,26 +33,12 @@ function projright0(env::Environment{3})
     return SparseProjectiveHamiltonian(EnvL,env.envs[site+1])
 end
 
-function proj1(env::Environment{3},site::Int64)
-    issparse(env.layer[2]) && return SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site]))
-end
+proj1(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site])) : nothing
 
 function proj2(env::Environment{3},site1::Int64,site2::Int64)
     !issparse(env.layer[2]) && return nothing
-    if site1 < site2
-        #return SparseProjectiveHamiltonian(env.envs[[site1,site2+1]]...,SparseMPO(env.layer[2].ts[site1:site2]))
-        return projright2(env,site1)
-    else
-        #return SparseProjectiveHamiltonian(env.envs[[site1,site2+1]]...,SparseMPO(env.layer[2].ts[site1:site2]))
-        return projleft2(env,site2)
-    end
+    return site1 < site2 ? projright2(env,site1) : projleft2(env,site2)
 end
-
-function projright2(env::Environment{3},site::Int64)
-    issparse(env.layer[2]) && return SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1]))
-end
-
-function projleft2(env::Environment{3},site::Int64)
-    issparse(env.layer[2]) && return SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site]))
-end
+projright2(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1])) : nothing
+projleft2(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site])) : nothing
 

@@ -22,7 +22,7 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,trunc::TruncationSche
 
         Lorth = orthogonalize!(env,A,EnvL,site)
         Rorth = orthogonalize!(env,B,EnvR,csite)
-        Ω = randntensor(randn,B,D_f,:right)
+        Ω = _cbetensor(randn,B,D_f,:right)
         # Ω = orthogonalize!(Ω',B,:right)'
         splice!(Lorth,Λ)
         Q,~ = leftorth(contract(Lorth,splice(Rorth,Ω)))
@@ -51,7 +51,7 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,trunc::TruncationSche
         Lorth = orthogonalize!(env,A,EnvL,csite)
         Rorth = orthogonalize!(env,B,EnvR,site)
 
-        Ω = randntensor(randn,A,D_f,:left)
+        Ω = _cbetensor(randn,A,D_f,:left)
         Ω = orthogonalize!(Ω',A,:left)'
         splice!(Rorth,Λ)
         ~,Q = rightorth(contract(splice(Lorth,Ω),Rorth))
@@ -82,7 +82,7 @@ function _expanddim(S::GradedSpace,D::Int64)
     return S
 end
 
-function randntensor(func,A::MPSTensor{3}, D_f::Int64, direction::Symbol)
+function _cbetensor(func,A::MPSTensor{3}, D_f::Int64, direction::Symbol)
     cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
     if direction == :left
         tmp = MPSTensor(func,cdm,_expanddim(fuse(cdm),D_f))
@@ -93,7 +93,7 @@ function randntensor(func,A::MPSTensor{3}, D_f::Int64, direction::Symbol)
     return tmp'
 end
 
-function randntensor(func,A::DenseMPOTensor{4}, D_f::Int64,direction::Symbol)
+function _cbetensor(func,A::DenseMPOTensor{4}, D_f::Int64,direction::Symbol)
     cdm,dm = space(A.A) |> x -> (codomain(x),domain(x))
     if direction == :left
         tmp = DenseMPOTensor(func,cdm,(_expanddim(fuse(cdm⊗dm[2]),D_f) )⊗dm[2])

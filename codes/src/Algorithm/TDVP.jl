@@ -1,194 +1,236 @@
-
-function MixTDVP(ψ::Vector,H::Vector,
-    t::Number,Nt::Int64,
-    D_MPS::Int64;prop::NTuple{2,Int64} = (1,5),TruncErr::Number = 1e-5)
-
-    N2, N1 = convert.(Int64,Nt .* prop ./ sum(prop))
-    t2, t1 = convert.(Float64,t .* prop ./ sum(prop))
-
-    lsψ2,lst2 = sweepTDVP2(ψ,H,t2,N2,D_MPS;TruncErr=TruncErr)
-    lsψ1,lst1 = sweepTDVP1(deepcopy(lsψ2[end]),H,t1,N1,D_MPS)
-    lsψ = vcat(lsψ2,lsψ1)
-    lst = vcat(lst2,lst2[end] .+ lst1)
-    return lsψ,lst
-end
-
-function sweepTDVP1(ψ::Vector,H::Vector,
-    t::Number,Nt::Int64,
-    D_MPS::Int64)
-
-    L = length(H)
-    
-    lsψ = Vector{Vector}(undef,Nt)
+function TDVP2!(ψ::DenseMPS, H::SparseMPO, t::Number, Nt::Int64, trunc::TruncationScheme;
+    kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ψ,H,adjoint(ψ)])
+        initialize!(Env)
+    end
     lst = collect(range(0,t,Nt))
-    τ = t/(Nt-1)/2
-
-    lsψ[1] = deepcopy(ψ)
-
-    lsEnv = vcat(LeftLsEnv(ψ,H,1),RightLsEnv(ψ,H,1))
-    totaltruncerror = 0
-    for iNt in 2:Nt
-
-        start_time = time()
-        println("evolution $iNt, t = $(round(lst[iNt];digits=3))/J")
-
-        println(">>>>>> begin >>>>>>")
-        for i in 1:L-1
-            if iNt != 1 && i == 1
-                ψ[i:i+1],temptruncerr = RightUpdateTDVP1(ψ[i:i+1],H[i],lsEnv[i],lsEnv[i+1],2*τ,D_MPS;τback = τ)
-            else
-                ψ[i:i+1],temptruncerr = RightUpdateTDVP1(ψ[i:i+1],H[i],lsEnv[i],lsEnv[i+1],τ,D_MPS)
-            end
-            lsEnv[i+1] = PushRight(lsEnv[i],ψ[i],H[i])
-
-            totaltruncerror = max(totaltruncerror,temptruncerr)
-        end
-        println(">>>>>> finished >>>>>>")
-
-        println("<<<<<< begin <<<<<<")
-        for i in L:-1:2
-            if i == L 
-                ψ[i-1:i],temptruncerr = LeftUpdateTDVP1(ψ[i-1:i],H[i],lsEnv[i],lsEnv[i+1],2*τ,D_MPS;τback = τ)
-            else
-                ψ[i-1:i],temptruncerr = LeftUpdateTDVP1(ψ[i-1:i],H[i],lsEnv[i],lsEnv[i+1],τ,D_MPS)
-            end
-            lsEnv[i] = PushLeft(lsEnv[i+1],ψ[i],H[i])
-
-            totaltruncerror = max(totaltruncerror,temptruncerr)
-        end
-        println("<<<<<< finished <<<<<<")
-
-        println("evolution $iNt finished, time consumed $(round(time()-start_time;digits=2))s, max truncation error = $(totaltruncerror)")
-
-        lsψ[iNt] = deepcopy(ψ)
-    end
-
-    return lsψ,lst
+    lsψ = TDVP2!(Env, lst, trunc;kwargs...)
+    return lsψ, lst
 end
 
-function RightUpdateTDVP1(ψs::Vector,Hi::AbstractTensorMap,
-    EnvL::AbstractTensorMap,EnvR::AbstractTensorMap,τ::Number,
-    D_MPS::Int64;τback::Number = τ)
+function TDVP2!(Env::Environment{3}, lst::AbstractVector, trunc::TruncationScheme;
+    TruncErr::Number=1e-4)
 
-    effH = EffHam(Hi,EnvL,EnvR)
-    Aτ = Apply(ψs[1],EvolveOpr(effH,τ))
+    lsobj = Vector(undef,1)
+    lsobj[1] = deepcopy(Env.layer[1])
 
-    MPSs,truncerr = RightSVD(Aτ,D_MPS)
-    thisMPS,Στ = MPSs
-
-    effH0 = EffHam(PushRight(EnvL,thisMPS,Hi),EnvR)
-    Σ = Apply(Στ,EvolveOpr(effH0,-τback))
-
-    return RightMerge(Σ,thisMPS,ψs[2]),truncerr
-end
-
-
-function LeftUpdateTDVP1(ψs::Vector,Hi::AbstractTensorMap,
-    EnvL::AbstractTensorMap,EnvR::AbstractTensorMap,τ::Number,
-    D_MPS::Int64;τback::Number = τ)
-
-    effH = EffHam(Hi,EnvL,EnvR)
-    Aτ = Apply(ψs[2],EvolveOpr(effH,τ))
-
-    MPSs,truncerr = LeftSVD(Aτ,D_MPS)
-    Στ,thisMPS = MPSs
-
-    effH0 = EffHam(EnvL,PushLeft(EnvR,thisMPS,Hi))
-    Σ = Apply(Στ,EvolveOpr(effH0,-τback))
-
-    return LeftMerge(Σ,thisMPS,ψs[1]),truncerr
-end
-############ NORMALIZED ##################
-
-function TDVP2!(
-    ψ::Vector{Union{AbstractTensorMap{ComplexSpace,1,2},AbstractTensorMap{ComplexSpace,0,3}}},
-    H::Vector{Union{AbstractTensorMap{ComplexSpace,2,2},AbstractTensorMap{ComplexSpace,1,3}}},
-    t::Number,Nt::Int64,
-    D_MPS::Int64,LanczosLevel::Int64;TruncErr::Number=1e-3)
-
-    L = length(H)
+    ϵ = 0
+    totalK = 0
     
-    lsψ = Vector{Vector}(undef,1)
-    lst = Vector{Float64}(undef,1)
-    τ = t/(Nt-1)
+    for i in 2:length(lst)
+        τ = (lst[i]-lst[i-1])/2
 
-    lsψ[1] = deepcopy(ψ)
-    lst[1] = 0.0
+        println("t = $(abs(lst[i]))")
 
-    lsEnv = vcat(LeftLsEnv(ψ,H,1),RightLsEnv(ψ,H,1))
+        ϵ,totalK = TDVP2!(Env, τ, trunc, ϵ)
 
-    totaltruncerror = 0
-    for iNt in 2:Nt
-
-        start_time = time()
-        println("evolution $iNt, t = $(round(lst[iNt-1]+τ;digits=3))/J")
-        totaltruncerror = TDVP2!(ψ,H,lsEnv,τ,D_MPS,LanczosLevel,totaltruncerror)        
-        println("evolution $iNt finished, time consumed $(round(time()-start_time;digits=2))s, max truncation error = $(totaltruncerror)")
-
-        totaltruncerror > TruncErr && break
-        push!(lsψ,deepcopy(ψ))
-        push!(lst,lst[end] + τ)
+        ϵ > TruncErr && break
+        push!(lsobj,deepcopy(Env.layer[1]))
     end
 
-    return lsψ,lst
+    return lsobj
 end
 
+function TDVP2!(Env::Environment{3}, τ::Number, trunc::TruncationScheme, ϵ::Number)
+    L = Env.L
+    ϵ1 = 0
+    totalK = 0
+    vns = zeros(L-1)
+    to = TimerOutput()
+    for site in 1:L-1
+        @timeit to "evolve" tmp,K1 = evolve!(composite(Env.layer[1].ts[site:site+1]...), proj2(Env,site,site+1), τ)
+        @timeit to "SVD" tl, tr, ϵ1, vns[site] = tsvd(tmp; direction=:right,trunc = trunc)
+        to1,K2 = pushright!(Env, tl, tr, τ)
+        ϵ += ϵ1
+        totalK = max(totalK,K1,K2)
+        merge!(to,to1)
+    end
+    @timeit to "evolve" ~,K = evolve!(Env.layer[1].ts[L], proj1(Env,L), τ)
+    Env.layer[3].ts[L] = Env.layer[1].ts[L]'
+    totalK = max(totalK,K)
+    show(to;title=">>> TDVP >>>")
+    filter!(!isnan,vns)
+    println("\nD = $(_maxdim(Env.layer[1])), TruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+    to = TimerOutput()
+    for site in L:-1:2
+        @timeit to "evolve" tmp, K1 = evolve!(composite(Env.layer[1].ts[site-1:site]...), proj2(Env,site-1,site), τ)
+        @timeit to "SVD" tl, tr, ϵ1, vns[site-1] = tsvd(tmp; direction=:left,trunc = trunc)
+        to1,K2 = pushleft!(Env, tl, tr, τ)
+        ϵ += ϵ1
+        totalK = max(totalK,K1,K2)
+        merge!(to,to1)
+    end
+    @timeit to "evolve" ~,K = evolve!(Env.layer[1].ts[1], proj1(Env,1), τ)
+    Env.layer[3].ts[1] = Env.layer[1].ts[1]'
+    totalK = max(totalK,K)
+    show(to;title="<<< TDVP <<<")
+    filter!(!isnan,vns)
+    println("\nD = $(_maxdim(Env.layer[1])), TruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
 
-function TDVP2!(
-    ψ::Vector{Union{AbstractTensorMap{ComplexSpace,1,2},AbstractTensorMap{ComplexSpace,0,3}}},
-    H::Vector{Union{AbstractTensorMap{ComplexSpace,2,2},AbstractTensorMap{ComplexSpace,1,3}}},
-    lsEnv::Vector{AbstractTensorMap{ComplexSpace,2,1}},
-    τ::Number,D_MPS::Int64,LanczosLevel::Int64,totaltruncerror::Number)
+    GC.gc()
+    return ϵ, totalK
+end
+
+# """
+# standard 2 site TDVP with a slightly higher error practically.
+# """
+# function TDVP2!_std(Env::Environment{3}, τ::Number, D::Int64, ϵ::Number)
+#     L = Env.L
+#     ϵ1 = 0
+#     totalK = 0
+#     vns = zeros(L-1)
+#     to = TimerOutput()
+#     for site in 1:L-2
+#         @timeit to "evolve" tmp,K1 = evolve!(composite(Env.layer[1].ts[site:site+1]...), proj2(Env,site,site+1), τ)
+#         @timeit to "SVD" tl, tr, ϵ1, vns[site] = tsvd(tmp; direction=:right,trunc = truncdim(D))
+#         to1,K2 = pushright!(Env, tl, tr, τ)
+#         ϵ += ϵ1
+#         totalK = max(totalK,K1,K2)
+#         merge!(to,to1)
+#     end
+#     @timeit to "evolve" tmp,K = evolve!(composite(Env.layer[1].ts[L-1:L]...), proj2(Env,L-1,L), 2τ)
+#     @timeit to "SVD" tl, tr, ϵ1, vns[L-1] = tsvd(tmp; direction=:left,trunc = truncdim(D))
+#     @timeit to "back evolve" evolve!(tl,proj1(Env,L-1),-τ)
+#     Env.layer[1].ts[L-1:L] = [tl,tr]
+#     Env.layer[3].ts[L-1:L] = [tl',tr']
+#     totalK = max(totalK,K)
+#     show(to;title=">>> TDVP >>>")
+#     filter!(!isnan,vns)
+#     println("\nD = $(_maxdim(Env.layer[1])), TruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+#     to = TimerOutput()
+#     for site in L-1:-1:2
+#         @timeit to "evolve" tmp, K1 = evolve!(composite(Env.layer[1].ts[site-1:site]...), proj2(Env,site-1,site), τ)
+#         @timeit to "SVD" tl, tr, ϵ1, vns[site] = tsvd(tmp; direction=:left,trunc = truncdim(D))
+#         to1,K2 = pushleft!(Env, tl, tr, τ)
+#         ϵ += ϵ1
+#         totalK = max(totalK,K1,K2)
+#         merge!(to,to1)
+#     end
+#     @timeit to "evolve" ~,K = evolve!(Env.layer[1].ts[1], proj1(Env,1), τ)
+#     Env.layer[3].ts[1] = Env.layer[1].ts[1]'
+#     totalK = max(totalK,K)
+#     show(to;title="<<< TDVP <<<")
+#     filter!(!isnan,vns)
+#     println("\nD = $(_maxdim(Env.layer[1])), TruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns[2:end])), σ(S) = $(std(vns[2:end]))")
+
+#     GC.gc()
+#     return ϵ, totalK
+# end
+
+function TDVP1!(Env::Environment{3}, lst::AbstractVector, trunc::TruncationScheme;
+    TruncErr::Number=1e-4,kwargs...)
+
+    lsobj = Vector(undef,1)
+    lsobj[1] = deepcopy(Env.layer[1])
+
+    ϵ = 0
+    totalK = 0
     
-    L = length(ψ)
-    println(">>>>>> begin >>>>>>")
-    for i in 1:L-1
-        ψ[i:i+1],H[i:i+1],temptruncerr = RightUpdateTDVP2(ψ[i:i+1],H[i:i+1],lsEnv[i],lsEnv[i+2],τ / 2,D_MPS,LanczosLevel)
-        lsEnv[i+1] = PushRight(lsEnv[i],ψ[i],H[i])
-        totaltruncerror = max(totaltruncerror,temptruncerr)
+    for i in 2:length(lst)
+        τ = (lst[i]-lst[i-1])/2
+
+        println("t = $(abs(lst[i]))")
+
+        ϵ,totalK = TDVP1!(Env, τ, trunc, ϵ;kwargs...)
+
+        #ϵ > TruncErr && break
+        push!(lsobj,deepcopy(Env.layer[1]))
+
     end
-    ψ[L] = Evolve(ψ[L],H[L],lsEnv[L],lsEnv[L+1],τ / 2,LanczosLevel)
-    println(">>>>>> finished >>>>>>")
 
-    println("<<<<<< begin <<<<<<")
-    for i in L:-1:2
-        ψ[i-1:i],H[i-1:i],temptruncerr = LeftUpdateTDVP2(ψ[i-1:i],H[i-1:i],lsEnv[i-1],lsEnv[i+1],τ / 2,D_MPS,LanczosLevel)
-        lsEnv[i] = PushLeft(lsEnv[i+1],ψ[i],H[i])
-        totaltruncerror = max(totaltruncerror,temptruncerr)
+    return lsobj
+end
+
+function TDVP1!(ψ::DenseMPS, H::SparseMPO, t::Number, Nt::Int64, trunc::TruncationScheme;
+    kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ψ,H,ψ'])
+        initialize!(Env)
     end
-    ψ[1] = Evolve(ψ[1],H[1],lsEnv[1],lsEnv[2],τ / 2,LanczosLevel)
-    println("<<<<<< finished <<<<<<")
-
-    return totaltruncerror 
+    lst = collect(range(0,t,Nt))
+    lsψ = TDVP1!(Env, lst, trunc;kwargs...)
+    return lsψ, lst
 end
 
-
-function RightUpdateTDVP2(ψs::Vector,Hi::Vector,
-    EnvL::AbstractTensorMap,EnvR::AbstractTensorMap,τ::Number,
-    D_MPS::Int64,LanczosLevel::Int64;
-    τback::Number = τ)
-
-    Aτ = Evolve(Contract(ψs...),Hi,EnvL,EnvR,τ,LanczosLevel)
-    MPSs,truncerr = mySVD(Aτ,"right",D_MPS)
-    thisMPS,Στ = MPSs 
-    Hi = Move(Hi...)
-    Σ = Evolve(Στ,Hi[2],PushRight(EnvL,thisMPS,Hi[1]),EnvR,-τback,LanczosLevel)
-
-    return [thisMPS,Σ],Hi,truncerr
+function TDVP1!(Env::Environment{3}, τ::Number, trunc::TruncationScheme, ϵ::Number;cbe::Bool=true)
+    L = Env.L
+    ϵ1 = 0
+    totalK = 0
+    vns = zeros(L-1)
+    to = TimerOutput()
+    for site in 1:L-1
+        if cbe 
+            @timeit to "CBE" begin
+                B = deepcopy(Env.layer[1].ts[site+1])
+                ϵ1 = CBE!(Env,site+1,trunc)
+                splice!(Env.layer[1],B,site+1)
+                Env.layer[3].ts[site] = Env.layer[1].ts[site]'
+                ϵ += ϵ1
+            end
+        end
+        @timeit to "evolve" tmp,K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ)
+        @timeit to "orthogonalize" begin
+            tl,tr = leftorth(tmp)
+            vns[site] = vonNeumann(tr.A)
+        end 
+        to1,K2 = pushright!(Env,tl,tr,τ)
+        totalK = max(totalK,K1,K2)
+        merge!(to,to1)
+    end
+    @timeit to "evolve" ~,K = evolve!(Env.layer[1].ts[L], proj1(Env,L), τ)
+    Env.layer[3].ts[L] = Env.layer[1].ts[L]'
+    totalK = max(totalK,K)
+    
+    show(to; title=">>> TDVP >>>")
+    filter!(!isnan,vns)
+    println("\nD = $(_maxdim(Env.layer[1])), TruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+    to = TimerOutput()
+    
+    for site in L:-1:2
+        if cbe 
+            @timeit to "CBE" begin
+                A = deepcopy(Env.layer[1].ts[site-1])
+                ϵ1 = CBE!(Env,site-1,trunc)
+                splice!(Env.layer[1],A,site-1)
+                Env.layer[3].ts[site] = Env.layer[1].ts[site]'
+                ϵ += ϵ1
+            end
+        end
+        @timeit to "evolve" tmp, K1 = evolve!(Env.layer[1].ts[site], proj1(Env,site), τ)
+        @timeit to "orthogonalize" begin
+            tl,tr = rightorth(tmp)
+            vns[site-1] = vonNeumann(tl.A)
+        end
+        to1,K2 = pushleft!(Env,tl,tr,τ)
+        totalK = max(totalK,K1,K2)
+        merge!(to,to1)
+    end
+    @timeit to "evolve" ~,K = evolve!(Env.layer[1].ts[1], proj1(Env,1), τ)
+    Env.layer[3].ts[1] = Env.layer[1].ts[1]'
+    totalK = max(totalK,K)
+    
+    show(to;title="<<< TDVP <<<")
+    filter!(!isnan,vns)
+    println("\nD = $(_maxdim(Env.layer[1])), TruncErr = $(ϵ), K = $(totalK), ⟨S⟩ = $(mean(vns)), σ(S) = $(std(vns))")
+    GC.gc()
+    return ϵ, totalK
 end
 
-function LeftUpdateTDVP2(ψs::Vector,Hi::Vector,
-    EnvL::AbstractTensorMap,EnvR::AbstractTensorMap,τ::Number,
-    D_MPS::Int64,LanczosLevel::Int64;
-    τback::Number = τ)
-
-    Aτ = Evolve(Contract(ψs...),Hi,EnvL,EnvR,τ,LanczosLevel)
-    MPSs,truncerr = LeftSVD(Aτ,D_MPS)
-    Στ,thisMPS = MPSs
-    Hi = Move(Hi...)
-    Σ = Evolve(Στ,Hi[1],EnvL,PushLeft(EnvR,thisMPS,Hi[2]),-τback,LanczosLevel)
-
-    return [Σ,thisMPS],Hi,truncerr
+function tanTRG2!(ρ::DenseMPO, H::SparseMPO, lsβ::AbstractVector, trunc::TruncationScheme;kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ρ,H,ρ'])
+        initialize!(Env)
+    end
+    lsρ = TDVP2!(Env,lsβ .* (-1im), trunc;kwargs...)
+    return lsρ
 end
 
-
+function tanTRG1!(ρ::DenseMPO, H::SparseMPO, lsβ::AbstractVector, trunc::TruncationScheme;kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ρ,H,ρ'])
+        initialize!(Env)
+    end
+    lsρ = TDVP1!(Env,lsβ .* (-1im), trunc;kwargs...)
+    return lsρ
+end

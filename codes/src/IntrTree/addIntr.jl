@@ -82,3 +82,16 @@ function addIntr!(Tree::InteractionTree,
     strength == 0 && return nothing
     addIntr!(Tree.Root.children[1],Opri,Latt,k,name,strength,string)
 end
+
+# c⁺ = exp(-1im)* ... 
+function addIntr!(Root::InteractionTreeNode,
+    Opri::Tuple,
+    Latt::AbstractLattice,k::Vector,
+    name::Tuple,
+    strength::Number,
+    Z::Union{Nothing,AbstractTensorMap})
+    L = size(Latt)
+    for i in 1:L, j in i+1:L, ind in 1:2 
+        addIntr2!(Root,Opri[ind],(i,j),name[ind],(-1)^(ind-1)*strength*exp((-1)^ind*1im*dot(k, coordinate(Latt,i) .- coordinate(Latt,j))) / L,Z)
+    end
+end

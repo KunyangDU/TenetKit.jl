@@ -153,3 +153,11 @@ function _scalar(Env::Environment{N}) where N
     tmp = contract(Env.envs[site],t1...,Env.envs[site+1])
     return tmp
 end
+
+function scalar(Env::Environment{3})
+    @assert Env.center[1] == Env.center[2]
+    contract(Env.layer[3].ts[Env.center[1]], action(proj1(Env, Env.center[1]), Env.layer[1].ts[Env.center[1]]))
+end
+
+
+

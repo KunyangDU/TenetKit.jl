@@ -1,4 +1,4 @@
-abstract type AbstractObservableForest end
+
 
 struct ObserableTree{N} <: AbstractObservableForest
     Root::InteractionTreeNode
@@ -27,4 +27,24 @@ struct ObserableForest{N} <: AbstractObservableForest
 
     ObserableForest() = ObserableForest{0}()
 end
+
+mutable struct MPSObservable <: AbstractObservable
+     forest::Union{Nothing, AbstractObservableForest}
+     values::Union{Nothing, AbstractDict}
+     L::Union{Nothing, Int64}
+ 
+     function MPSObservable(forest::AbstractObservableForest,
+         L::Int64)
+         return new(forest, L) 
+     end
+ 
+     function MPSObservable(forest::AbstractObservableForest)
+         return new(forest, treeheight(obj.forest.Roots) - 2) 
+     end
+ 
+     MPSObservable() = new(ObserableForest(), nothing)
+end
+
+
+update!(obj::MPSObservable) = obj.L = treeheight(obj.forest.Roots) - 2
 

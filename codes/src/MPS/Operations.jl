@@ -1,16 +1,75 @@
-function WeightProd(MPS::Vector,weight::Number)
-    return (vcat([weight],ones(length(MPS)-1)) .* MPS)
+function TensorKit.leftorth(elm::MPSTensor{3})
+    Q,Rm = leftorth(elm.A,(1,2),(3,))
+    return map(MPSTensor,(Q,Rm))
 end
 
-function WeightSum(MPSs::Vector,weights::Vector,D_MPS::Int64)
-    d = dims(domain(MPSs[1][1]))
+function TensorKit.leftorth(A::MPSTensor{R}) where R
+    @assert R > 3
+    Q,Rm = leftorth(A.A,(1,2),tuple(3:R...))
+    return Q,Rm
+end
+
+function TensorKit.leftorth(A::MPSTensor{3}, B::MPSTensor{3})
+    Q, Rm = leftorth(A)
+    @tensor tmp[-1 -2;-3] ≔ Rm.A[-1,1]*B.A[1,-2,-3]
+    return Q,MPSTensor(tmp)
+end
+
+function TensorKit.leftorth!(obj::DenseMPS,site::Int64)
+    obj.ts[site:site+1] = collect(leftorth(obj.ts[site:site+1]...))
+end
+
+function TensorKit.rightorth(A::MPSTensor{3})
+    Lm,Q = rightorth(A.A,(1,),(2,3))
+    return map(MPSTensor,(Lm,permute(Q,(1,2),(3,))))
+end
+
+function TensorKit.rightorth(A::MPSTensor{R}) where R
+    @assert R > 3
+    Lm,Q = rightorth(A.A,(1,2),tuple(3:R...))
+    return Lm, Q
+end
+
+function TensorKit.rightorth(A::MPSTensor{3}, B::MPSTensor{3})
+    Lm,Q = rightorth(B)
+    return MPSTensor(A.A*Lm.A),Q
+end
+
+function TensorKit.rightorth!(obj::DenseMPS,site::Int64)
+    obj.ts[site-1:site] = collect(rightorth(obj.ts[site-1:site]...))
+end
 
 
-    MPS = VariPlusMPS(WeightProd(MPSs[1],weights[1]), WeightProd(MPSs[2],weights[2]),d,D_MPS)
 
-    for i in eachindex(MPSs)[3:end]
-        MPS = VariPlusMPS(MPS,WeightProd(MPSs[i],weights[i]),d,D_MPS)
+function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
+    @assert direction in [:center,:left,:right]
+    vns = nothing
+    U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
+    d = sqrt(@tensor S[1,2] * S'[2,1])
+    if d != 0
+        ϵ /= d
+        vns = vonNeumann(S)
     end
-    
-    return MPS
+    if direction == :center
+        return U,S,V,ϵ,vns
+    elseif direction == :left 
+        return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
+    elseif direction == :right 
+        return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
+    end
 end
+
+function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, kwargs...)
+    @assert direction in [:center,:left,:right]
+    if direction == :center
+        U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
+        return U,S,V,ϵ
+    elseif direction == :left 
+        U,S,V,ϵ = tsvd(A.A,(1,),(2,3);kwargs...)
+        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ
+    elseif direction == :right 
+        U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
+        return map(MPSTensor,(U,S*V))...,ϵ
+    end
+end
+

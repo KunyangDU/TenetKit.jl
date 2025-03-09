@@ -1,0 +1,225 @@
+
+function TensorKit.scalartype(A::AbstractTensorWrapper)
+    return TensorKit.scalartype(A.A)
+end
+
+Base.similar(A::AbstractTensorWrapper, ::Type{S}) where {S<:Number} = zerovector(A, S)
+function zerovector(A::T, ::Type{S}) where {S<:Number, T<:AbstractTensorWrapper}
+    return convert(T, TensorKit.zerovector(A.A, S))
+end  
+
+Base.convert(::Type{T}, A::AbstractTensorMap) where {T<:AbstractTensorWrapper} = T(A)
+
+function zerovector!(A::AbstractTensorWrapper) 
+    TensorKit.zerovector!(A.A)
+    return A
+end
+function TensorKit.LinearAlgebra.rmul!(A::AbstractTensorWrapper, α::Number)
+    TensorKit.LinearAlgebra.rmul!(A.A, α)
+    return A
+end
+function TensorKit.LinearAlgebra.mul!(A::T, B::T, α::Number) where {T<:AbstractTensorWrapper}
+    TensorKit.LinearAlgebra.mul!(A.A, B.A, α)
+    return A
+end
+
+function add!!(A::AbstractTensorWrapper,
+    B::AbstractTensorWrapper,
+    β::Number = one(scalartype(B)),
+    α::Number = one(scalartype(A))
+    ) 
+    T = promote_type(scalartype(A.A), scalartype(B.A), typeof(α), typeof(β))
+    if T <: scalartype(A.A)
+         return axpby!(β, B, α, A)
+    else
+         return α*A + β*B
+    end
+end
+
+function axpy!(α::Number, A::T, B::T) where {T<:AbstractTensorWrapper}
+    axpy!(α, A.A, B.A)
+    return B
+end
+axpy!(::Number, ::Nothing, A::AbstractTensorWrapper) = A
+axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
+axpby!(α::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
+axpby!(α::Number, A::AbstractTensorWrapper, β::Number, ::Nothing) = axpy!(α, A, nothing)
+
+add!(A::AbstractTensorWrapper, B::AbstractTensorWrapper) = axpy!(true, B, A)
+add!(A::AbstractTensorWrapper, ::Nothing) = A
+add!(::Nothing, A::AbstractTensorWrapper) = A
+
+scale!(A::AbstractTensorWrapper, α::Number) = rmul!(A, α)
+scale(A::AbstractTensorWrapper, α::Number) = α * A
+
+function scale!!(A::AbstractTensorWrapper, α::S) where {S<:Number}
+    T = promote_type(scalartype(A.A), S)
+    if T <: scalartype(A)
+         return scale!(A, α)
+    else
+         return scale(A, α)
+    end
+end
+
+Base.iterate(t::AbstractTensorWrapper) = (t.A,nothing)
+Base.iterate(::AbstractTensorWrapper,::Nothing) = nothing
+TensorKit.norm(A::AbstractTensorWrapper) = norm(A.A)
+
+showdomain(A::AbstractTensorWrapper) = showdomain(A.A)
+
+Base.isapprox(A::AbstractTensorWrapper,B::AbstractTensorWrapper) = isapprox(A.A , B.A)
+TensorKit.space(A::AbstractTensorWrapper) = space(A.A)
+
+TensorKit.dims(A::AbstractTensorWrapper) = dims(A.A)
+
+issparse(::Union{DenseMPO,AdjointMPO}) = false
+issparse(::SparseMPO) = return true
+Base.size(t::DenseMPOTensor{4}) = map(dim,t.A |> x -> (codomain(x)[2],domain(x)[1]))
+Base.length(::DenseMPO{L}) where L = return L
+Base.length(::SparseMPO{L}) where L = return L
+Base.size(::SparseMPOTensor{N,M}) where {N,M} = N,M
+
+function normalize!(obj::Union{DenseMPO{L},DenseMPS{L}}) where {L}
+    @assert 1 == obj.center[1] == obj.center[2]
+    return normalize!(obj.ts[1])
+end
+
+function normalize!(obj::AbstractTensorWrapper)
+    tmp = norm(obj.A)
+    obj.A = obj.A / tmp
+    return tmp
+end
+
+Base.:+(A::T, B::T) where T <: AbstractTensorWrapper = T(A.A + B.A)
+Base.:+(::Nothing, B::AbstractTensorWrapper) = B
+Base.:+(A::AbstractTensorWrapper, ::Nothing) = A
+Base.:-(A::T, B::T) where T <: AbstractTensorWrapper = T(A.A - B.A)
+Base.:*(A::T,B::T) where T <: AbstractTensorWrapper = T(A.A * B.A)
+Base.:*(A::Number,B::T) where T <: AbstractTensorWrapper = T(A * B.A)
+Base.:/(A::T,B::Number) where T <: AbstractTensorWrapper = (1/B) * A
+
+# function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
+#     return A + (-1) * B
+# end
+
+# function Base.:-(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
+#     return A + (-1)*B
+# end
+
+# function Base.:-(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
+#     return A + (-1)*B
+# end
+
+# function Base.:-(A::RightCompositeEnvironmentTensor{N₁, R₁}, B::RightCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
+#     @assert N₁ == N₂ && R₁ == R₂
+#     return RightCompositeEnvironmentTensor(A.A - B.A)
+# end
+
+# function Base.:-(A::LeftCompositeEnvironmentTensor{N₁, R₁}, B::LeftCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
+#     @assert N₁ == N₂ && R₁ == R₂
+#     return LeftCompositeEnvironmentTensor(A.A - B.A)
+# end
+
+
+# function Base.:+(A::LeftCompositeEnvironmentTensor,
+#     B::LeftCompositeEnvironmentTensor)
+#     return LeftCompositeEnvironmentTensor(A.A + B.A)
+# end
+
+# function Base.:+(A::RightCompositeEnvironmentTensor,
+#     B::RightCompositeEnvironmentTensor)
+#     return RightCompositeEnvironmentTensor(A.A + B.A)
+# end
+
+# function Base.:+(A::LeftEnvironmentTensor,
+#     B::LeftEnvironmentTensor)
+#     return LeftEnvironmentTensor(A.A + B.A)
+# end
+
+# function Base.:+(A::RightEnvironmentTensor,
+#     B::RightEnvironmentTensor)
+#     return RightEnvironmentTensor(A.A + B.A)
+# end
+
+# function Base.:+(A::CompositeMPOTensor{N₁, R₁}, B::CompositeMPOTensor{N₂, R₂}) where {N₁, N₂, R₁, R₂}
+#     @assert N₁ == N₂ && R₁ == R₂
+#     return CompositeMPOTensor(A.A + B.A)
+# end
+
+# function Base.:+(A::DenseMPOTensor{R₁}, B::DenseMPOTensor{R₂}) where {R₁, R₂}
+#     @assert R₁ == R₂
+#     return DenseMPOTensor(A.A + B.A)
+# end
+
+# function Base.:+(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
+#     @assert R₁ == R₂
+#     return MPSTensor(A.A + B.A)
+# end
+# function Base.:+(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
+#     return CompositeMPSTensor(A.A + B.A)
+# end
+
+# function Base.:+(::Nothing,A::DenseMPOTensor)
+#     return A
+# end
+
+# function Base.:+(A::DenseMPOTensor,::Nothing)
+#     return A
+# end
+
+
+# function Base.:*(α::Number, A::CompositeMPOTensor)
+#     return  CompositeMPOTensor(α*A.A)
+# end
+
+# function Base.:*(α::Number, A::DenseMPOTensor)
+#     return  DenseMPOTensor(α*A.A)
+# end
+
+# function Base.:*(n::Number, A::MPSTensor)
+#     return MPSTensor(A.A*n)
+# end
+
+# function Base.:*(n::Number, A::MPSTensor)
+#     return MPSTensor(A.A*n)
+# end
+
+# function Base.:*(n::Number, A::CompositeMPSTensor)
+#     return CompositeMPSTensor(n*A.A)
+# end
+
+# function Base.:/(A::AbstractMPOTensor, α::Number)
+#     return  (1/α) * A
+# end
+
+# function Base.:/(A::CompositeMPSTensor, n::Number)
+#     return (1/n) * A
+# end
+
+# function Base.:/(A::MPSTensor, n::Number)
+#     @assert n ≠ 0
+#     return (1/n)*A
+# end
+
+
+# function normalize!(obj::Union{DenseMPOTensor,MPSTensor})
+#     tmp = norm(obj.A)
+#     obj.A = obj.A / tmp
+#     return tmp
+# end
+
+#= function Base.:*(A::CompositeMPSTensor{2, 4}, B::AdjointCompositeMPSTensor{2, 4})
+    return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
+end
+
+function Base.:*(A::MPSTensor{3}, Ad::AdjointMPSTensor{3})
+    return @tensor A.A[1,2,3] * Ad.A[3,1,2]
+end
+
+function Base.:*(A::CompositeMPOTensor{2,6}, B::AdjointCompositeMPOTensor{2,6})
+    return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
+end
+
+function Base.:*(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4})
+    return  @tensor A.A[1,2,3,4] * B.A[3,4,1,2]
+end =#

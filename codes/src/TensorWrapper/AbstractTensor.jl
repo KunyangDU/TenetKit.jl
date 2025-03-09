@@ -72,50 +72,11 @@ mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor{R}
 
 end
 
-function Base.adjoint(t::MPSTensor)
-    return AdjointMPSTensor(t.A')
-end
+Base.adjoint(t::MPSTensor) = AdjointMPSTensor(t.A')
+Base.adjoint(ts::Vector{MPSTensor}) = convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(t.A') for t in ts])
+Base.adjoint(t::AdjointMPSTensor) = MPSTensor(t.A')
+Base.adjoint(ts::Vector{AdjointMPSTensor}) = convert(Vector{MPSTensor},[MPSTensor(t.A') for t in ts])
 
-function Base.adjoint(ts::Vector{MPSTensor})
-    return convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(t.A') for t in ts])
-end
-
-function Base.adjoint(t::AdjointMPSTensor)
-    return MPSTensor(t.A')
-end
-
-function Base.adjoint(ts::Vector{AdjointMPSTensor})
-    return convert(Vector{MPSTensor},[MPSTensor(t.A') for t in ts])
-end
-
-
-
-
-function Base.:*(n::Number, A::MPSTensor)
-    return MPSTensor(A.A*n)
-end
-
-function Base.:*(n::Number, A::MPSTensor)
-    return MPSTensor(A.A*n)
-end
-
-function Base.:/(A::MPSTensor, n::Number)
-    @assert n ≠ 0
-    return (1/n)*A
-end
-
-function Base.:+(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
-    @assert R₁ == R₂
-    return MPSTensor(A.A + B.A)
-end
-
-function Base.:-(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
-    return A + (-1)*B
-end
-
-function TensorKit.norm(A::MPSTensor)
-    return norm(A.A)
-end
 """
 todo {}
     1' - A - R
@@ -138,11 +99,6 @@ mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
     end
 end
 
-function composite(A::MPSTensor{3}, B::MPSTensor{3})
-    @tensor tmp[-1 -2 -3; -4] ≔ A.A[-1,-2,1]*B.A[1,-3,-4]
-    return CompositeMPSTensor(tmp)
-end
-
 mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
     A::AbstractTensorMap
 
@@ -155,6 +111,11 @@ mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
         return new{length(domain(A))-1, rank(A)}(A)
     end
 end
+
+Base.adjoint(t::CompositeMPSTensor) = AdjointCompositeMPSTensor(t.A')
+Base.adjoint(t::AdjointCompositeMPSTensor) = CompositeMPSTensor(t.A')
+Base.adjoint(ts::Vector{CompositeMPSTensor}) = convert(Vector{AdjointCompositeMPSTensor},[t' for t in ts])
+Base.adjoint(ts::Vector{AdjointCompositeMPSTensor}) = convert(Vector{CompositeMPSTensor},[t' for t in ts])
 
 mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
     A::AbstractTensorMap
@@ -186,69 +147,10 @@ mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
     end
 end
 
-function composite(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
-    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ A.A[-2,-3,1,-6] * B.A[-1,1,-4,-5]
-    return CompositeMPOTensor(tmp)
-end
-
-function Base.adjoint(t::CompositeMPSTensor)
-    return AdjointCompositeMPSTensor(t.A')
-end
-
-function Base.adjoint(ts::Vector{CompositeMPSTensor})
-    return convert(Vector{AdjointCompositeMPSTensor},[AdjointCompositeMPSTensor(t.A') for t in ts])
-end
-
-function Base.adjoint(t::AdjointCompositeMPSTensor)
-    return CompositeMPSTensor(t.A')
-end
-
-function Base.adjoint(ts::Vector{AdjointCompositeMPSTensor})
-    return convert(Vector{CompositeMPSTensor},[CompositeMPSTensor(t.A') for t in ts])
-end
-
-
-
-function Base.:+(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
-    return CompositeMPSTensor(A.A + B.A)
-end
-
-function Base.:-(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
-    return A + (-1)*B
-end
-
-function Base.:*(n::Number, A::CompositeMPSTensor)
-    return CompositeMPSTensor(n*A.A)
-end
-
-function Base.:/(A::CompositeMPSTensor, n::Number)
-    return (1/n) * A
-end
-
-function getAuxSpace(t::DenseMPOTensor{4})
-    return collect(codomain(t.A))[2], collect(domain(t.A))[1]
-end
-
-function getAuxSpace(t::AdjointMPOTensor{4})
-    return collect(domain(t.A))[2], collect(codomain(t.A))[1]
-end
-
-
-function Base.adjoint(t::DenseMPOTensor)
-    return AdjointMPOTensor(t.A')
-end
-
-function Base.adjoint(ts::Vector{DenseMPOTensor})
-    return convert(Vector{AdjointMPOTensor},[AdjointMPOTensor(t.A') for t in ts])
-end
-
-function Base.adjoint(t::AdjointMPOTensor)
-    return DenseMPOTensor(t.A')
-end
-
-function Base.adjoint(ts::Vector{AdjointMPOTensor})
-    return convert(Vector{DenseMPOTensor},[DenseMPOTensor(t.A') for t in ts])
-end
+Base.adjoint(t::DenseMPOTensor) = AdjointMPOTensor(t.A')
+Base.adjoint(t::AdjointMPOTensor) = DenseMPOTensor(t.A')
+Base.adjoint(ts::Vector{DenseMPOTensor}) = convert(Vector{AdjointMPOTensor},[t' for t in ts])
+Base.adjoint(ts::Vector{AdjointMPOTensor}) = convert(Vector{DenseMPOTensor},[t' for t in ts])
 
 mutable struct CompositeMPOTensor{N, R} <: AbstractMPOTensor
     A::AbstractTensorMap
@@ -280,7 +182,10 @@ mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
     end
 end
 
-
+Base.adjoint(t::CompositeMPOTensor) = return AdjointCompositeMPOTensor(t.A')
+Base.adjoint(t::AdjointCompositeMPOTensor) = return CompositeMPOTensor(t.A')
+Base.adjoint(ts::Vector{CompositeMPOTensor}) = return convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
+Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 
 mutable struct SparseMPOTensor{N,M} <: AbstractMPOTensor
     m::Matrix{Union{Nothing,DenseMPOTensor}}
@@ -294,17 +199,7 @@ mutable struct SparseMPOTensor{N,M} <: AbstractMPOTensor
     end
 end
 
-function Base.size(::SparseMPOTensor{N,M}) where {N,M}
-    return N,M
-end
 
-
-function Base.length(::DenseMPOTensor)
-    return 1
-end
-
-function rank(A::AbstractTensorMap)
-    return length(codomain(A)) + length(domain(A))
-end
+#= ====================== =#
 
 

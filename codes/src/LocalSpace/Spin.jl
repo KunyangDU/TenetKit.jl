@@ -1,47 +1,50 @@
-module Spin2
+
+module SU₂Spin
+
 using TensorKit
 
-const d = 2
-const PhySpace = (ℂ^d)'
-const Spinσ0 = TensorMap([1 0;0 1],PhySpace,PhySpace)
-const Spinσx = TensorMap([0 1;1 0],PhySpace,PhySpace)
-const Spinσy = TensorMap([0 -1im;1im 0],PhySpace,PhySpace)
-const Spinσz = TensorMap([1 0; 0 -1],PhySpace,PhySpace)
+const PhySpace = Rep[SU₂](1//2 => 1)
 
-const I = let 
-    Spinσ0
+# S⋅S interaction
+const SS = let
+    AuxSpace = Rep[SU₂](1 => 1)
+    OpL = TensorMap(ones, Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(3) / 2.
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
 end
 
-const Sx = let 
-    Spinσx / 2
 end
 
-const Sy = let 
-    Spinσy / 2
-end
+
+module U₁Spin
+
+using TensorKit
+
+const PhySpace = Rep[U₁](1//2 => 1, -1//2 => 1)
 
 const Sz = let 
-    Spinσz / 2
+    Op = TensorMap(ones, PhySpace, PhySpace )
+    block(Op, Irrep[U₁](1//2)) .= 1/2
+    block(Op, Irrep[U₁](-1//2)) .= -1/2
+    Op
 end
 
-const SxSx = let 
-    (Spinσx,Spinσx) ./ 2
-end
-
-const SySy = let 
-    (Spinσy,Spinσy) ./ 2
-end
-
-const SzSz = let 
-    (Spinσz,Spinσz) ./ 2
-end
+const SzSz = Sz, Sz
 
 const S₊S₋ = let 
-    (Spinσx + 1im * Spinσx) / 4, (Spinσx - 1im * Spinσx) / 4
+    AuxSpace = Rep[U₁](1 => 1)
+    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
 end
 
 const S₋S₊ = let 
-    (Spinσx - 1im * Spinσx) / 4, (Spinσx + 1im * Spinσx) / 4
+    AuxSpace = Rep[U₁](-1 => 1)
+    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
 end
 
 end
+
+

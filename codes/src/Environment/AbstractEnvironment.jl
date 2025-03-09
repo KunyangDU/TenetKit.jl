@@ -7,6 +7,9 @@ mutable struct LocalEnvironmentTensor{R} <: AbstractEnvironmentTensor
     function LocalEnvironmentTensor(t::AbstractTensorMap)
         return new{rank(t)}(t)
     end
+    function LocalEnvironmentTensor{r}(t::AbstractTensorMap) where r
+        return new{rank(t)}(t)
+    end
 end
 
 mutable struct RightEnvironmentTensor{R} <: AbstractEnvironmentTensor
@@ -15,9 +18,10 @@ mutable struct RightEnvironmentTensor{R} <: AbstractEnvironmentTensor
     function RightEnvironmentTensor(t::AbstractTensorMap)
         return new{rank(t)}(t)
     end
+    function RightEnvironmentTensor{r}(t::AbstractTensorMap) where r
+        return new{rank(t)}(t)
+    end
 end
-
-
 
 mutable struct LeftEnvironmentTensor{R} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
@@ -25,17 +29,11 @@ mutable struct LeftEnvironmentTensor{R} <: AbstractEnvironmentTensor
     function LeftEnvironmentTensor(t::AbstractTensorMap)
         return new{rank(t)}(t)
     end
+    function LeftEnvironmentTensor{r}(t::AbstractTensorMap) where r
+        return new{rank(t)}(t)
+    end
 end
 
-function Base.:+(A::LeftEnvironmentTensor,
-    B::LeftEnvironmentTensor)
-    return LeftEnvironmentTensor(A.A + B.A)
-end
-
-function Base.:+(A::RightEnvironmentTensor,
-    B::RightEnvironmentTensor)
-    return RightEnvironmentTensor(A.A + B.A)
-end
 """
 
 """
@@ -43,6 +41,10 @@ mutable struct LeftCompositeEnvironmentTensor{N,R} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
 
     function LeftCompositeEnvironmentTensor(t::AbstractTensorMap)
+        return new{length(codomain(t)),rank(t)}(t)
+    end
+
+    function LeftCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
         return new{length(codomain(t)),rank(t)}(t)
     end
 end
@@ -54,31 +56,10 @@ mutable struct RightCompositeEnvironmentTensor{N,R} <: AbstractEnvironmentTensor
         return new{length(domain(t)),rank(t)}(t)
     end
 
-#=     function RightCompositeEnvironmentTensor(t::AbstractTensorMap,order::Int64)
-        return new{order,rank(t)}(t)
-    end =#
+    function RightCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
+        return new{length(domain(t)),rank(t)}(t)
+    end
 end
-
-function Base.:+(A::LeftCompositeEnvironmentTensor,
-    B::LeftCompositeEnvironmentTensor)
-    return LeftCompositeEnvironmentTensor(A.A + B.A)
-end
-
-function Base.:+(A::RightCompositeEnvironmentTensor,
-    B::RightCompositeEnvironmentTensor)
-    return RightCompositeEnvironmentTensor(A.A + B.A)
-end
-
-function Base.:-(A::RightCompositeEnvironmentTensor{N₁, R₁}, B::RightCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
-    @assert N₁ == N₂ && R₁ == R₂
-    return RightCompositeEnvironmentTensor(A.A - B.A)
-end
-
-function Base.:-(A::LeftCompositeEnvironmentTensor{N₁, R₁}, B::LeftCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
-    @assert N₁ == N₂ && R₁ == R₂
-    return LeftCompositeEnvironmentTensor(A.A - B.A)
-end
-
 
 mutable struct SparseEnvironmentTensor <: AbstractEnvironmentTensor
     A::Vector{AbstractEnvironmentTensor}
@@ -157,6 +138,10 @@ mutable struct DenseLeftEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
         return new{rank(t)}(LeftEnvironmentTensor(t))
     end
 
+    function DenseLeftEnvironmentTensor{r}(t::AbstractTensorMap) where r
+        return new{rank(t)}(LeftEnvironmentTensor(t))
+    end
+
     function DenseLeftEnvironmentTensor(t::LeftEnvironmentTensor)
         return new{rank(t.A)}(t)
     end
@@ -166,6 +151,10 @@ mutable struct DenseRightEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
     A::RightEnvironmentTensor
 
     function DenseRightEnvironmentTensor(t::AbstractTensorMap)
+        return new{rank(t)}(RightEnvironmentTensor(t))
+    end
+
+    function DenseRightEnvironmentTensor{r}(t::AbstractTensorMap) where r
         return new{rank(t)}(RightEnvironmentTensor(t))
     end
 
@@ -197,50 +186,3 @@ mutable struct Environment{N} <: AbstractEnvironment
 
 end
 
-function initialize!(env::Environment)
-    env.envs = Vector{AbstractEnvironmentTensor}(undef, env.L + 1)
-    setdefault!(env)
-    canonicalize!(env,1)
-end
-
-function canonicalize!(env::Environment,sl::Int64,sr::Int64)
-    @assert 1 ≤ sl ≤ sr ≤ env.L + 1
-
-    for _ in env.center[1]:sl-1
-        pushright!(env)
-    end
-
-    for _ in env.center[2]:-1:sr+1
-        pushleft!(env)
-    end
-
-end
-
-function canonicalize!(env::Environment,si::Int64)
-    @assert 1 ≤ si ≤ env.L + 1
-    canonicalize!(env,si,si)
-end
-
-
-function setdefault!(env::Environment{3})
-    if issparse(env.layer[2])
-        env.envs[1] = SparseLeftEnvironmentTensor(isometry(reverse(map(x -> getAuxSpace(env.layer[x].ts[1])[1],[1,3]))...))
-        env.envs[end] = SparseRightEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[end])[2],[1,3])...))
-    else
-        AuxSpaces = reverse(map(x -> getAuxSpace(env.layer[x].ts[1])[1],1:3))
-        env.envs[1] = DenseLeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2] ⊗ AuxSpaces[3]))
-        AuxSpaces = map(x -> getAuxSpace(env.layer[x].ts[end])[2],1:3)
-        env.envs[end] = DenseRightEnvironmentTensor(isometry(AuxSpaces[1] ⊗ AuxSpaces[2], AuxSpaces[3]))
-    end
-end
-
-function setdefault!(env::Environment{2})
-    if !issparse(env.layer[1]) && !issparse(env.layer[2])
-        env.envs[1] = DenseLeftEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[1])[1],1:2)...))
-        env.envs[end] = DenseRightEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[end])[2],1:2)...))
-    elseif issparse(env.layer[1]) && !issparse(env.layer[2])
-        env.envs[1] = SparseLeftEnvironmentTensor(isometry((getAuxSpace(env.layer[2].ts[1])[1] |> y -> (trivial(y),y))...))
-        env.envs[end] = SparseLeftEnvironmentTensor(isometry((getAuxSpace(env.layer[2].ts[end])[2] |> y -> (y,trivial(y)))...))
-        #env.envs[end] = SparseRightEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[end])[2],[2,])...))
-    end
-end

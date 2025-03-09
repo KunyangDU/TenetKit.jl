@@ -1,134 +1,174 @@
-module SpinlessFermion
+module U₁SU₂Fermion
+
 using TensorKit
 
-const d = 2
-const PhySpace = (ℂ^d)'
-const JWstring2 = TensorMap([-1 0; 0 1],PhySpace,PhySpace)
-const FermionCreation2 = TensorMap([0 1;0 0],PhySpace,PhySpace)
-const FermionAnnihilation2 = TensorMap([0 0;1 0],PhySpace,PhySpace)
-
-const Z = let 
-    JWstring2
-end
-
-const F = let 
-    FermionAnnihilation2
-end
-
-const Fdag = let 
-    FermionCreation2
-end
-
-const FFdag = let 
-    FermionAnnihilation2,FermionCreation2
-end
-
-const FdagF = let 
-    FermionCreation2,FermionAnnihilation2
-end
-
-const n = let 
-    FermionCreation2*FermionAnnihilation2
-end
-
-const nn = let 
-    n, n
-end
-
-end
-
-module Spin2Fermion
-using TensorKit
-
-function diagm(dg::Vector{T}) where T
-    L = length(dg)
-    mat = zeros(T,L,L)
-    for (dgi,dge) in enumerate(dg)
-        mat[dgi,dgi] = dge
-    end
-    return mat
-end
-
-function diagm(pair::Pair{Int64, Vector{T}}) where T
-    L = length(pair[2]) + abs(pair[1])
-    mat = zeros(T,L,L)
-    if pair[1] > 0
-        for (ii,ie) in enumerate(pair[2])
-            mat[ii,ii+pair[1]] = ie
-        end
-    elseif pair[1] < 0
-        for (ii,ie) in enumerate(pair[2])
-            mat[ii-pair[1],ii] = ie
-        end
-    else
-        mat = diagm(pair[2])
-    end
+const PhySpace = Rep[U₁×SU₂]((-1,0) => 1, (0,1/2) => 1, (1,0) => 1)
     
-    return mat
-end
-
-const d = 4
-const PhySpace = (ℂ^d)'
-
-const JWstring4 = TensorMap(diagm([1,-1,-1,1]),PhySpace,PhySpace)
-const FermionCreationUp4 = TensorMap(diagm(2 => [1,1]),PhySpace,PhySpace)
-const FermionCreationDown4 = TensorMap(diagm(1 => [1,0,1]),PhySpace,PhySpace)
-
 const Z = let 
-    JWstring4
-end
-
-const Fup = let 
-    FermionCreationUp4'
-end
-
-const Fdagup = let 
-    FermionCreationUp4
-end
-
-const Fdown = let 
-    FermionCreationDown4'
-end
-
-const Fdagdown = let 
-    FermionCreationDown4
-end
-
-
-const FFdagUp = let 
-    -FermionCreationUp4'*JWstring4,FermionCreationUp4
-end
-
-const FFdagDown = let 
-    FermionCreationDown4',-JWstring4*FermionCreationDown4
-end
-
-const FdagFUp = let 
-    FermionCreationUp4*JWstring4,FermionCreationUp4'
-end
-
-const FdagFDown = let 
-    FermionCreationDown4,JWstring4*FermionCreationDown4'
-end
-
-const nup = let 
-    FermionCreationUp4*FermionCreationUp4'
-end
-
-const ndown = let 
-    FermionCreationDown4*FermionCreationDown4'
+    tmp = TensorMap(ones,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁×SU₂](0,1/2)) .= -1
+    tmp
 end
 
 const n = let 
-    nup + ndown
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁×SU₂](0,1/2)) .= 1
+    block(tmp,Irrep[U₁×SU₂](1,0)) .= 2
+    tmp
 end
 
 const nd = let 
-    nup*ndown
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁×SU₂](1,0)) .= 1
+    tmp
 end
 
-const SS = let 
-    (nup - ndown,nup - ndown)
+const F⁺F = let 
+    AuxSpace = Rep[U₁×SU₂]((1,1/2) => 1)
+    F⁺ = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    block(F⁺, Irrep[U₁×SU₂](1, 0)) .= -sqrt(2)
+    F = permute(F⁺', (2,1), (3,))
+    block(F, Irrep[U₁×SU₂](1, 0)) .= sqrt(2)
+    F⁺, F
+end
+
+const FF⁺ = let 
+    AuxSpace = Rep[U₁×SU₂]((1, 1 / 2) => 1)
+    rev = isometry(AuxSpace, flip(AuxSpace))
+    @tensor F[-1; -2 -3] ≔ F⁺F[1]'[1,-1,-3] * rev'[-2,1]
+    @tensor F⁺[-1 -2; -3] ≔ F⁺F[2]'[-1,-3,1] * rev[1,-2]
+    F, F⁺
+end
+
+const SS = let
+    AuxSpace = Rep[U₁×SU₂]((0,1) => 1)
+    OpL = TensorMap(ones, Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(3) / 2.
+    OpR = permute(OpL', (2,1), (3,))
+    OpL, OpR
 end
 
 end
+
+
+module U₁U₁Fermion
+
+using TensorKit
+
+const PhySpace = Rep[U₁×U₁]((-1,0) => 1, (0,1 // 2) => 1, (0,-1 // 2) => 1,(1,0) => 1)
+    
+const Z = let 
+    tmp = TensorMap(ones,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁×U₁](0,1/2)) .= -1
+    block(tmp,Irrep[U₁×U₁](0,-1/2)) .= -1
+    tmp
+end
+
+const n₊ = let 
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁×U₁](0,1/2)) .= 1
+    block(tmp,Irrep[U₁×U₁](1,0)) .= 1
+    tmp
+end
+
+const n₋ = let 
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁×U₁](0,-1/2)) .= 1
+    block(tmp,Irrep[U₁×U₁](1,0)) .= 1
+    tmp
+end
+
+const n = n₊ + n₋
+
+const nd = n₊ * n₋
+
+const Sz = (n₊ - n₋) / 2
+
+const F₊⁺F₊ = let
+    AuxSpace = Rep[U₁×U₁]((1,1/2) => 1)
+    F⁺ = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    F = TensorMap(ones, PhySpace ⊗ AuxSpace, PhySpace)
+    F⁺, F
+end
+
+const F₋⁺F₋ = let
+    AuxSpace = Rep[U₁×U₁]((1,-1/2) => 1)
+    F⁺ = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    F = TensorMap(ones, PhySpace ⊗ AuxSpace, PhySpace)
+    block(F⁺, Irrep[U₁×U₁](1, 0)) .= -1
+    block(F, Irrep[U₁×U₁](1, 0)) .= -1
+    F⁺, F
+end
+
+const F₊F₊⁺ = let 
+    AuxSpace = Rep[U₁×U₁]((1, 1 / 2) => 1)
+    rev = isometry(AuxSpace, flip(AuxSpace))
+    @tensor F[-1;-2 -3] ≔ F₊⁺F₊[1]'[1,-1,-3] * rev'[-2,1]
+    @tensor F⁺[-1 -2; -3] ≔ F₊⁺F₊[2]'[-1,-3,1] * rev[1,-2]
+    -F, -F⁺
+end
+
+const F₋F₋⁺ = let 
+    AuxSpace = Rep[U₁×U₁]((1, -1 / 2) => 1)
+    rev = isometry(AuxSpace, flip(AuxSpace))
+    @tensor F[-1; -2 -3] ≔ F₋⁺F₋[1]'[1,-1,-3] * rev'[-2,1]
+    @tensor F⁺[-1 -2; -3] ≔ F₋⁺F₋[2]'[-1,-3,1] * rev[1,-2]
+    -F, -F⁺
+end
+
+const S₊S₋ = let 
+    AuxSpace = Rep[U₁×U₁]((0,1) => 1)
+    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
+end
+
+const S₋S₊ = let 
+    AuxSpace = Rep[U₁×U₁]((0,-1) => 1)
+    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
+end
+
+end
+
+
+module U₁Fermion 
+
+using TensorKit
+
+const PhySpace = Rep[U₁](-1//2 => 1, 1//2 => 1)
+
+const Z = let 
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁](1//2)) .= -1
+    block(tmp,Irrep[U₁](-1//2)) .= 1
+    tmp
+end
+
+const n = let 
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁](1//2)) .= 1
+    tmp
+end
+
+const F⁺F = let 
+    AuxSpace = Rep[U₁](1 => 1)
+    F⁺ = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace )
+    F = permute(F⁺', (2,1), (3,))
+    F⁺, F
+end
+
+const FF⁺ = let 
+#=     AuxSpace = Rep[U₁](-1 => 1)
+    F = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    F⁺ = permute(F', (2,1), (3,)) =#
+    AuxSpace = Rep[U₁](1 => 1)
+    rev = isometry(AuxSpace, flip(AuxSpace))
+    @tensor F[-1; -2 -3] ≔ F⁺F[1]'[1,-1,-3] * rev'[-2,1]
+    @tensor F⁺[-1 -2; -3] ≔ F⁺F[2]'[-1,-3,1] * rev[1,-2]
+    F, F⁺
+end
+
+end
+
+

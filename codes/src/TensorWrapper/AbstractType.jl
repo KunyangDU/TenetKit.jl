@@ -18,5 +18,6 @@ abstract type AbstractHamiltonian end
 abstract type AbstractProjectiveHamiltonian <: AbstractHamiltonian end
 
 abstract type AbstractObservable end
+abstract type AbstractObservableForest end
 abstract type AbstractLocalOperator end
 
