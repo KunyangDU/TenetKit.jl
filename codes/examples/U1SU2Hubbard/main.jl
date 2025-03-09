@@ -3,7 +3,7 @@ include("../../src/iMPS.jl")
 include("model.jl")
 foldername = "examples/U1SU2Hubbard/data"
 
-Lx = 8
+Lx = 4
 Ly = 4
 
 Latt = YCSqua(Lx,Ly)
@@ -15,7 +15,7 @@ Ndop = 0
     randMPS(U₁SU₂Fermion.PhySpace, AuxSpace)
 end
 
-for U in[0,8]
+#= for U in[0,8]
     params = (U = U,)
 
     H = Hamiltonian(Latt;params...)
@@ -26,7 +26,7 @@ for U in[0,8]
     showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
     @save "$(foldername)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
 end
-
+ =#
 #= @time "calculate observables" begin
     Obs = MPSObservable()
     LocalSpace = U₁SU₂Fermion
@@ -40,4 +40,13 @@ end
 
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
 Obs.values =#
+
+params = (U = 0,)
+
+H = Hamiltonian(Latt;params...)
+
+D = 400
+
+lsE = DMRG1!(ψ,H,truncdim(D)&truncbelow(1e-6))
+showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 

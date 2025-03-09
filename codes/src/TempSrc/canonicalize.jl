@@ -49,11 +49,9 @@ function TensorKit.leftorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
     @tensor tmp[-1 -2;-3 -4] ≔ Rm.A[-2,1]*B.A[-1,1,-3,-4]
     A.A = Q.A
     B.A = tmp
-    #return map(DenseMPOTensor,[Q,tmp])
 end
 
 function TensorKit.leftorth!(obj::DenseMPO,site::Int64)
-    #obj.ts[site:site+1] = leftorth(obj.ts[site:site+1]...)
     leftorth!(obj.ts[site:site+1]...)
 end
 
@@ -67,11 +65,9 @@ function TensorKit.rightorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
     @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,-2,1,-4]*Lm.A[1,-3]
     A.A = tmp
     B.A = Q.A
-    #return map(DenseMPOTensor,[,])
 end
 
 function TensorKit.rightorth!(obj::DenseMPO,site::Int64)
-    #obj.ts[site-1:site] = rightorth(obj.ts[site-1:site]...)
     rightorth!(obj.ts[site-1:site]...)
 end
 
@@ -114,31 +110,15 @@ end
 
 function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
-    vns = nothing
     if direction == :center
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
-        d = sqrt(@tensor S[1,2] * S'[2,1])
-        if d != 0
-            ϵ /= d
-            vns = vonNeumann(S)
-        end
-        return U,S,V,ϵ,vns
+        return U,S,V,ϵ
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(1,),(2,3);kwargs...)
-        d = sqrt(@tensor S[1,2] * S'[2,1])
-        if d != 0
-            ϵ /= d
-            vns = vonNeumann(S)
-        end
-        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ,vns
+        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
-        d = sqrt(@tensor S[1,2] * S'[2,1])
-        if d != 0
-            ϵ /= d
-            vns = vonNeumann(S)
-        end
-        return map(MPSTensor,(U,S*V))...,ϵ,vns
+        return map(MPSTensor,(U,S*V))...,ϵ
     end
 end
 
@@ -223,29 +203,18 @@ end
 
 function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, kwargs...)
     @assert direction in [:left,:right]
-    vns = nothing
     if direction == :left 
         U,S,V,ϵ = tsvd(A.A,(2,),(1,3,4);kwargs...)
-        d = sqrt(@tensor S[1,2] * S'[2,1])
-        if d != 0
-            ϵ /= d
-            vns = vonNeumann(S)
-        end
-        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ,vns
+        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2,4),(3,);kwargs...)
-        d = sqrt(@tensor S[1,2] * S'[2,1])
-        if d != 0
-            ϵ /= d
-            vns = vonNeumann(S)
-        end
-        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ,vns
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ
     end
 end
 
-function orthogonalize!(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol;tol::Number=1e-12)
-    space(Q.A) != space(A.A) && return nothing
-    if abs(contract(Q',A)) > tol
+function orthogonalize!(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol;tol::Number=1e-8)
+    #space(Q.A) != space(A.A) && return nothing
+    if norm(_cbeinner(Q,A,direction)) > tol
         if direction == :right 
             @tensor tmp[-1,-2;-3] ≔ Q.A[-1,2,1] * A'.A[1,3,2] * A.A[3,-2,-3]
             Q.A -= tmp
@@ -254,26 +223,68 @@ function orthogonalize!(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol;tol::N
             Q.A -= tmp
         end
     end
-    @assert abs(contract(Q',A)) < tol
+    @assert norm(_cbeinner(Q,A,direction)) < tol norm(_cbeinner(Q,A,direction))
+    return Q
 end
 
-function orthogonalize!(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol;tol::Number=1e-12)
-    space(Q.A) != space(A.A) && return nothing
-    if abs(contract(Q',A)) > tol
-        if direction == :right 
-            @tensor tmp[-1,-2;-3,-4] ≔ Q.A[2,-2,1,3] * A'.A[1,3,2,4] * A.A[-1,4,-3,-4]
-            Q.A -= tmp
-        elseif direction == :left
-            @tensor tmp[-1,-2;-3,-4] ≔ Q.A[2,1,-3,3] * A'.A[4,3,2,1] * A.A[-1,-2,4,-4]
-            Q.A -= tmp
-        end
+function orthogonalize!(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol;tol::Number=1e-4,maxiter=5)
+    #space(Q.A) != space(A.A) && return nothing
+    if direction == :right 
+        _cbeorth!(Q,A,direction)
+    elseif direction == :left
+        _cbeorth!(Q,A,direction)
     end
-    @assert abs(contract(Q',A)) < tol
+    # for _ in 1:maxiter
+    #     ϵ = norm(_cbeinner(Q,A,direction))
+    #     if ϵ > tol
+    #         if direction == :right 
+    #             _cbeorth!(Q,A,direction)
+    #         elseif direction == :left
+    #             _cbeorth!(Q,A,direction)
+    #         end
+    #     else
+    #         break
+    #     end
+    # end
+    # if norm(_cbeinner(Q,A,direction)) > tol
+    #     data = (Q,A,direction,tol)
+    #     @save "testdatajld2" data
+    # end
+    # @assert norm(_cbeinner(Q,A,direction)) < tol norm(_cbeinner(Q,A,direction))
+    return Q
 end
 
-#= function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}
-    @assert (center = obj.center[1]) == obj.center[2]
-    tmp = norm(obj.A)
-    obj.A[center] /= tmp
-    return tmp
-end =#
+function _cbeorth!(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol)
+    Q.A -= _cbeproj(Q,A,direction)
+end
+
+function _cbeproj(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol)
+    if direction == :right
+        return @tensor tmp[-1,-2;-3,-4] ≔ Q.A[2,-2,1,3] * A'.A[1,3,2,4] * A.A[-1,4,-3,-4]
+    elseif direction == :left 
+        return @tensor tmp[-1,-2;-3,-4] ≔ Q.A[2,1,-3,3] * A'.A[4,3,2,1] * A.A[-1,-2,4,-4]
+    end
+end
+
+function _cbeinner(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::Symbol)
+    if direction == :right
+        return @tensor tmp[-1;-2] ≔ Q.A[2,-1,1,3] * A'.A[1,3,2,-2]
+    elseif direction == :left
+        return @tensor tmp[-1;-2] ≔ Q.A[2,1,-2,3] * A'.A[-1,3,2,1]
+    end
+end
+
+function _cbeinner(Q::MPSTensor{3},A::MPSTensor{3},direction::Symbol)
+    if direction == :right
+        return @tensor tmp[-1;-2] ≔ Q.A[-1,2,1] * A'.A[1,-2,2]
+    elseif direction == :left
+        return @tensor tmp[-1;-2] ≔ Q.A[1,2,-2] * A'.A[-1,1,2]
+    end
+end
+
+# function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}
+#     @assert (center = obj.center[1]) == obj.center[2]
+#     tmp = norm(obj.A)
+#     obj.A[center] /= tmp
+#     return tmp
+# end

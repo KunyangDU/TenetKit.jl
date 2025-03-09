@@ -3,26 +3,43 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 8
+# Lx = 8
+# Ly = 1
+
+
+# ψ = let 
+#     AuxSpace = repeat([ℂ^1,], Lx*Ly)
+#     randMPS(TrivialSpinOneHalf.PhySpace     ,AuxSpace)
+# end 
+
+# Latt = YCSqua(Lx,Ly)
+
+# D = 2^8
+# params = (J=1,h=0.2,hz=0)
+
+# H = Hamiltonian(Latt;params...)
+
+# lsE = DMRG1!(ψ,H,truncdim(D) & truncbelow(1e-6))
+# Eg = lsE[end]
+
+
+
+Lx = 11
 Ly = 1
-
-
-ψ = let 
-    AuxSpace = repeat([ℂ^1,], Lx*Ly)
-    randMPS(TrivialSpinOneHalf.PhySpace     ,AuxSpace)
-end 
+D = 100
 
 Latt = YCSqua(Lx,Ly)
 
-D = 2^8
-params = (J=1,h=0.2,hz=0)
+ψ = let 
+    AuxSpace = repeat([ℂ^1,], Lx*Ly)
+    PhySpace = TrivialSpinOneHalf.PhySpace 
+    randMPS(PhySpace,AuxSpace)
+end
+
+params = (J=1,h=0.2,hz=1)
 
 H = Hamiltonian(Latt;params...)
-
-lsE = DMRG2!(ψ,H,D)
-Eg = lsE[end]
-@save "examples/Ising/data/ψ.jld2" ψ
-@save "examples/Ising/data/Eg.jld2" Eg
+lsE = DMRG1!(ψ,H,truncdim(D);Nsweep=3)
 
 #= showQuantSweep(lsE ./(J*Lx) .-0.25)
 @time "calculate observables" begin

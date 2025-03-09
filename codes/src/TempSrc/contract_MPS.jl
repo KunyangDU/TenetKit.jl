@@ -240,18 +240,18 @@ function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2
     return SparseRightEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
+function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D)
     for i in 1:Envorth.D
-        tmp[i] = contract(Envorth.A[i],Λ)
+        tmp[i] = contract(Envorth.A[i],A)
     end
     return SparseLeftEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
+function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D)
     for i in 1:Envorth.D
-        tmp[i] = contract(Envorth.A[i],Λ)
+        tmp[i] = contract(Envorth.A[i],A)
     end
     return SparseRightEnvironmentTensor(tmp)
 end

@@ -10,7 +10,7 @@ L = size(Latt)
 #@load "examples/TrivialSpinlessFermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
 params = (μ = 0,)
-D = 2^6
+D = 30
 
 tailname = "_tanTRG"
 

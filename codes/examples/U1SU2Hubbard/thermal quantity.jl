@@ -1,20 +1,21 @@
 using TensorKit,JLD2
 include("../../src/iMPS.jl")
 include("model.jl")
+foldername = "examples/U1SU2Hubbard/data"
 
 Lx = 6
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
-@load "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
+@load "$(foldername)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 D = 30
-params = (μ=0,)
+params = (U=0,)
 
 H= Hamiltonian(Latt;params...)
 
-@load "examples/U1Fermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
-@load "examples/U1Fermion/data/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
+@load "$(foldername)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
+@load "$(foldername)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 f = zeros(length(lsβ))
 u = zeros(length(lsβ))
 u2 = zeros(length(lsβ))

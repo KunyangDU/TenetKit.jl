@@ -34,3 +34,17 @@ function vonNeumann(S::AbstractTensorMap{sp,1,1}) where sp
     A = S/d |> x -> x*x'
     return real(VNtrace(-A*log(A)))
 end
+
+_maxdim(obj::Union{DenseMPS,DenseMPO}) = _maxdim(obj.ts)
+_maxdim(obj::Vector{MPSTensor}) where S = maximum(map(x -> dims(x) |> y -> max(y[1][1],y[2][1]),obj))
+_maxdim(obj::Vector{DenseMPOTensor}) where S = maximum(map(x -> dims(x) |> y -> max(y[1][2],y[2][1]),obj))
+
+_getdim(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) == TensorKit.TruncationDimension,collect(trunc.truncations))[1].dim
+_getcutoff(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) == TensorKit.TruncationCutoff,collect(trunc.truncations))[1].ϵ
+_!getdim(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) != TensorKit.TruncationDimension, collect(trunc.truncations))
+_updatedim(trunc::TensorKit.MultipleTruncation,ratio::Number) = TensorKit.MultipleTruncation(tuple(truncdim(ceil(Int64,_getdim(trunc)*ratio)),_!getdim(trunc)...))
+
+_getdim(trunc::TensorKit.TruncationDimension) = trunc.dim
+#TensorKit.truncdim(tc::TensorKit.TruncationDimension,ratio::Number) = truncdim(ceil(Int64,tc.dim*ratio))
+TensorKit.truncdim(tc::Union{TensorKit.MultipleTruncation,TensorKit.TruncationDimension},ratio::Number) = truncdim(ceil(Int64,_getdim(tc)*ratio))
+TensorKit.truncdim(trunc::TruncationScheme) = truncdim(_getdim(trunc))

@@ -71,6 +71,8 @@ Base.:*(A::AbstractTensorWrapper,B::AbstractTensorWrapper) = A.A * B.A
 Base.isapprox(A::AbstractTensorWrapper,B::AbstractTensorWrapper) = isapprox(A.A , B.A)
 TensorKit.space(A::AbstractTensorWrapper) = space(A.A)
 
+TensorKit.dims(A::AbstractTensorWrapper) = dims(A.A)
+
 #= function Base.:*(A::CompositeMPSTensor{2, 4}, B::AdjointCompositeMPSTensor{2, 4})
     return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
 end
