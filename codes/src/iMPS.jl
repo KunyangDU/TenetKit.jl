@@ -1,7 +1,5 @@
 using TensorKit, JLD2, MKL, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit
 
-include("default.jl")
-
 include("TensorWrapper/AbstractType.jl")
 include("TensorWrapper/AbstractTensor.jl")
 include("MPS/AbstractMPS.jl")
@@ -11,6 +9,13 @@ include("Hamiltonian/AbstractHamiltonian.jl")
 include("IntrTree/LocalOperator.jl")
 include("IntrTree/Node.jl")
 include("Observables/ObsTree.jl")
+include("ProcessControl/AbstractType.jl")
+include("ProcessControl/algorithm.jl")
+include("ProcessControl/direction.jl")
+include("ProcessControl/information.jl")
+include("ProcessControl/scheme.jl")
+
+include("default.jl")
 
 include("TensorWrapper/TensorWrapper.jl")
 include("TensorWrapper/canonicalize.jl")

@@ -23,7 +23,6 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,trunc::TruncationSche
         Lorth = orthogonalize!(env,A,EnvL,site)
         Rorth = orthogonalize!(env,B,EnvR,csite)
         Ω = _cbetensor(randn,B,D_f,:right)
-        # Ω = orthogonalize!(Ω',B,:right)'
         splice!(Lorth,Λ)
         Q,~ = leftorth(contract(Lorth,splice(Rorth,Ω)))
         Ω = Q'
@@ -52,7 +51,6 @@ function rsvd!(env::Environment{3},csite::Int64,λ::Number,trunc::TruncationSche
         Rorth = orthogonalize!(env,B,EnvR,site)
 
         Ω = _cbetensor(randn,A,D_f,:left)
-        # Ω = orthogonalize!(Ω',A,:left)'
         splice!(Rorth,Λ)
         ~,Q = rightorth(contract(splice(Lorth,Ω),Rorth))
         Ω = Q'

@@ -3,8 +3,8 @@ include("../../src/iMPS.jl")
 include("model.jl")
 foldername = "examples/U1SU2Hubbard/data"
 
-Lx = 4
-Ly = 4
+Lx = 6
+Ly = 1
 
 Latt = YCSqua(Lx,Ly)
 Ndop = 0
@@ -50,3 +50,15 @@ D = 400
 lsE = DMRG1!(ψ,H,truncdim(D)&truncbelow(1e-6))
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 
+
+A = ψ.ts[div(size(Latt),2)].A
+let 
+    D = 0
+    DD = 0
+    for (c,b) in blocks(A)
+        λ = diag(b)
+        D += length(λ)
+        DD += length(λ)*dim(c)
+    end
+    D,DD
+end

@@ -105,7 +105,7 @@ function _initialMPS(O::SparseProjectiveHamiltonian{2})
     return tmp
 end
 
-function groundEig(O::SparseProjectiveHamiltonian{N},alg::KrylovKit.KrylovAlgorithm = DMRGDefaultLanczos) where N
+function groundEig(O::SparseProjectiveHamiltonian{N},alg::KrylovKit.KrylovAlgorithm = DMRGDefaultLanczos.Alg) where N
     Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR,alg)
     return ApproxReal(Eg[1]), normalize(Ev[1]), info.numiter
 end
@@ -113,7 +113,7 @@ end
 function evolve!(
     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     O::SparseProjectiveHamiltonian{N}, τ::Number,
-    alg::KrylovKit.KrylovAlgorithm = TDVPDefaultLanczos) where N
+    alg::KrylovKit.KrylovAlgorithm = TDVPDefaultLanczos.Alg) where N
     nm = normalize!(obj)
     tmp,info = exponentiate(x -> action(O,x),-1im * τ,obj,alg)
     rmul!(tmp,nm)

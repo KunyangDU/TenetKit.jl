@@ -19,10 +19,23 @@ end
 H = Hamiltonian(Latt;μ=μ)
 
 D = 60
-
 lsE = DMRG1!(ψ,H,truncdim(D)&truncbelow(1e-6);Nsweep=5)
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 Eg = lsE[end]
+
+A = ψ.ts[div(size(Latt),2)].A
+let 
+    D = 0
+    DD = 0
+    for (c,b) in blocks(A)
+        λ = diag(b)
+        D += length(λ)
+        DD += length(λ)*dim(c)
+    end
+    D,DD
+end
+
+
 
 #= @time "calculate observables" begin
     Obs = MPSObservable()
