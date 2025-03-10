@@ -166,7 +166,7 @@ end
 """
 Monolayer Environment, i.e., only one layer MPO is considered.
 """
-mutable struct Environment{N} <: AbstractEnvironment
+mutable struct Environment{N,L} <: AbstractEnvironment
     layer::Vector
     envs::Union{Nothing,Vector{AbstractEnvironmentTensor}}
     center::Vector{Int64}
@@ -176,12 +176,12 @@ mutable struct Environment{N} <: AbstractEnvironment
         envs::Vector{AbstractEnvironmentTensor},
         center::Union{Nothing,Vector{Int64}},
         L::Union{Nothing,Int64})
-        return new{length(layer)}(layer,envs,center,L)
+        return new{length(layer),length(layer[1])}(layer,envs,center,L)
     end
 
     function Environment(layer::Vector)
         L = length(layer[1])
-        return new{length(layer)}(layer,nothing,[1,L],L)
+        return new{length(layer),length(layer[1])}(layer,nothing,[1,L],L)
     end
 
 end

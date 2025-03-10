@@ -179,3 +179,138 @@ function DMRG1!(Env::Environment{3},
 end
 
 
+#= =============================== =#
+
+
+function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
+    info =  DMRGinfo()
+    lsinfo = []
+    lsE = []
+    for _ in 1:Alg.N
+
+        l2rinfo = DMRGsweepinfo(L2R())
+        to = DMRG!(Env,Alg,l2rinfo)
+        show(to;title=">>> DMRG >>>")
+        print("\n")
+        show(l2rinfo)
+        print("\n")
+        merge!(info,l2rinfo)
+
+        r2linfo = DMRGsweepinfo(R2L())
+        to = DMRG!(Env,Alg,r2linfo)
+        show(to;title="<<< DMRG <<<")
+        print("\n")
+        show(r2linfo)
+        print("\n")
+        merge!(info,r2linfo)
+
+        GC.gc()
+
+        push!(lsinfo,deepcopy(info))
+        push!(lsE,info.E)
+
+        info.ϵ > Alg.tol && return lsinfo
+    end
+    return lsE,lsinfo
+end
+
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg,D,tol},info::DMRGsweepinfo{L2R}) where {L,alg,D,tol}
+    localto = TimerOutput()
+    lsE = []
+    for site in 1:L-1
+        localinfo = DMRGsiteinfo()
+        if alg <: CBEalgo 
+            cbeinfo = CBEinfo(L2R())
+            @timeit localto "CBE" CBE!(Env, Alg, Alg.alg, cbeinfo)
+            merge!(localinfo,cbeinfo)
+        end
+        @timeit localto "Krylov" begin
+            @timeit localto "projection" projH = proj1(Env,site)
+            @timeit localto "lanczos" localinfo.E, Egv, localinfo.solver = groundEig(projH)
+        end
+        @timeit localto "orthogonalize" begin
+            tl,tr = leftorth(Egv)
+            localinfo.bond = BondInfo(tr)
+            tr = contract(tr,Env.layer[1].ts[site+1])
+        end
+        @timeit localto "pushright" pushright!(Env,tl, tr)
+        merge!(info,localinfo)
+        push!(lsE,localinfo.E)
+    end
+
+    info.σE = std(filter(!isnan,lsE))
+
+    return localto
+end
+
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg,D,tol},info::DMRGsweepinfo{R2L}) where {L,alg,D,tol}
+    localto = TimerOutput()
+    lsE = []
+    for site in L:-1:2
+        localinfo = DMRGsiteinfo()
+        if alg <: CBEalgo 
+            cbeinfo = CBEinfo(R2L())
+            @timeit localto "CBE" CBE!(Env, Alg, Alg.alg, cbeinfo)
+            merge!(localinfo,cbeinfo)
+        end
+        @timeit localto "Krylov" begin
+            @timeit localto "projection" projH = proj1(Env,site)
+            @timeit localto "lanczos" localinfo.E, Egv, localinfo.solver = groundEig(projH)
+        end
+        @timeit localto "orthogonalize" begin
+            tl,tr = rightorth(Egv)
+            localinfo.bond = BondInfo(tl)
+            tl = contract(Env.layer[1].ts[site-1],tl)
+        end
+        @timeit localto "pushleft" pushleft!(Env,tl, tr)
+        merge!(info,localinfo)
+        push!(lsE,localinfo.E)
+    end
+
+    info.σE = std(filter(!isnan,lsE))
+
+    return localto
+end
+
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite,alg,D,tol},info::DMRGsweepinfo{L2R}) where {L,alg,D,tol}
+    localto = TimerOutput()
+    lsE = []
+    for site in 1:L-1
+        localinfo = DMRGsiteinfo()
+        @timeit localto "Krylov" begin
+            @timeit localto "projection" projH = proj2(Env,site,site+1)
+            @timeit localto "lanczos" localinfo.E,Egv,K = groundEig(projH)
+        end
+        @timeit localto "SVD" tl, tc, tr, localinfo.ϵ = tsvd(Egv; direction=:center,trunc = truncdim(Alg.D) & truncbelow(Alg.ϵ))
+        localinfo.bond = BondInfo(tc)
+        @timeit localto "contract" tr = contract(tc,tr) 
+        @timeit localto "pushright" pushright!(Env,tl, tr)
+        merge!(info,localinfo)
+        push!(lsE,localinfo.E)
+    end
+    info.σE = std(filter(!isnan,lsE))
+
+    return localto
+end
+
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite,alg,D,tol},info::DMRGsweepinfo{R2L}) where {L,alg,D,tol}
+    localto = TimerOutput()
+    lsE = []
+    for site in L:-1:2
+        localinfo = DMRGsiteinfo()
+            @timeit localto "Krylov" begin
+                @timeit localto "projection" projH = proj2(Env,site-1,site)
+                @timeit localto "lanczos" localinfo.E,Egv,K = groundEig(projH)
+            end 
+            @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(Egv; direction=:center,trunc = truncdim(Alg.D) & truncbelow(Alg.ϵ))
+            localinfo.bond = BondInfo(tc)
+            @timeit localto "contract" tl = contract(tl,tc) 
+            @timeit localto "pushleft" pushleft!(Env,tl, tr)
+        merge!(info,localinfo)
+        push!(lsE,localinfo.E)
+    end
+    info.σE = std(filter(!isnan,lsE))
+
+    return localto
+end
+

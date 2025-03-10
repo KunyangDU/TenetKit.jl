@@ -107,7 +107,7 @@ end
 
 function groundEig(O::SparseProjectiveHamiltonian{N},alg::KrylovKit.KrylovAlgorithm = DMRGDefaultLanczos.Alg) where N
     Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR,alg)
-    return ApproxReal(Eg[1]), normalize(Ev[1]), info.numiter
+    return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
 end
 
 function evolve!(
@@ -119,5 +119,5 @@ function evolve!(
     rmul!(tmp,nm)
     obj.A = tmp.A
     @assert info.residual ≈ 0
-    return obj, info.numiter
+    return obj, Lanczosinfo(info)
 end

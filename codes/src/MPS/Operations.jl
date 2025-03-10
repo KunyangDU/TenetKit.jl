@@ -45,16 +45,19 @@ function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, 
     @assert direction in [:center,:left,:right]
     vns = nothing
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
-    d = sqrt(@tensor S[1,2] * S'[2,1])
-    if d != 0
-        ϵ /= d
-        vns = vonNeumann(S)
-    end
     if direction == :center
-        return U,S,V,ϵ,vns
+        return map(MPSTensor,[U,S,permute(V,(1,2),(3,))])...,ϵ
     elseif direction == :left 
+        d = sqrt(@tensor S[1,2] * S'[2,1])
+        if d != 0
+            vns = vonNeumann(S)
+        end
         return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
     elseif direction == :right 
+        d = sqrt(@tensor S[1,2] * S'[2,1])
+        if d != 0
+            vns = vonNeumann(S)
+        end
         return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
     end
 end

@@ -1,7 +1,7 @@
 
 
 
-function ApproxReal(Qi::Number;tol::Float64=1e-1)
+function isapproxreal(Qi::Number;tol::Float64=1e-1)
     imag(Qi) <= tol && return real(Qi)
     @error "$(Qi) not real"
 end
