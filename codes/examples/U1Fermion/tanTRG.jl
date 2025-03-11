@@ -9,13 +9,13 @@ include("model.jl")
 Fermion complexity
 =#
 
-Lx = 6
-Ly = 1
+Lx = 8
+Ly = 4
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 30
+D = 1000
 params = (μ=0,)
 Ndop = 0
 H = Hamiltonian(Latt;params...)

@@ -3,13 +3,13 @@ include("../../src/iMPS.jl")
 include("model.jl")
 foldername = "examples/U1SU2Hubbard/data"
 
-Lx = 6
+Lx = 10
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @load "$(foldername)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 30
+D = 100
 params = (U=0,)
 
 H= Hamiltonian(Latt;params...)

@@ -3,8 +3,8 @@ include("../../src/iMPS.jl")
 include("model.jl")
 foldername = "examples/U1SU2Hubbard/data"
 
-Lx = 6
-Ly = 1
+Lx = 4
+Ly = 4
 
 Latt = YCSqua(Lx,Ly)
 Ndop = 0
@@ -41,13 +41,13 @@ end
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
 Obs.values =#
 
-params = (U = 0,)
+params = (U = 8,)
 
 H = Hamiltonian(Latt;params...)
 
-D = 50
+D = 1000
 
-lsE,lsinfo = DMRG2!(ψ,H,D)
+lsE,lsinfo = DMRG1!(ψ,H,D)
 @show lsE
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 

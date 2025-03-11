@@ -5,42 +5,50 @@ MPS + ENVR
 push left 
 """
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
-    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-2,3] * EnvR.A[1,2]
+    # @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-2,3] * EnvR.A[1,2]
+    @tensor tmp[-1;-2] ≔ A.A[-1,2,1] * mpot.A[4,2] * B.A[3,-2,4] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
-    @tensor tmp[-1 -2;-3] ≔ A.A[-1,4,1] * mpot.A[3,-2,4] * B.A[2,-3,3] * EnvR.A[1,2]
+    # @tensor tmp[-1 -2;-3] ≔ A.A[-1,4,1] * mpot.A[3,-2,4] * B.A[2,-3,3] * EnvR.A[1,2]
+    @tensor tmp[-1 -2;-3] ≔ A.A[-1,2,1] * mpot.A[4,-2,2] * B.A[3,-3,4] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
-    @tensor tmp[-1 -2 ; -3] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-3,3] * EnvR.A[1,-2,2]
+    # @tensor tmp[-1 -2 ; -3] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-3,3] * EnvR.A[1,-2,2]
+    @tensor tmp[-1 -2 ; -3] ≔ A.A[-1,2,1] * mpot.A[3,2] * B.A[4,-3,3] * EnvR.A[1,-2,4]
     return RightEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
-    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,5,4] * B.A[2,-2,3] * EnvR.A[1,5,2]
+    # @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,5,4] * B.A[2,-2,3] * EnvR.A[1,5,2]
+    @tensor tmp[-1;-2] ≔ A.A[-1,2,1] * mpot.A[5,3,2] * B.A[4,-2,5] * EnvR.A[1,3,4]
     return RightEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
-    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,2]
+    # @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,2]
+    @tensor tmp[-1;-2] ≔ A.A[3,4,-2] * mpot.A[2,4] * B.A[-1,1,2] * EnvL.A[1,3]
     return LeftEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
-    @tensor tmp[-1;-2 -3] ≔ A.A[2,4,-3] * mpot.A[3,-2,4] * B.A[-1,1,3] * EnvL.A[1,2]
+    # @tensor tmp[-1;-2 -3] ≔ A.A[2,4,-3] * mpot.A[3,-2,4] * B.A[-1,1,3] * EnvL.A[1,2]
+    @tensor tmp[-1;-2 -3] ≔ A.A[3,4,-3] * mpot.A[2,-2,4] * B.A[-1,1,2] * EnvL.A[1,3]
     return LeftEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
-    @tensor tmp[-1 -2 ; -3] ≔ A.A[2,4,-3] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,-2,2]
+    # @tensor tmp[-1 -2 ; -3] ≔ A.A[2,4,-3] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,-2,2]
+    @tensor tmp[-1 -2 ; -3] ≔ A.A[3,4,-3] * mpot.A[2,4] * B.A[-1,1,2] * EnvL.A[1,-2,3]
     return LeftEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
-    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,5,4] * B.A[-1,1,3] * EnvL.A[1,5,2]
+    # @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,5,4] * B.A[-1,1,3] * EnvL.A[1,5,2]
+    @tensor tmp[-1;-2] ≔ A.A[4,5,-2] * mpot.A[3,2,5] * B.A[-1,1,3] * EnvL.A[1,2,4]
     return LeftEnvironmentTensor(tmp)
 end
 
@@ -324,11 +332,11 @@ function contract(A::AdjointMPSTensor{3},B::MPSTensor{3})
 end
 
 function contract(B::AdjointCompositeMPOTensor{2,6}, A::CompositeMPOTensor{2,6})
-    return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
+    return  @tensor A.A[5,6,2,1,3,4] * B.A[1,3,4,5,6,2]
 end
 
 function contract(B::AdjointCompositeMPSTensor{2, 4}, A::CompositeMPSTensor{2, 4})
-    return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
+    return @tensor A.A[1,3,4,2] * B.A[2,1,3,4]
 end
 
 function contract(A::MPSTensor{3}, B::MPSTensor{3})
@@ -336,7 +344,7 @@ function contract(A::MPSTensor{3}, B::MPSTensor{3})
 end
 
 function contract(A::MPSTensor{3}, B::AdjointMPSTensor{3})
-    return @tensor A.A[1,2,3] * B.A[3,1,2]
+    return @tensor A.A[1,3,2] * B.A[2,1,3]
 end
 
 function contract(B::AdjointMPOTensor{4}, A::DenseMPOTensor{4})

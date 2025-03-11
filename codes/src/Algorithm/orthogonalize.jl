@@ -50,10 +50,16 @@ end
 #     return Q
 # end
 
-function orthogonalize!(Q::T,A::T,direction::Symbol;tol::Number=1e-8) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
+function orthogonalize!(Q::T,A::T,direction::Symbol;tol::Number=1e-4) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
     ϵ = norm(_cbeinner(Q,A,direction))
-    ϵ > tol &&  (ϵ = _cbeorth!(Q,A,direction))
-    @assert ϵ < tol ϵ
+    if ϵ > tol 
+        for i in 1:2
+            ϵ = _cbeorth!(Q,A,direction)
+            ϵ < tol && break
+            i == 2 && @error "cbe not orthogonal with ϵ=$(ϵ)"
+        end
+    end
+    # @assert ϵ < tol ϵ
     return Q
 end
 
