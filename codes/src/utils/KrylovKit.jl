@@ -105,19 +105,37 @@ function _initialMPS(O::SparseProjectiveHamiltonian{2})
     return tmp
 end
 
-function groundEig(O::SparseProjectiveHamiltonian{N},alg::KrylovKit.KrylovAlgorithm = DMRGDefaultLanczos.Alg) where N
-    Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR,alg)
+# function groundEig(O::SparseProjectiveHamiltonian{N},alg::KrylovKit.KrylovAlgorithm = DMRGDefaultLanczos.Alg) where N
+#     Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR,alg)
+#     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
+# end
+
+# function evolve!(
+#     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+#     O::SparseProjectiveHamiltonian{N}, τ::Number,
+#     alg::KrylovKit.KrylovAlgorithm = TDVPDefaultLanczos.Alg) where N
+#     nm = normalize!(obj)
+#     tmp,info = exponentiate(x -> action(O,x),-1im * τ,obj,alg)
+#     rmul!(tmp,nm)
+#     obj.A = tmp.A
+#     @assert info.residual ≈ 0
+#     return obj, Lanczosinfo(info)
+# end
+
+function groundEig(O::SparseProjectiveHamiltonian{N},alg::Krylovalgo = DMRGDefaultLanczos) where N
+    Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR, alg.Alg)
     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
 end
 
 function evolve!(
     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     O::SparseProjectiveHamiltonian{N}, τ::Number,
-    alg::KrylovKit.KrylovAlgorithm = TDVPDefaultLanczos.Alg) where N
+    alg::Krylovalgo = TDVPDefaultLanczos) where N
     nm = normalize!(obj)
-    tmp,info = exponentiate(x -> action(O,x),-1im * τ,obj,alg)
+    tmp,info = exponentiate(x -> action(O,x), τ, obj, alg.Alg)
     rmul!(tmp,nm)
     obj.A = tmp.A
     @assert info.residual ≈ 0
     return obj, Lanczosinfo(info)
 end
+

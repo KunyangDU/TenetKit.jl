@@ -63,7 +63,7 @@ mutable struct TDVPinfo <: AlgorithmInfo
     ϵ::Number
     TDVPinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number) = new(bond,solver,n,ϵ)
     TDVPinfo(info::TDVPinfo) = new(BondInfo(),Lanczosinfo(),info.n,0)
-    TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0,Inf,0)
+    TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0)
 end
 
 mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir
@@ -89,7 +89,7 @@ end
 #     return DMRGsweepinfo(sch₁,merge(A.bond, B.bond),merge(A.solver, B.solver),min(A.E,B.E),max(A.σE,B.σE))
 # end
 
-function merge!(A::DMRGinfo,B::DMRGsweepinfo{dir}) where dir
+function TimerOutputs.merge!(A::DMRGinfo,B::DMRGsweepinfo{dir}) where dir
     merge!(A.bond, B.bond)
     merge!(A.solver, B.solver)
     A.ϵ = max(A.ϵ,B.ϵ)
@@ -99,22 +99,31 @@ function merge!(A::DMRGinfo,B::DMRGsweepinfo{dir}) where dir
     return A
 end
 
-function merge!(A::DMRGsweepinfo{dir},B::DMRGsiteinfo) where dir
+function TimerOutputs.merge!(A::TDVPinfo,B::TDVPsweepinfo{dir}) where dir
     merge!(A.bond, B.bond)
     merge!(A.solver, B.solver)
     A.ϵ = max(A.ϵ,B.ϵ)
-    A.E = min(A.E,B.E)
-    A.σE = max(A.σE,B.σE)
     return A
 end
 
-function merge!(info1::DMRGsiteinfo, info2::CBEinfo)
+function TimerOutputs.merge!(A::T₁,B::T₂) where {T₁<:Union{DMRGsweepinfo,TDVPsweepinfo},T₂<:Union{DMRGsiteinfo,TDVPsiteinfo}}
+    merge!(A.bond, B.bond)
+    merge!(A.solver, B.solver)
+    A.ϵ = max(A.ϵ,B.ϵ)
+    if T₁ <: DMRGsweepinfo && T₂ <: DMRGsiteinfo
+        A.E = min(A.E,B.E)
+        A.σE = max(A.σE,B.σE)
+    end
+    return A
+end
+
+function TimerOutputs.merge!(info1::T, info2::CBEinfo) where T <: Union{DMRGsiteinfo,TDVPsiteinfo}
     info1.ϵ = max(info1.ϵ, info2.ϵ)
 end
 
 #= ========================= =#
 
-function merge!(A::Lanczosinfo,B::Lanczosinfo)
+function TimerOutputs.merge!(A::Lanczosinfo,B::Lanczosinfo)
     A.converged = A.converged & B.converged
     A.numiter = max(A.numiter,B.numiter)
     return A
@@ -122,14 +131,14 @@ end
 
 #= ========================= =#
 
-function merge!(A::BondInfo,B::BondInfo)
+function TimerOutputs.merge!(A::BondInfo,B::BondInfo)
     A.Deff = max(A.Deff, B.Deff)
     A.D = max(A.D,B.D)
     A.S = max(A.S,B.S)
     return A
 end
 
-merge(A::BondInfo,B::BondInfo) = BondInfo(max(A.Deff, B.Deff), max(A.D,B.D), max(A.S,B.S) )
+TimerOutputs.merge(A::BondInfo,B::BondInfo) = BondInfo(max(A.Deff, B.Deff), max(A.D,B.D), max(A.S,B.S) )
 
 function update!(A::BondInfo,B::Union{MPSTensor{2},DenseMPOTensor{2}})
     merge!(A,BondInfo(B))

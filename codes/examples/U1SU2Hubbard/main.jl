@@ -45,20 +45,10 @@ params = (U = 0,)
 
 H = Hamiltonian(Latt;params...)
 
-D = 400
+D = 50
 
-lsE = DMRG1!(ψ,H,truncdim(D)&truncbelow(1e-6))
+lsE,lsinfo = DMRG2!(ψ,H,D)
+@show lsE
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 
 
-A = ψ.ts[div(size(Latt),2)].A
-let 
-    D = 0
-    DD = 0
-    for (c,b) in blocks(A)
-        λ = diag(b)
-        D += length(λ)
-        DD += length(λ)*dim(c)
-    end
-    D,DD
-end

@@ -17,12 +17,12 @@ end
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
 D = 60
-env = Environment([ψ,H,ψ'])
-initialize!(env)
-Alg = DMRGalgo(SingleSite(),CBEalgo(randSVD(),1.2),D,1e-6,5,1e-4,DMRGDefaultLanczos)
+# env = Environment([ψ,H,ψ'])
+# initialize!(env)
+# Alg = DMRGalgo(SingleSite(),CBEalgo(randSVD(),1.2),D,1e-6,5,1e-4,DMRGDefaultLanczos)
 #Alg = DMRGalgo(DoubleSite(),NoAlgorithm(),D,1e-6,5,1e-4,DMRGDefaultLanczos)
 
-lsE,lsinfo = DMRG!(env,Alg)
+lsE,lsinfo = DMRG1!(ψ,H,D)
 
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 

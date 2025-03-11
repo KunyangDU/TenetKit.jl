@@ -58,7 +58,7 @@ include("Algorithm/utils.jl")
 
 include("LocalSpace/Fermion.jl")
 include("LocalSpace/Spin.jl")
-include("LocalSpace/Spin.jl")
+include("LocalSpace/trivial.jl")
 
 # include("default.jl")
 # include("TempSrc/AbstractType.jl")
