@@ -2,20 +2,17 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-
-
-
 #= 
 Fermion complexity
 =#
 
 Lx = 8
-Ly = 4
+Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 1000
+D = 120
 params = (μ=0,)
 Ndop = 0
 H = Hamiltonian(Latt;params...)
@@ -28,8 +25,8 @@ end
 
 lsβ = vcat(2. .^ (-10:1:-1), 1:10)
 
-SETTN!(lsβ[1], H, ρ;D=20)
-lsρ,lsinfo = tanTRG1!(ρ, H, lsβ, D)
+SETTN!(lsβ[1], H, ρ;D=D)
+lsρ,lsinfo = tanTRG1!(ρ, H, lsβ;trunc = truncdim(D) & truncbelow(1e-6))
 
 @save "examples/U1Fermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 @save "examples/U1Fermion/data/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ

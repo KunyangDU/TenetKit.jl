@@ -237,13 +237,18 @@
 
 #= ================================ =#
 
-function TDVP1!(Env::Environment{3}, lst::AbstractVector;D::Int64)
+function TDVP1!(Env::Environment{3}, lst::AbstractVector;kwargs...)
 
     lsobj = Vector(undef,1)
     lsobj[1] = deepcopy(Env.layer[1])
     info = TDVPinfo()
     lsinfo = []
-    alg = TDVPalgo(SingleSite(),CBEalgo(randSVD(),1.2),D,1e-6,0,1e-4,TDVPDefaultLanczos)
+    trunc = get(kwargs,:trunc,notrunc())
+    solver = get(kwargs,:solver,TDVPDefaultLanczos)
+    tol = get(kwargs,:tol,1e-4)
+    λ = get(kwargs,:λ,1.2)
+    subalgo = get(kwargs,:subalgo,CBEalgo(randSVD(),λ,_getdim(trunc),_getcutoff(trunc)))
+    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver)
     
     for i in 2:length(lst)
         τ = (lst[i]-lst[i-1])/2
@@ -252,7 +257,7 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector;D::Int64)
         
         TDVP!(Env, alg, info)
 
-        info.ϵ > alg.tol && break
+        info.err > alg.tol && break
         push!(lsobj,deepcopy(Env.layer[1]))
         push!(lsinfo,deepcopy(info))
     end
@@ -260,13 +265,17 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector;D::Int64)
     return lsobj,lsinfo
 end
 
-function TDVP2!(Env::Environment{3}, lst::AbstractVector;D::Int64)
+function TDVP2!(Env::Environment{3}, lst::AbstractVector;kwargs...)
 
     lsobj = Vector(undef,1)
     lsobj[1] = deepcopy(Env.layer[1])
     info = TDVPinfo()
     lsinfo = []
-    alg = TDVPalgo(DoubleSite(),NoAlgorithm(),D,1e-6,0,1e-4,TDVPDefaultLanczos)
+    trunc = get(kwargs,:trunc,notrunc())
+    solver = get(kwargs,:solver,TDVPDefaultLanczos)
+    tol = get(kwargs,:tol,1e-4)
+    subalgo = get(kwargs,:subalgo,NoAlgorithm())
+    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver)
     
     for i in 2:length(lst)
         τ = (lst[i]-lst[i-1])/2
@@ -275,7 +284,7 @@ function TDVP2!(Env::Environment{3}, lst::AbstractVector;D::Int64)
         
         TDVP!(Env, alg, info)
 
-        info.ϵ > alg.tol && break
+        info.err > alg.tol && break
         push!(lsobj,deepcopy(Env.layer[1]))
         push!(lsinfo,deepcopy(info))
     end
@@ -285,20 +294,18 @@ end
 
 function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) where L
 
-    l2rinfo = TDVPsweepinfo(L2R())
+    l2rinfo = TDVPsweepinfo(L2R(),info.err)
     to = TDVP!(Env,Alg,l2rinfo)
     show(to;title=">>> TDVP >>>")
     print("\n")
     show(l2rinfo)
-    print("\n")
     merge!(info,l2rinfo)
 
-    r2linfo = TDVPsweepinfo(R2L())
+    r2linfo = TDVPsweepinfo(R2L(),info.err)
     to = TDVP!(Env,Alg,r2linfo)
     show(to;title="<<< TDVP <<<")
     print("\n")
     show(r2linfo)
-    print("\n")
     merge!(info,r2linfo)
 
     GC.gc()
@@ -309,7 +316,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
     for site in 1:L-1
         localinfo = TDVPsiteinfo()
         @timeit localto "evolve" tmp,localinfo.solver = evolve!(composite(Env.layer[1].ts[site:site+1]...), proj2(Env,site,site+1), Alg.τ, Alg.solver)
-        @timeit localto "SVD" tl, tc, tr, localinfo.ϵ = tsvd(tmp; direction=:center,trunc = truncdim(Alg.D) & truncbelow(Alg.ϵ))
+        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(tmp; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
         tr = contract(tc,tr)
         to,solver = pushright!(Env, tl, tr, Alg.τ, Alg.solver)
@@ -328,7 +335,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
     for site in L:-1:2
         localinfo = TDVPsiteinfo()
         @timeit localto "evolve" tmp, localinfo.solver = evolve!(composite(Env.layer[1].ts[site-1:site]...), proj2(Env,site-1,site), Alg.τ, Alg.solver)
-        @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncdim(Alg.D) & truncbelow(Alg.ϵ))
+        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(tmp; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
         tl = contract(tl,tc)
         to,solver = pushleft!(Env, tl, tr, Alg.τ, Alg.solver)
@@ -350,11 +357,12 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
             @timeit localto "CBE" begin
                 cbeinfo = CBEinfo(L2R())
                 B = deepcopy(Env.layer[1].ts[site+1])
-                CBE!(Env,Alg,Alg.alg,cbeinfo)
+                cbeto = CBE!(Env,Alg.alg,cbeinfo)
                 splice!(Env.layer[1],B,site+1)
                 Env.layer[3].ts[site] = Env.layer[1].ts[site]'
                 merge!(localinfo,cbeinfo)
             end
+            merge!(localto,cbeto,tree_point = ["CBE"])
         end
         @timeit localto "evolve" tmp,localinfo.solver = evolve!(Env.layer[1].ts[site], proj1(Env,site), Alg.τ, Alg.solver)
         @timeit localto "orthogonalize" begin
@@ -380,11 +388,12 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
             @timeit localto "CBE" begin
                 cbeinfo = CBEinfo(R2L())
                 A = deepcopy(Env.layer[1].ts[site-1])
-                CBE!(Env,Alg,Alg.alg,cbeinfo)
+                cbeto = CBE!(Env,Alg.alg,cbeinfo)
                 splice!(Env.layer[1],A,site-1)
                 Env.layer[3].ts[site] = Env.layer[1].ts[site]'
                 merge!(localinfo,cbeinfo)
             end
+            merge!(localto,cbeto,tree_point = ["CBE"])
         end
         @timeit localto "evolve" tmp, localinfo.solver = evolve!(Env.layer[1].ts[site], proj1(Env,site), Alg.τ, Alg.solver)
         @timeit localto "orthogonalize" begin
@@ -402,41 +411,41 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
     return localto
 end
 
-function TDVP1!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number,D::Int64)
+function TDVP1!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number;kwargs...)
     @time "initialize environment" begin 
         Env = Environment([ψ,H,ψ'])
         initialize!(Env)
     end
     lst = range(0,t,Nt)
-    lsobj,lsinfo = TDVP1!(Env,1im * lst;D=D)
+    lsobj,lsinfo = TDVP1!(Env,1im * lst;kwargs...)
     return lst,lsobj,lsinfo
 end
 
-function TDVP2!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number,D::Int64)
+function TDVP2!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number;kwargs...)
     @time "initialize environment" begin 
         Env = Environment([ψ,H,ψ'])
         initialize!(Env)
     end
     lst = range(0,t,Nt)
-    lsobj,lsinfo = TDVP2!(Env,1im * lst;D=D)
+    lsobj,lsinfo = TDVP2!(Env,1im * lst;kwargs...)
     return lst,lsobj,lsinfo
 end
 
 
-function tanTRG1!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector,D::Int64)
+function tanTRG1!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
     @time "initialize environment" begin 
         Env = Environment([ρ,H,ρ'])
         initialize!(Env)
     end
-    lsobj,lsinfo = TDVP1!(Env, - lsβ;D=D)
+    lsobj,lsinfo = TDVP1!(Env, - lsβ;kwargs...)
     return lsobj,lsinfo
 end
-function tanTRG2!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector,D::Int64)
+function tanTRG2!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
     @time "initialize environment" begin 
         Env = Environment([ρ,H,ρ'])
         initialize!(Env)
     end
-    lsobj,lsinfo = TDVP2!(Env, - lsβ;D=D)
+    lsobj,lsinfo = TDVP2!(Env, - lsβ;kwargs...)
     return lsobj,lsinfo
 end
 

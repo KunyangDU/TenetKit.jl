@@ -11,38 +11,46 @@ Nsweep: times of variational calculation (sweep). Default is 2.
 """
 function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,SparseMPO}, α::Number, β::Number; kwargs...)
     #D_MPO = get(kwargs, :D_MPO, maximum(vcat(map(size, filter(x -> typeof(x) <: DenseMPO.[A,B])[1].ts)...)))
+    to = TimerOutput()
     D = get(kwargs, :D, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
     Nsweep = get(kwargs, :Nsweep, 2)
+    tol = get(kwargs, :tol, 1e-4)
     @assert length(A) == length(B)
     L = length(A)
 
     tmp = deepcopy(C)'
-    EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
-    EnvC = Environment([deepcopy(C),tmp])
-    initialize!(EnvAB)
-    initialize!(EnvC)
+    @timeit to "initialize ABC Env" begin
+        EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
+        EnvC = Environment([deepcopy(C),tmp])
+        initialize!(EnvAB)
+        initialize!(EnvC)
+    end
 
     for i in 1:Nsweep
+        localto = TimerOutput()
+        
         totaltruncerror = 0
         for site in 1:L-1
-            tl, tr, temptruncerr = tsvd(let 
-                ts = map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])
-                axpby!(α, β, ts...)
-            end; direction=:right,trunc = truncdim(D))
-            map(z -> pushright!(z, tl, tr),[EnvAB,EnvC])
+            @timeit localto "contract" ts = map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])
+            @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpby!(α, β, ts...); direction=:right,trunc = truncdim(D))
+            @timeit localto "push right" map(z -> pushright!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
         for site in L:-1:2
-            tl, tr, temptruncerr = tsvd(let 
-                axpby!(α, β,map(z -> contract(z.envs[site-1], vcat(map(u -> z.layer[u].ts[site-1:site],1:length(z.layer)-1)...)..., z.envs[site+1]),[EnvAB,EnvC])...)
-            end; direction=:left,trunc = truncdim(D))
-            map(z -> pushleft!(z, tl, tr),[EnvAB,EnvC])
+            @timeit localto "contract" ts = map(z -> contract(z.envs[site-1], vcat(map(u -> z.layer[u].ts[site-1:site],1:length(z.layer)-1)...)..., z.envs[site+1]),[EnvAB,EnvC])
+            @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpby!(α, β,ts...); direction=:left,trunc = truncdim(D))
+            @timeit localto "push left" map(z -> pushleft!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
+
+        # show(localto;title = "mul!")
+        merge!(to,localto)
+
+        totaltruncerror > tol && @error "mul! trunc error"
     end
 
     @assert EnvAB.layer[end] == EnvC.layer[end]
-    return xpy!(EnvAB.layer[end]',C)
+    return xpy!(EnvAB.layer[end]',C),to
 end
 """
 axpy!(α, x, y) -> y
@@ -55,57 +63,41 @@ Nsweep: times of variational calculation (sweep). Default is 2.
 function axpy!(α::Number, x::DenseMPO{L}, y::DenseMPO{L};kwargs...) where L
     D = get(kwargs, :D, max(map(y -> maximum(vcat(collect.(map(size, y.ts))...)),[x,y])...))
     Nsweep = get(kwargs, :Nsweep, 3)
+    tol = get(kwargs, :tol, 1e-4)
 
     tmp = deepcopy(y)'
-#=     @time "Initialize x,y Environment" begin
+    to = TimerOutput()
+    @timeit to "initialize XY Env" begin
         Envx = Environment([deepcopy(x),tmp])
         Envy = Environment([deepcopy(y),tmp])
         initialize!(Envx)
         initialize!(Envy)
-    end =#
-    Envx = Environment([deepcopy(x),tmp])
-    Envy = Environment([deepcopy(y),tmp])
-    initialize!(Envx)
-    initialize!(Envy)
+    end
 
     for i in 1:Nsweep
+        localto = TimerOutput()
         totaltruncerror = 0
         for site in 1:L-1
-            tl, tr, temptruncerr = tsvd(let 
-                axpy!(α,map(z -> contract(z.envs[site], z.layer[1].ts[site:site+1]..., z.envs[site+2]),[Envx,Envy])...)
-            end; direction=:right,trunc = truncdim(D))
-            map(z -> pushright!(z, tl, tr),[Envx,Envy])
+            @timeit localto "contract" ts = map(z -> contract(z.envs[site], z.layer[1].ts[site:site+1]..., z.envs[site+2]),[Envx,Envy])
+            @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpy!(α,ts...); direction=:right,trunc = truncdim(D))
+            @timeit localto "push right" map(z -> pushright!(z, tl, tr),[Envx,Envy])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
         for site in L:-1:2
-            tl, tr, temptruncerr = tsvd(let 
-                axpy!(α,map(z -> contract(z.envs[site-1], z.layer[1].ts[site-1:site]..., z.envs[site+1]),[Envx,Envy])...)
-            end; direction=:left,trunc = truncdim(D))
-            map(z -> pushleft!(z, tl, tr),[Envx,Envy])
+            @timeit localto "contract" ts = map(z -> contract(z.envs[site-1], z.layer[1].ts[site-1:site]..., z.envs[site+1]),[Envx,Envy])
+            @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpy!(α,ts...); direction=:left,trunc = truncdim(D))
+            @timeit localto "push left" map(z -> pushleft!(z, tl, tr),[Envx,Envy])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
-        #= @time "sweep $i finished, max truncation error = $(totaltruncerror)" begin
-            #println(">>>>>> Right >>>>>>")
-            for site in 1:L-1
-                tl, tr, temptruncerr = tsvd(let 
-                    axpy!(α,map(z -> contract(z.envs[site], z.layer[1].ts[site:site+1]..., z.envs[site+2]),[Envx,Envy])...)
-                end; direction=:right,trunc = truncdim(D_MPO))
-                map(z -> pushright!(z,map(DenseMPOTensor, [tl, tr])...),[Envx,Envy])
-                totaltruncerror = max(totaltruncerror,temptruncerr)
-            end
-            #println("<<<<<< Left <<<<<<")
-            for site in L:-1:2
-                tl, tr, temptruncerr = tsvd(let 
-                    axpy!(α,map(z -> contract(z.envs[site-1], z.layer[1].ts[site-1:site]..., z.envs[site+1]),[Envx,Envy])...)
-                end; direction=:left,trunc = truncdim(D_MPO))
-                map(z -> pushleft!(z,map(DenseMPOTensor, [tl, tr])...),[Envx,Envy])
-                totaltruncerror = max(totaltruncerror,temptruncerr)
-            end
-        end =#
+
+        # show(localto;title = "axpy!")
+        merge!(to,localto)
+
+        totaltruncerror > tol && @error "axpy! trunc error"
     end
 
     @assert Envx.layer[2] == Envy.layer[2]
-    return xpy!(Envx.layer[2]',y)
+    return xpy!(Envx.layer[2]',y),to
 end
 
 function axpy!(α::Number, x::CompositeMPOTensor{N₁,R₁}, y::CompositeMPOTensor{N₂,R₂}) where {N₁,R₁,N₂,R₂}

@@ -3,6 +3,7 @@ include("../../src/iMPS.jl")
 include("model.jl")
 
 
+
 Lx = 4
 Ly = 4
 
@@ -16,13 +17,13 @@ end
 
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
-D = 60
+D = 120
 # env = Environment([ψ,H,ψ'])
 # initialize!(env)
 # Alg = DMRGalgo(SingleSite(),CBEalgo(randSVD(),1.2),D,1e-6,5,1e-4,DMRGDefaultLanczos)
 #Alg = DMRGalgo(DoubleSite(),NoAlgorithm(),D,1e-6,5,1e-4,DMRGDefaultLanczos)
 
-lsE,lsinfo = DMRG1!(ψ,H,D)
+lsE,lsinfo = DMRG1!(ψ,H;trunc = truncdim(D) & truncbelow(1e-6))
 
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 

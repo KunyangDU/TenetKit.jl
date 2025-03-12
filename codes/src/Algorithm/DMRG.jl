@@ -166,22 +166,32 @@
 
 #= =============================== =#
 
-function DMRG1!(ψ::DenseMPS,H::SparseMPO,D::Int64)
+function DMRG1!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ'])
         initialize!(Env)
     end
-    alg = DMRGalgo(SingleSite(),CBEalgo(randSVD(),1.2),D,1e-6,5,1e-4,DMRGDefaultLanczos)
+    trunc = get(kwargs,:trunc,notrunc())
+    solver = get(kwargs,:solver,DMRGDefaultLanczos)
+    N = get(kwargs,:N,5)
+    tol = get(kwargs,:tol,1e-4)
+    subalgo = get(kwargs,:subalgo,CBEalgo(randSVD(),1.2,_getdim(trunc),_getcutoff(trunc)))
+    alg = DMRGalgo(SingleSite(),subalgo,trunc,N,tol,solver)
     lsE,lsinfo = DMRG!(Env,alg)
     return lsE,lsinfo
 end
 
-function DMRG2!(ψ::DenseMPS,H::SparseMPO,D::Int64)
+function DMRG2!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ'])
         initialize!(Env)
     end
-    alg = DMRGalgo(DoubleSite(),CBEalgo(randSVD(),1.2),D,1e-6,5,1e-4,DMRGDefaultLanczos)
+    trunc = get(kwargs,:trunc,notrunc())
+    solver = get(kwargs,:solver,DMRGDefaultLanczos)
+    N = get(kwargs,:N,5)
+    tol = get(kwargs,:tol,1e-4)
+    subalgo = get(kwargs,:subalgo,NoAlgorithm())
+    alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,tol,solver)
     lsE,lsinfo = DMRG!(Env,alg)
     return lsE,lsinfo
 end
@@ -198,7 +208,6 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
         show(to;title=">>> DMRG >>>")
         print("\n")
         show(l2rinfo)
-        print("\n")
         merge!(info,l2rinfo)
 
         r2linfo = DMRGsweepinfo(R2L())
@@ -206,7 +215,6 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
         show(to;title="<<< DMRG <<<")
         print("\n")
         show(r2linfo)
-        print("\n")
         merge!(info,r2linfo)
 
         GC.gc()
@@ -214,20 +222,21 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
         push!(lsinfo,deepcopy(info))
         push!(lsE,info.E)
 
-        info.ϵ > Alg.tol && return lsE,lsinfo
+        info.err > Alg.tol && return lsE,lsinfo
     end
     return lsE,lsinfo
 end
 
-function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg,D,tol},info::DMRGsweepinfo{L2R}) where {L,alg,D,tol}
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGsweepinfo{L2R}) where {L,alg}
     localto = TimerOutput()
     lsE = []
     for site in 1:L-1
         localinfo = DMRGsiteinfo()
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(L2R())
-            @timeit localto "CBE" CBE!(Env, Alg, Alg.alg, cbeinfo)
+            @timeit localto "CBE" cbeto = CBE!(Env, Alg.alg, cbeinfo)
             merge!(localinfo,cbeinfo)
+            merge!(localto,cbeto,tree_point = ["CBE"])
         end
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site)
@@ -248,15 +257,16 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg,D,tol},info::D
     return localto
 end
 
-function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg,D,tol},info::DMRGsweepinfo{R2L}) where {L,alg,D,tol}
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGsweepinfo{R2L}) where {L,alg}
     localto = TimerOutput()
     lsE = []
     for site in L:-1:2
         localinfo = DMRGsiteinfo()
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(R2L())
-            @timeit localto "CBE" CBE!(Env, Alg, Alg.alg, cbeinfo)
+            @timeit localto "CBE" cbeto = CBE!(Env, Alg.alg, cbeinfo)
             merge!(localinfo,cbeinfo)
+            merge!(localto,cbeto,tree_point = ["CBE"])
         end
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site)
@@ -277,7 +287,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg,D,tol},info::D
     return localto
 end
 
-function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite,alg,D,tol},info::DMRGsweepinfo{L2R}) where {L,alg,D,tol}
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepinfo{L2R}) where L
     localto = TimerOutput()
     lsE = []
     for site in 1:L-1
@@ -286,7 +296,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite,alg,D,tol},info::D
             @timeit localto "projection" projH = proj2(Env,site,site+1)
             @timeit localto "lanczos" localinfo.E,Egv,K = groundEig(projH)
         end
-        @timeit localto "SVD" tl, tc, tr, localinfo.ϵ = tsvd(Egv; direction=:center,trunc = truncdim(Alg.D) & truncbelow(Alg.ϵ))
+        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "pushright" pushright!(Env,tl, tr)
@@ -298,7 +308,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite,alg,D,tol},info::D
     return localto
 end
 
-function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite,alg,D,tol},info::DMRGsweepinfo{R2L}) where {L,alg,D,tol}
+function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepinfo{R2L}) where L
     localto = TimerOutput()
     lsE = []
     for site in L:-1:2
@@ -307,7 +317,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite,alg,D,tol},info::D
                 @timeit localto "projection" projH = proj2(Env,site-1,site)
                 @timeit localto "lanczos" localinfo.E,Egv,K = groundEig(projH)
             end 
-            @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(Egv; direction=:center,trunc = truncdim(Alg.D) & truncbelow(Alg.ϵ))
+            @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
             localinfo.bond = BondInfo(tc)
             @timeit localto "contract" tl = contract(tl,tc) 
             @timeit localto "pushleft" pushleft!(Env,tl, tr)

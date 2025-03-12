@@ -7,36 +7,46 @@ mutable struct Krylovalgo <: SolverAlgo
     Krylovalgo(Alg::KrylovKit.KrylovAlgorithm) = new(Alg)
 end
 
-mutable struct DMRGalgo{Sch,Alg,Dim,Tol} <: AbstractAlgorithm where {Sch,Alg,Dim,Tol}
+mutable struct SETTNalgo{Sch} <: AbstractAlgorithm where {Sch}
+    scheme::AbstractScheme
+    N::Int64
+    D::Int64
+    tol::Number
+    function SETTNalgo(scheme::AbstractScheme, N::Int64, D::Int64, tol::Number)
+        new{typeof(scheme)}(scheme,N,D,tol)
+    end
+end
+
+mutable struct DMRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     scheme::AbstractScheme
     alg::AbstractAlgorithm
-    D::Int64
-    ϵ::Number
+    trunc::TruncationScheme
     N::Int64
     tol::Number
     solver::SolverAlgo
-    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, D::Int64, ϵ::Number,N::Int64,tol::Number, solver::SolverAlgo)
-        new{typeof(scheme),typeof(alg),D,ϵ}(scheme,alg,D,ϵ,N,tol,solver)
+    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, tol::Number, solver::SolverAlgo)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol,solver)
     end
 end
 
-mutable struct TDVPalgo{Sch,Alg,Dim,Tol} <: AbstractAlgorithm where {Sch,Alg,Dim,Tol}
+mutable struct TDVPalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     scheme::AbstractScheme
     alg::AbstractAlgorithm
-    D::Int64
-    ϵ::Number
+    trunc::TruncationScheme
     τ::Number 
     tol::Number
     solver::SolverAlgo
-    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, D::Int64, ϵ::Number,τ::Number,tol::Number, solver::SolverAlgo)
-        new{typeof(scheme),typeof(alg),D,ϵ}(scheme,alg,D,ϵ,τ,tol,solver)
+    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, τ::Number, tol::Number, solver::SolverAlgo)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,τ,tol,solver)
     end
 end
 
-mutable struct CBEalgo{Sch,Rat} <: AbstractAlgorithm where {Sch,Rat}
+mutable struct CBEalgo{Sch} <: AbstractAlgorithm where {Sch}
     scheme::AbstractScheme
     λ::Number
-    CBEalgo(scheme::AbstractScheme,λ::Number) = new{typeof(scheme),λ}(scheme,λ)
+    D::Int64 
+    ϵ::Number
+    CBEalgo(scheme::AbstractScheme,λ::Number,D::Int64,ϵ::Number) = new{typeof(scheme)}(scheme,λ,D,ϵ)
 end
 
 #= ========================= =#

@@ -39,8 +39,8 @@ _maxdim(obj::Union{DenseMPS,DenseMPO}) = _maxdim(obj.ts)
 _maxdim(obj::Vector{MPSTensor}) = maximum(map(x -> dims(x) |> y -> max(y[1][1],y[2][1]),obj))
 _maxdim(obj::Vector{DenseMPOTensor}) = maximum(map(x -> dims(x) |> y -> max(y[1][2],y[2][1]),obj))
 
-_getdim(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) == TensorKit.TruncationDimension,collect(trunc.truncations))[1].dim
-_getcutoff(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) == TensorKit.TruncationCutoff,collect(trunc.truncations))[1].ϵ
+_getdim(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) <: TensorKit.TruncationDimension,collect(trunc.truncations))[1].dim
+_getcutoff(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) <: TensorKit.TruncationCutoff,collect(trunc.truncations))[1].ϵ
 _!getdim(trunc::TensorKit.MultipleTruncation) = filter(x -> typeof(x) != TensorKit.TruncationDimension, collect(trunc.truncations))
 _updatedim(trunc::TensorKit.MultipleTruncation,ratio::Number) = TensorKit.MultipleTruncation(tuple(truncdim(ceil(Int64,_getdim(trunc)*ratio)),_!getdim(trunc)...))
 
