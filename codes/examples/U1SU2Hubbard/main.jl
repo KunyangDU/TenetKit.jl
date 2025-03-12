@@ -41,13 +41,13 @@ end
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
 Obs.values =#
 
-params = (U = 8,)
+params = (U = 0,)
 
 H = Hamiltonian(Latt;params...)
 
-D = 1000
+D = 800
 
-lsE,lsinfo = DMRG1!(ψ,H,D)
+lsE,lsinfo = DMRG1!(ψ,H;trunc = truncdim(D) & truncbelow(1e-6))
 @show lsE
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 

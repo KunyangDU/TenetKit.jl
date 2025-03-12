@@ -6,13 +6,13 @@ include("model.jl")
 Fermion complexity
 =#
 foldername = "examples/U1SU2Hubbard/data"
-Lx = 10
+Lx = 8
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "$(foldername)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 300
+D = 200
 params = (U = 0,)
 H = Hamiltonian(Latt; params...)
 ρ = let 
@@ -25,7 +25,7 @@ end
 lsβ = vcat(2. .^ (-10:1:-1), 1:10)
 
 SETTN!(lsβ[1], H, ρ;D=D)
-lsρ,lsinfo = tanTRG1!(ρ, H, lsβ, D)
+lsρ,lsinfo = tanTRG2!(ρ, H, lsβ;tol = 100, trunc = truncdim(D) & truncbelow(1e-6))
 
 @save "$(foldername)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 @save "$(foldername)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ

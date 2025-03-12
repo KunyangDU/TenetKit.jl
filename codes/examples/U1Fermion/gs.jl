@@ -4,7 +4,7 @@ include("model.jl")
 
 
 
-Lx = 4
+Lx = 8
 Ly = 4
 
 Latt = YCSqua(Lx,Ly)

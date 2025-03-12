@@ -11,35 +11,31 @@ function SETTN!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
 end
 
 function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo{SingleSite}) where L
-    F = zeros(Alg.N)
-    dF = zeros(Alg.N)
 
-    Hn = deepcopy(ρ)
-    dF[1] = 2*Alg.tol # make sure dF > F_tol
     to = TimerOutput()
-    for i in 1:Alg.N 
-        localto = TimerOutput()
-        @timeit localto "mul!" ~,multo = mul!(Hn,deepcopy(Hn),H,1.,0.; D = Alg.D)
-        @timeit localto "axpy!" ~,axpyto = axpy!((-β)^i / factorial(i),Hn ,ρ ; D = Alg.D)
 
-        merge!(localto,multo, tree_point = ["mul!"])
-        merge!(localto,axpyto, tree_point = ["axpy!"])
+    @timeit to "I - βH" begin
+        Hn = deepcopy(ρ)
+        F₀,localto = SETTN!(β,H,Hn,ρ,1,Alg)
+    end
+    merge!(to,localto, tree_point = ["I - βH"])
+    show(localto;title = "SETTN - (I - βH)")
+    print("\n")
+    
+    for i in 2:Alg.N 
+        @timeit to "Iteration" F,localto = SETTN!(β,H,Hn,ρ,i,Alg)
 
-        @timeit localto "calculate F" F[i] = - log(tr(ρ)) / 2 / β
-
-        if i ≠ 1
-            dF[i] = abs((F[i] - F[i-1]) / F[i])
-            if dF[i] < Alg.tol
-                println("SETTN converged at $(i)th order with dF = $(dF[i])")
-                break
-            end
+        ϵ = abs((F - F₀) / F)
+        merge!(to,localto, tree_point = ["Iteration"])   
+        show(localto;title = "SETTN - $(i) (≤$(Alg.N))")
+        println("\ndF = $(ϵ)")
+        if ϵ < Alg.tol
+            println("SETTN converged at $(i)th order with dF = $(ϵ)")
+            break
         end
-
-        show(localto;title = "SWEEN - $(i) (≤$(Alg.N))")
-        print("\n")
-        merge!(to,localto)
-
-        i == Alg.N && println("SETTN not converged at max $(i)th order with dF = $(dF)") 
+             
+        i == Alg.N && println("SETTN not converged at max $(i)th order with dF = $(ϵ)") 
+        F₀ = F
     end
 
     show(to;title = "SETTN")
@@ -48,6 +44,17 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo{SingleS
     return ρ
     
 end
+
+function SETTN!(β::Number,H::SparseMPO{L},Hn::DenseMPO,ρ::DenseMPO,order::Int64,Alg::SETTNalgo{SingleSite}) where L
+    to = TimerOutput()
+    @timeit to "mul!" ~,multo = mul!(Hn,deepcopy(Hn),H; D = Alg.D)
+    @timeit to "axpy!" ~,axpyto = axpy!((-β) ^ order / factorial(order),Hn ,ρ ; D = Alg.D)
+    merge!(to,multo, tree_point = ["mul!"])
+    merge!(to,axpyto, tree_point = ["axpy!"])
+    @timeit to "calculate F" F = - log(tr(ρ)) / 2 / β
+    return F,to
+end
+
 
 # function SETTN!(lsβ::Vector, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     

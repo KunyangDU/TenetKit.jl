@@ -7,12 +7,12 @@ Fermion complexity
 =#
 
 Lx = 8
-Ly = 1
+Ly = 4
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 120
+D = 500
 params = (μ=0,)
 Ndop = 0
 H = Hamiltonian(Latt;params...)
@@ -25,7 +25,7 @@ end
 
 lsβ = vcat(2. .^ (-10:1:-1), 1:10)
 
-SETTN!(lsβ[1], H, ρ;D=D)
+SETTN!(lsβ[1], H, ρ;D=64)
 lsρ,lsinfo = tanTRG1!(ρ, H, lsβ;trunc = truncdim(D) & truncbelow(1e-6))
 
 @save "examples/U1Fermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ

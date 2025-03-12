@@ -8,7 +8,7 @@ Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @load "examples/U1Fermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 120
+D = 100
 params = (μ=0,)
 
 H= Hamiltonian(Latt;params...)

@@ -1,4 +1,6 @@
-using TensorKit, JLD2, MKL, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit
+using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees
+
+include("init.jl")
 
 include("TensorWrapper/AbstractType.jl")
 include("TensorWrapper/AbstractTensor.jl")
