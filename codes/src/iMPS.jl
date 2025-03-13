@@ -47,6 +47,7 @@ include("tools/algebra.jl")
 include("tools/geometry.jl")
 include("tools/operations.jl")
 include("tools/tools.jl")
+include("tools/lattice.jl")
 
 include("utils/benchmarktools.jl")
 include("utils/KrylovKit.jl")

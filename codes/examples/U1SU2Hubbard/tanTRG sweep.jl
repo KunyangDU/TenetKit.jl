@@ -35,7 +35,7 @@ push!(lsρ,deepcopy(ρ))
 @save "$(foldername)/ρ_$(Lx)x$(Ly)_$(D)_$(params)_$(1)_$(lsβ[1]).jld2" ρ
 
 for i in 2:length(lsβ)
-    Env = Environment([ρ,H,ρ'])
+    Env = Environment([lsρ[i-1],H,lsρ[i-1]'])
     Alg = TDVPalgo(DoubleSite(),NoAlgorithm(),truncdim(D) & truncbelow(1e-6),0,1e-4,TDVPDefaultLanczos)
     info = TDVPinfo()
     TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo)

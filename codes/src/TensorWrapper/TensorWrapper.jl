@@ -79,9 +79,14 @@ Base.length(::DenseMPO{L}) where L = return L
 Base.length(::SparseMPO{L}) where L = return L
 Base.size(::SparseMPOTensor{N,M}) where {N,M} = N,M
 
-function normalize!(obj::Union{DenseMPO{L},DenseMPS{L}}) where {L}
-    @assert 1 == obj.center[1] == obj.center[2]
-    return normalize!(obj.ts[1])
+function normalize!(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where {L}
+    @assert (site = obj.center[1]) == obj.center[2]
+    return normalize!(obj.ts[site])
+end
+
+function TensorKit.norm(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where {L}
+    @assert (site = obj.center[1]) == obj.center[2]
+    return norm(obj.ts[site])
 end
 
 function normalize!(obj::AbstractTensorWrapper)

@@ -61,9 +61,11 @@ mutable struct TDVPinfo <: AlgorithmInfo
     solver::SolverInfo
     n::Int64
     err::Number
-    TDVPinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number) = new(bond,solver,n,ϵ)
-    TDVPinfo(info::TDVPinfo) = new(BondInfo(),Lanczosinfo(),info.n,0)
-    TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0)
+    lnZ::Number
+    E::Number
+    TDVPinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number,lnZ::Number,E::Number) = new(bond,solver,n,ϵ,lnZ,E)
+    TDVPinfo(info::TDVPinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.lnZ,info.E)
+    TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0,0,0)
 end
 
 mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir
@@ -71,7 +73,6 @@ mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir
     bond::BondInfo
     solver::SolverInfo
     err::Number
-
     TDVPsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number) = new{typeof(direction)}(direction,bond,solver,ϵ)
     TDVPsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0)
     TDVPsweepinfo(direction::SweepDirection,err::Number) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),err)
@@ -143,7 +144,7 @@ end
 function TimerOutputs.merge!(A::BondInfo,B::BondInfo)
     A.Deff = max(A.Deff, B.Deff)
     A.D = max(A.D,B.D)
-    A.S = max(A.S,B.S)
+    A.S = isnan(B.S) ? A.S : max(A.S,B.S)
     return A
 end
 

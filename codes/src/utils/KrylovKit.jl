@@ -132,7 +132,7 @@ function evolve!(
     O::SparseProjectiveHamiltonian{N}, τ::Number,
     alg::Krylovalgo = TDVPDefaultLanczos) where N
     nm = normalize!(obj)
-    tmp,info = exponentiate(x -> action(O,x), τ, obj, alg.Alg)
+    tmp,info = exponentiate(x -> action(O,x), -τ, obj, alg.Alg)
     rmul!(tmp,nm)
     obj.A = tmp.A
     @assert info.residual ≈ 0

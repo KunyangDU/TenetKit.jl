@@ -301,12 +301,23 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
     show(l2rinfo)
     merge!(info,l2rinfo)
 
+    if isreal(Alg.τ)
+        @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
+        info.lnZ += 2 * log(d)
+    end
+
     r2linfo = TDVPsweepinfo(R2L(),info.err)
     to = TDVP!(Env,Alg,r2linfo)
     show(to;title="<<< TDVP <<<")
     print("\n")
     show(r2linfo)
     merge!(info,r2linfo)
+
+    if isreal(Alg.τ)
+        @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
+        info.lnZ += 2 * log(d)
+        info.E = scalar(Env)
+    end
 
     GC.gc()
 end
@@ -437,15 +448,79 @@ function tanTRG1!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
         Env = Environment([ρ,H,ρ'])
         initialize!(Env)
     end
-    lsobj,lsinfo = TDVP1!(Env, - lsβ;kwargs...)
-    return lsobj,lsinfo
+    lsobj,lsinfo,lsF = tanTRG1!(Env, - lsβ;kwargs...)
+    return lsobj,lsinfo,lsF
 end
 function tanTRG2!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
     @time "initialize environment" begin 
         Env = Environment([ρ,H,ρ'])
         initialize!(Env)
     end
-    lsobj,lsinfo = TDVP2!(Env, - lsβ;kwargs...)
-    return lsobj,lsinfo
+    lsobj,lsinfo,lsF = tanTRG2!(Env, - lsβ;kwargs...)
+    return lsobj,lsinfo,lsF
+end
+
+function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
+    
+    lsobj = Vector(undef,1)
+    lsobj[1] = deepcopy(Env.layer[1])
+    info = TDVPinfo()
+    lsinfo = []
+    trunc = get(kwargs,:trunc,notrunc())
+    solver = get(kwargs,:solver,TDVPDefaultLanczos)
+    tol = get(kwargs,:tol,Inf)
+    subalgo = get(kwargs,:subalgo,NoAlgorithm())
+    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver)
+
+    lsF = Float64[]
+    lsE = Float64[]
+    for i in 2:length(lsβ)
+        τ = (lsβ[i]-lsβ[i-1])/2
+        println("t = $(lsβ[i])")
+        alg.τ = τ
+        
+        TDVP!(Env, alg, info)
+
+        info.err > alg.tol && break
+        push!(lsobj,deepcopy(Env.layer[1]))
+        push!(lsinfo,deepcopy(info))
+        push!(lsF, - info.lnZ / lsβ[i] / 2)
+        push!(lsE, info.E)
+    end
+
+    return lsobj,lsinfo,lsF,lsE
+end
+
+function tanTRG1!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
+    
+    lsobj = Vector(undef,1)
+    lsobj[1] = deepcopy(Env.layer[1])
+    info = TDVPinfo()
+    lsinfo = []
+    trunc = get(kwargs,:trunc,notrunc())
+    solver = get(kwargs,:solver,TDVPDefaultLanczos)
+    tol = get(kwargs,:tol,Inf)
+    λ = get(kwargs,:λ,1.2)
+    subalgo = get(kwargs,:subalgo,CBEalgo(randSVD(),λ,_getdim(trunc),_getcutoff(trunc)))
+    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver)
+
+    lsF = Float64[]
+    lsE = Float64[]
+    
+    for i in 2:length(lsβ)
+        τ = (lsβ[i]-lsβ[i-1])/2
+        println("t = $( lsβ[i])")
+        alg.τ = τ
+        
+        TDVP!(Env, alg, info)
+
+        info.err > alg.tol && break
+        push!(lsobj,deepcopy(Env.layer[1]))
+        push!(lsinfo,deepcopy(info))
+        push!(lsF, - info.lnZ / lsβ[i] / 2)
+        push!(lsE, info.E)
+    end
+
+    return lsobj,lsinfo,lsF,lsE
 end
 
