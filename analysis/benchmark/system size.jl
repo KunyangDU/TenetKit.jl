@@ -15,7 +15,7 @@ result_memory = curve_fit(func,L[4:end],memory[4:end],[0,0] * 1.)
 
 fig = Figure()
 
-figsize = (width = 450,height = 200)
+figsize = (width = 600,height = 200)
 
 axt = Axis(fig[1,1];xscale = log10,yscale=log10,
 xticks = (10:10:100,string.(10:10:100)),

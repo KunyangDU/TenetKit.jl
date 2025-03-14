@@ -1,6 +1,6 @@
 # iMPS.jl
 
-Personal code for finite MPS simulations, **which is still under great development**.
+Personal code for finite MPS simulations.
 
 ## Features
 
@@ -17,16 +17,24 @@ Now this code contains:
 
 This code has been applied to many models in 1D and 2D finite lattice (square lattice mostly), including:
 
-* Hubbard model: compared with [ED](https://github.com/KunyangDU/iED.jl.git)
+* Hubbard model: finite temperature calculation at half filled, compared with [ED](https://github.com/KunyangDU/iED.jl.git)
 
 ![Fermi Hubbard](slides/mdfig/hubbard_U=0.png "Fermi Hubbard, U=0")
 ![Fermi Hubbard](slides/mdfig/hubbard_U=8.png "Fermi Hubbard, U=8")
 
-calculated with $U=0$ (free fermion):
+calculated with $U=0$ (free fermion) to check code precision and performance:
 
-![Free fermion](slides/mdfig/free%20fermion.png "free fermion")
+![Free fermion](slides/mdfig/free%20fermion_md.png "free fermion")
 
-The tutorial is to be added.
+* Heisenberg chain: the extrapolation of finite size Heisenberg chain. The limit of $N\to \infty$ for $(E_{AFM} - E_{FM})/N$ is given by [Bethe Ansatz](https://github.com/KunyangDU/Bethe-Ansatz.git): $-\ln 2$.
+
+![Free fermion](slides/mdfig/heisenberg.png "Heisenberg")
+
+* Free fermion chain: calculation with a given bond dimension and different system size (length $L$). The tiume/memory complexity $\sim L$:
+
+![Free fermion](slides/mdfig/system%20size.png "Ising")
+
+* The tutorial is to be added.
 
 ### Announcement
 
@@ -44,3 +52,5 @@ The following packages has been used:
 
 * [TensorKit.jl](https://github.com/Jutho/TensorKit.jl) for basic tensor operations.
 * [MKL.jl](https://github.com/JuliaLinearAlgebra/MKL.jl) for nested multi-threaded BLAS.
+* [AbstractTrees.jl](https://github.com/JuliaCollections/AbstractTrees.jl.git) for tree struct to generate automata, which constructs Hamiltonian automatically.
+
