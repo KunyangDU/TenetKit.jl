@@ -26,6 +26,20 @@ calculated with $U=0$ (free fermion) to check code precision and performance:
 
 ![Free fermion](slides/mdfig/free%20fermion_md.png "free fermion")
 
+Detailed performance are listed below:
+|N	| $L_x \times L_y$ | D | Error | CPU time per sweep (s)|
+|------|--------- | ----------|--------------------|-----------|
+|8 | 2x4 | 128 | 1E-14 | 2.02 | 
+|16 | 4x4 | 1024 | 1E-07 | 87.2 | 
+|24 | 6x4 | 2048 | 1E-07 | 300 | 
+|32 | 8x4 | 2048 | 1E-06 | 542 | 
+|40 | 10x4 | 2048 | 1E-06 | 681 | 
+|48 | 12x4 | 2048 | 1E-05 | 726 | 
+|12 | 2x6 | 512 | 1E-05 | 12.7 | 
+|24 | 4x6 | 4096 | 1E-05 | 802 | 
+|36 | 6x6 | 4096 | 1E-03 | 1806 | 
+|48 | 8x6 | 4096 | 1E-03 | 3049 | 
+
 * Heisenberg chain: the extrapolation of finite size Heisenberg chain. The limit of $N\to \infty$ for $(E_{AFM} - E_{FM})/N$ is given by [Bethe Ansatz](https://github.com/KunyangDU/Bethe-Ansatz.git): $-\ln 2$.
 
 ![Free fermion](slides/mdfig/heisenberg.png "Heisenberg")
