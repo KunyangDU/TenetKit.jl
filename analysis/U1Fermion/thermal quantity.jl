@@ -1,20 +1,19 @@
-using JLD2,CairoMakie,LaTeXStrings
+using JLD2,CairoMakie,LaTeXStrings,FiniteLattices
 
 include("../analysis/analysis.jl")
 include("model.jl")
 
-Lx = 6
+Lx = 8
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 
 params = (μ = 0,)
-D = 60
+D = 120
 
-tailname = "_tanTRG"
 
-@load "../codes/examples/TrivialSpinlessFermion/data/lsβ2_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsβ2
-@load "../codes/examples/TrivialSpinlessFermion/data/data_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" data
+@load "../codes/examples/U1Fermion/data/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
+@load "../codes/examples/U1Fermion/data/data_$(Lx)x$(Ly)_$(D)_$(params).jld2" data
 
 f = data["f"]
 u = data["u"]
@@ -46,6 +45,6 @@ hidexdecorations!(axu;ticks = false,grid = false)
 resize_to_layout!(fig)
 display(fig)
 
-save("TrivialSpinlessFermion/figures/thermal quantity$(tailname).png",fig)
+save("U1Fermion/figures/thermal quantity.png",fig)
 
 f - fe.(lsβ2,Lx,Ly)*size(Latt)

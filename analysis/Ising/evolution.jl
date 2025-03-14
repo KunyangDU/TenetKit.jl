@@ -18,9 +18,6 @@ ax1 = Axis(fig[1,1];figsize...,ylabel="site",yticks = 1:size(Latt))
 heatmap!(ax1,lst,1:size(Latt),Szm[:,:,1])
 
 
-axislegend(ax3;position=:rb)
-
-
 resize_to_layout!(fig)
 display(fig)
 
