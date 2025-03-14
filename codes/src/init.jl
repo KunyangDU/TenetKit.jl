@@ -3,6 +3,7 @@
 function __init__()
     println("Julia Version $(VERSION)")
     __multithreading_init__()
+    flush(stdout)
 end
 
 function __multithreading_init__()

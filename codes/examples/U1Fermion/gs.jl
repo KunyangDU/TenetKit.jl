@@ -4,7 +4,7 @@ include("model.jl")
 
 
 
-Lx = 8
+Lx = 4
 Ly = 4
 
 Latt = YCSqua(Lx,Ly)
@@ -17,11 +17,7 @@ end
 
 μ = 0
 H = Hamiltonian(Latt;μ=μ)
-D = 120
-# env = Environment([ψ,H,ψ'])
-# initialize!(env)
-# Alg = DMRGalgo(SingleSite(),CBEalgo(randSVD(),1.2),D,1e-6,5,1e-4,DMRGDefaultLanczos)
-#Alg = DMRGalgo(DoubleSite(),NoAlgorithm(),D,1e-6,5,1e-4,DMRGDefaultLanczos)
+D = 300
 
 lsE,lsinfo = DMRG1!(ψ,H;trunc = truncdim(D) & truncbelow(1e-6))
 

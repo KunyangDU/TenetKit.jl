@@ -105,6 +105,55 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
 
     return xpy!(EnvAB.layer[end]',C),to
 end
+
+# function mul!(C::DenseMPO, A::DenseMPO, B::SparseMPO; kwargs...)
+#     to = TimerOutput()
+#     D = get(kwargs, :D, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
+#     Nsweep = get(kwargs, :Nsweep, 10)
+#     tol = get(kwargs, :tol, 1e-12)
+#     @assert length(A) == length(B)
+#     L = length(A)
+
+#     tmp = deepcopy(C)'
+    
+#     @timeit to "initialize ABC Env" begin
+#         EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
+#         initialize!(EnvAB)
+#     end
+
+#     for i in 1:Nsweep
+#         localto = TimerOutput()
+#         ϵ = 0
+        
+#         for site in 1:L-1
+#             x₀ = composite(EnvAB.layer[1].ts[site:site+1]...)
+#             projH = proj2(EnvAB,site,site+1)
+#             ts = action(projH,x₀)
+#             #@timeit localto "contract" ts = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u].ts[site:site+1],1:length(EnvAB.layer)-1)...)..., EnvAB.envs[site+2])
+#             @timeit localto "SVD" tl, tr, ~ = tsvd(ts; direction=:right,trunc = truncdim(D))
+#             @timeit localto "push right" pushright!(EnvAB, tl, tr)
+#             x = composite(EnvAB.layer[1].ts[site:site+1]...)
+#             ϵ = max(ϵ,norm(x-x₀))
+#         end
+#         for site in L:-1:2
+#             x₀ = composite(EnvAB.layer[1].ts[site-1:site]...)
+#             projH = proj2(EnvAB,site-1,site)
+#             ts = action(projH,x₀)
+#             # @timeit localto "contract" ts = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u].ts[site-1:site],1:length(EnvAB.layer)-1)...)..., EnvAB.envs[site+1])
+#             @timeit localto "SVD" tl, tr, ~ = tsvd(ts; direction=:left,trunc = truncdim(D))
+#             @timeit localto "push left" pushleft!(EnvAB, tl, tr)
+#             x = composite(EnvAB.layer[1].ts[site-1:site]...)
+#             ϵ = max(ϵ,norm(x-x₀))
+#         end
+#         # show(localto;title = "mul!")
+#         merge!(to,localto)
+
+#         ϵ < tol && break
+#     end
+
+#     return xpy!(EnvAB.layer[end]',C),to
+# end
+
 """
 axpy!(α, x, y) -> y
 Overwrite y with x * α + y and return y. If x and y have the same axes, it's equivalent with y .+= x .* a.

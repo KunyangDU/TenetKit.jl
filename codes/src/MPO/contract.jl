@@ -259,6 +259,7 @@ function contract(EnvL::DenseLeftEnvironmentTensor{3}, A::DenseMPOTensor{4}, B::
     return contract(EnvL.A,A,B,C,D,EnvR.A)
 end
 function contract(EnvL::LeftEnvironmentTensor{3}, A::DenseMPOTensor{4}, B::DenseMPOTensor{4}, C::DenseMPOTensor{4}, D::DenseMPOTensor{4}, EnvR::RightEnvironmentTensor{3})
+    @show "----------------testtesttest----------------"
     @tensor tmp1[-1 -2;-3 -4 -5] ≔ EnvL.A[-1,1,2] * A.A[-2,1,-3,3] * C.A[3,2,-4,-5]
     @tensor tmp2[-1 -2 -3;-4 -5] ≔ B.A[3,-1,1,-5] * D.A[-3,-2,2,3] * EnvR.A[1,2,-4]
     @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ tmp1[-3,-2,2,1,-6] * tmp2[1,2,-1,-4,-5]

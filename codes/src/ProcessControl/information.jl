@@ -173,11 +173,11 @@ function BondInfo(A::TensorMap{<:ComplexSpace,1,1})
 end
 
 function Base.show(io::IO,info::DMRGsweepinfo)
-    println(io,info.bond,", TruncError = $(info.err), E = $(info.E), σE = $(info.σE)")
+    println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err), E = $(info.E), σE = $(info.σE)")
 end
 
 function Base.show(io::IO,info::TDVPsweepinfo)
-    println(io,info.bond,", TruncError = $(info.err)")
+    println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err)")
 end
 
 function Base.show(io::IO,info::BondInfo)

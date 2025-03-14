@@ -13,6 +13,7 @@ end
 function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo{SingleSite}) where L
 
     to = TimerOutput()
+    # H2 = nothing
 
     @timeit to "I - βH" begin
         Hn = deepcopy(ρ)
@@ -21,6 +22,7 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo{SingleS
     merge!(to,localto, tree_point = ["I - βH"])
     show(localto;title = "SETTN - (I - βH)")
     print("\n")
+    flush(stdout)
     
     for i in 2:Alg.N 
         @timeit to "Iteration" F,localto = SETTN!(β,H,Hn,ρ,i,Alg)
@@ -29,14 +31,17 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo{SingleS
         merge!(to,localto, tree_point = ["Iteration"])   
         show(localto;title = "SETTN - $(i) (≤$(Alg.N))")
         println("\ndF = $(ϵ)")
+        flush(stdout)
         if ϵ < Alg.tol
             println("SETTN converged at $(i)th order with dF = $(ϵ)")
             break
         end
              
         i == Alg.N && println("SETTN not converged at max $(i)th order with dF = $(ϵ)") 
+        # i == 2 && (H2 = deepcopy(Hn))
         F₀ = F
     end
+    flush(stdout)
 
     show(to;title = "SETTN")
     print("\n")
@@ -56,45 +61,4 @@ function SETTN!(β::Number,H::SparseMPO{L},Hn::DenseMPO,ρ::DenseMPO,order::Int6
 end
 
 
-# function SETTN!(lsβ::Vector, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
-    
-#     max_order = get(kwargs,:max_order,6)
-#     D = get(kwargs,:D,maximum(vcat(collect.(H.D)...)))
-#     F_tol = get(kwargs,:F_tol,1e-8)
-#     F = zeros(max_order)
-#     lsρ = Vector(undef,length(lsβ))
-#     for i in 1:length(lsβ)-1
-#         lsρ[i] = deepcopy(ρ)
-#     end
-
-#     β = lsβ[end]
-
-#     Hn = deepcopy(ρ)
-#     dF = 2*F_tol # make sure dF > F_tol
-#     for i in 1:max_order 
-#         println("SETTN order = $i")
-#         mul!(Hn,deepcopy(Hn),H,1.,0.; D = D)
-#         axpy!((-β)^i / factorial(i),Hn ,ρ ; D = D)
-
-#         F[i] = - log(tr(ρ)) /2/β
-#         if i ≠ 1
-#             dF = abs((F[i] - F[i-1]) / F[i])
-#             println("dF = $dF")
-#         end
-#         for (iβ,βi) in enumerate(lsβ[1:end-1])
-#             lsρ[iβ] = axpy!((-βi)^i / factorial(i),Hn ,lsρ[iβ] ; D = D)
-#         end
-        
-
-#         if dF < F_tol
-#            println("SETTN converged at $(i)th order with dF = $(dF)")
-#            break
-#         end
-
-#         i == max_order && println("SETTN not converged at max $(i)th order with dF = $(dF)") 
-#     end
-#     lsρ[end] = deepcopy(ρ)
-
-#     return lsρ
-# end
 

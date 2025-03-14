@@ -3,11 +3,14 @@ include("../../src/iMPS.jl")
 include("model.jl")
 foldername = "examples/U1SU2Hubbard/data"
 
-Lx = 4
-Ly = 4
-
-Latt = YCSqua(Lx,Ly)
+Lx = 2
+Ly = 6
 Ndop = 0
+params = (U = 0,μ = 0)
+D = 2^9
+
+Latt = iYCSqua(Lx,Ly)
+println("$(Lx)x$(Ly), D = $(D), params = $(params)")
 @save "$(foldername)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 ψ = let
@@ -15,40 +18,9 @@ Ndop = 0
     randMPS(U₁SU₂Fermion.PhySpace, AuxSpace)
 end
 
-#= for U in[0,8]
-    params = (U = U,)
-
-    H = Hamiltonian(Latt;params...)
-
-    D = 2^10
-
-    lsE = DMRG2!(ψ,H,D)
-    showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
-    @save "$(foldername)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
-end
- =#
-#= @time "calculate observables" begin
-    Obs = MPSObservable()
-    LocalSpace = U₁SU₂Fermion
-
-    for i in 1:size(Latt)
-        addObs!(Obs,LocalSpace.n,i,"n",nothing)
-    end
-
-    calObs!(Obs,ψ)
-end
-
-@show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
-Obs.values =#
-
-params = (U = 0,)
-
 H = Hamiltonian(Latt;params...)
 
-D = 800
 
-lsE,lsinfo = DMRG1!(ψ,H;trunc = truncdim(D) & truncbelow(1e-6))
-@show lsE
+lsE,lsinfo = DMRG1!(ψ,H;trunc = truncdim(D) & truncbelow(1e-12))
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
-
-
+@save "$(foldername)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
