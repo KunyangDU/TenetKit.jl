@@ -6,7 +6,7 @@ tailname = "SU2"
 # lsλ = vcat(0:0.1:0.3, 0.4:0.01:0.6, 0.7:0.1:1)
 # lsλ = 0:0.1:1
 # lsλ = vcat(0:0.1:0.3, 0.4:0.01:0.6, 0.7:0.1:1,1.2:0.2,2)
-lsλ = vcat(0:0.1:1,1.2:0.2:2)
+lsλ = 1:0.2:2
 lsLx = [20,]
 Lx = 20
 @load "../codes/examples/J1J2chain/data/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -27,20 +27,19 @@ for (i,λ) in enumerate(lsλ)
     @load "../codes/examples/J1J2chain/data/data_$(Lx)x$(Ly)_D=$(D)_params=$(params)_$(tailname).jld2" data
     @assert abs(data["σE"] / data["E"]) < 1e-6
     bonds = zeros(N-1)
-    for i in 1:N-1
-        bonds[i] = data["SS"][(i,i+1)]
+    for j in 1:N-1
+        bonds[j] = data["SS"][(1,j+1)]
     end
-    bonds /= maximum(abs.(bonds))
-    plotbond!(ax,nnpair,bonds,[0,i];colorlimit = (-1,1),colormap = :bwr)
-    i == 1 && Colorbar(fig[1,2],limits = (-1,1),colormap = :bwr)
-    text!(ax,0,i + 0.5;text = "$(λ)",fontsize = 12)
+    bonds = abs.(bonds)
+    scatterlines!(ax,1:N-1,bonds,color = (:red,i / (N-1)))
 end
 resize_to_layout!(fig)
 display(fig)
 
+save("J1J2chain/figures/SSdecay.pdf",fig)
+save("J1J2chain/figures/SSdecay.png",fig)
 
-save("J1J2chain/figures/patern.pdf",fig)
-save("J1J2chain/figures/patern.png",fig)
+
 
 
 
