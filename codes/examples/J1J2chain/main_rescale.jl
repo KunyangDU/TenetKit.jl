@@ -6,8 +6,9 @@ include("model.jl")
 totalname = "examples/J1J2chain/data/rescale"
 Ly = 1
 tailname = "SU2"
-
-lsλ = 0:0.05:1
+lsλ = vcat(0.2:0.2:2,2.5:0.5:5,6:10)
+lsλ = vcat(-reverse(lsλ),0,lsλ)
+lsλ = [-1.5,-0.5,0.5,1.5]
 lsLx = [20,]
 for Lx in lsLx
     @show Lx
@@ -24,7 +25,7 @@ for Lx in lsLx
 
     for λ in lsλ
         @show λ
-        params = (J1 = -1, J2 = λ)
+        params = (J1 = λ, J2 = 1)
         H = Hamiltonian(Latt;params...)
         lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 6)
         showQuantSweep(lsEg ./ N)

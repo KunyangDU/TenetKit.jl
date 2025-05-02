@@ -13,6 +13,7 @@ const SS = let
     OpL, OpR
 end
 
+const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 3 / 4
 end
 
 
@@ -44,6 +45,8 @@ const S₋S₊ = let
     OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
+const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 3 / 4
+const Sz2 = Sz*Sz
 
 end
 

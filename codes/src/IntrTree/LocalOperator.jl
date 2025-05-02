@@ -49,9 +49,9 @@ function Base.show(io::IO,Opr::LocalOperator)
 end
 
 
-isequal(::AbstractLocalOperator, ::AbstractLocalOperator) = false
-isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.name == B.name)
-function isequal(A::LocalOperator, B::LocalOperator)
+Base.isequal(::AbstractLocalOperator, ::AbstractLocalOperator) = false
+Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.name == B.name)
+function Base.isequal(A::LocalOperator, B::LocalOperator)
     A.name ≠ B.name && return false
     A.site ≠ B.site && return false
     A.strength ≠ B.strength && return false

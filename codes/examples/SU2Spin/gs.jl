@@ -4,9 +4,9 @@ include("../../src/iMPS.jl")
 include("model.jl")
 
 J = 1
-D = 2^10
-lsLx = [10,12]
-Ly = 1
+D = 100
+lsLx = [4]
+Ly = 4
 @save "examples/SU2Spin/data/lsLx_$(Ly).jld2" lsLx
 
 for (i,Lx) in enumerate(lsLx)
@@ -22,7 +22,7 @@ for (i,Lx) in enumerate(lsLx)
 
     H = Hamiltonian(Latt,J)
 
-    lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-6),N = 3)
+    lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
     showQuantSweep(lsEg ./ N .- 1/4)
     @save "examples/SU2Spin/data/lsE_$(Lx)x$(Ly).jld2" lsEg
 end

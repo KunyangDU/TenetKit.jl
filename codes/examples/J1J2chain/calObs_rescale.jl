@@ -3,22 +3,22 @@ include("../../src/iMPS.jl")
 include("model.jl")
 
 # λ = 0.5
+totalname = "examples/J1J2chain/data/rescale"
 
 Ly = 1
 tailname = "SU2"
 
-# lsλ = vcat(0:0.1:0.3, 0.4:0.01:0.6, 0.7:0.1:1)
-# lsλ = vcat(0:0.1:0.3)
-lsλ = 0:0.05:1
-# lsλ = 0:0.1:2
-lsLx = [22,]
+lsλ = vcat(0.2:0.2:2,2.5:0.5:5,6:10)
+lsλ = vcat(-reverse(lsλ),0,lsλ)
+lsλ = vcat(lsλ,[-1.5,-0.5,0.5,1.5])
+lsLx = [20,]
 D = 2 ^ 9
 
 
 for Lx in lsLx
     @show Lx
     N = Lx*Ly
-    @load "examples/J1J2chain/data/Latt_$(Lx)x$(Ly).jld2" Latt
+    @load "$(totalname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
     Obs = let 
         tmp = MPSObservable()
@@ -31,16 +31,16 @@ for Lx in lsLx
 
     for λ in lsλ
         @show λ
-        params = (J1 = -1, J2 = λ)
+        params = (J1 = λ, J2 = 1)
         tmpobs = deepcopy(Obs)
-        @load "examples/J1J2chain/data/ψ_$(Lx)x$(Ly)_D=$(D)_params=$(params)_$(tailname).jld2" ψ
-        @load "examples/J1J2chain/data/lsE_$(Lx)x$(Ly)_D=$(D)_params=$(params)_$(tailname).jld2" lsEg
+        @load "$(totalname)/ψ_$(Lx)x$(Ly)_D=$(D)_params=$(params)_$(tailname).jld2" ψ
+        @load "$(totalname)/lsE_$(Lx)x$(Ly)_D=$(D)_params=$(params)_$(tailname).jld2" lsEg
 
         calObs!(tmpobs,ψ)
         data = convert(Dict{String,Any},tmpobs.values )
         data["E"] = lsEg[end]
         data["σE"] = std(lsEg[end-2:end])
-        @save "examples/J1J2chain/data/data_$(Lx)x$(Ly)_D=$(D)_params=$(params)_$(tailname).jld2" data
+        @save "$(totalname)/data_$(Lx)x$(Ly)_D=$(D)_params=$(params)_$(tailname).jld2" data
     end
 end
 

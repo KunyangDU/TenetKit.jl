@@ -51,6 +51,7 @@ include("tools/lattice.jl")
 
 include("utils/benchmarktools.jl")
 include("utils/KrylovKit.jl")
+include("utils/lattice.jl")
 
 include("Algorithm/DMRG.jl")
 include("Algorithm/TDVP.jl")

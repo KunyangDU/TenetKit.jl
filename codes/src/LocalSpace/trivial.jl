@@ -63,7 +63,7 @@ const Sx = let
     TensorMap(MatOp,PhySpace,PhySpace)
 end
 const Sy = let 
-    MatOp = [0 -1im;1im 0] / 2
+    MatOp = [0 -1im;+1im 0] / 2
     TensorMap(MatOp,PhySpace,PhySpace)
 end
 const Sz = let 
@@ -75,5 +75,14 @@ const S₋ = S₊'
 const SxSx = Sx,Sx 
 const SySy = Sy,Sy 
 const SzSz = Sz,Sz 
+const S2 = TensorMap([1 0;0 1]*3/4,PhySpace,PhySpace)
+const Sz2 = Sz*Sz
+
+const SxSy = Sx,Sy
+const SySx = Sy,Sx
+const SySz = Sy,Sz
+const SzSy = Sz,Sy
+const SxSz = Sx,Sz
+const SzSx = Sz,Sx
 end
 
