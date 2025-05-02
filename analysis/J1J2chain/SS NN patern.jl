@@ -1,4 +1,5 @@
 using JLD2, CairoMakie, FiniteLattices, ColorSchemes
+include("../analysis/analysis.jl")
 include("model.jl")
 Ly = 1
 tailname = "SU2"
@@ -37,7 +38,7 @@ for (i,λ) in enumerate(lsλ)
         bonds[i] = data["SS"][(i,i+1)]
     end
     # bonds /= maximum(abs.(bonds))
-    plotbond!(ax,nnpair,bonds,[0,i-1];
+    plotbond!(ax,Latt,nnpair,bonds,[0,i-1];
     colorlimit = 0.75 .* (-1,1),
     colormap = :bwr)
     i == 1 && Colorbar(fig[1,2],limits = 0.75 .* (-1,1),colormap = :bwr, label = L"\langle \mathbf{S}_i\cdot\mathbf{S}_j \rangle")

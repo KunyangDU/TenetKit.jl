@@ -1,5 +1,6 @@
 using JLD2, CairoMakie, FiniteLattices, ColorSchemes
-include("model.jl")
+include("../../analysis/analysis.jl")
+include("../model.jl")
 Ly = 1
 tailname = "SU2"
 
@@ -8,11 +9,11 @@ tailname = "SU2"
 # lsλ = vcat(0:0.1:0.3, 0.4:0.01:0.6, 0.7:0.1:1,1.2:0.2,2)
 lsλ = 0:0.1:2
 lsLx = [20,]
-Lx = 20
+Lx = 22
 @load "../codes/examples/J1J2chain/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
 N = Lx*Ly
-D = 2 ^ 10
+D = 2 ^ 9
 J1 = 1
 
 nnpair = neighbor(Latt)

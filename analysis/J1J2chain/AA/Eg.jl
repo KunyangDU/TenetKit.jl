@@ -8,7 +8,7 @@ lsλ = 0:0.1:2
 lsLx = [20,]
 Lx = 20
 N = Lx*Ly
-D = 2 ^ 10
+D = 2 ^ 9
 J1 = 1
 lsE = zeros(length(lsλ))
 

@@ -1,5 +1,6 @@
 using JLD2, CairoMakie, FiniteLattices, ColorSchemes
-include("model.jl")
+include("../../analysis/analysis.jl")
+include("../model.jl")
 Ly = 1
 tailname = "SU2"
 
@@ -12,7 +13,7 @@ Lx = 20
 @load "../codes/examples/J1J2chain/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
 N = Lx*Ly
-D = 2 ^ 10
+D = 2 ^ 9
 J1 = 1
 
 @load "J1J2chain/data/NNAFM_$(Lx)x$(Ly)_D=$(D)_J1=$(J1)_$(tailname).jld2" nnafm
@@ -28,11 +29,11 @@ ax = Axis(fig[1,1];figsize...,
 title = "Order parameter",
 ylabel = L"values",
 xlabel = L"J_2/J_1")
-scatterlines!(ax,lsλ,nnnafm / maximum(nnnafm),label = L"F(\pi)",color = :green,linewidth = 2,markersize = 10)
-scatterlines!(ax,nncoeff[1,:],nncoeff[2,:] / maximum(nncoeff[2,:]),label = L"K_{NN}",color = :green,marker = :star5,linewidth = 2,markersize = 10)
-scatterlines!(ax,lsλ,nndop / maximum(nndop),label = L"DOP",color = :purple,linewidth = 2,markersize = 10)
-scatterlines!(ax,lsλ,nnafm / maximum(nnafm),label = L"F(\pi/2)",color = :blue,linewidth = 2,markersize = 10)
-scatterlines!(ax,nnncoeff[1,:],nnncoeff[2,:] / maximum(nnncoeff[2,:]),label = L"K_{NNN}",color = :blue,marker = :star5,linewidth = 2,markersize = 10)
+scatterlines!(ax,lsλ,nnafm,label = L"F(\pi)",color = :green,linewidth = 2,markersize = 10)
+scatterlines!(ax,nncoeff[1,:],nncoeff[2,:],label = L"K_{NN}",color = :green,marker = :star5,linewidth = 2,markersize = 10)
+scatterlines!(ax,lsλ,nndop,label = L"DOP",color = :purple,linewidth = 2,markersize = 10)
+scatterlines!(ax,lsλ,nnnafm,label = L"F(\pi/2)",color = :blue,linewidth = 2,markersize = 10)
+scatterlines!(ax,nnncoeff[1,:],nnncoeff[2,:],label = L"K_{NNN}",color = :blue,marker = :star5,linewidth = 2,markersize = 10)
 
 Legend(fig[1,2],ax)
 
