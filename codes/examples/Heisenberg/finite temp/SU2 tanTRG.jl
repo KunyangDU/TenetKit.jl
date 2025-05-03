@@ -5,11 +5,11 @@ include("../model.jl")
 #= 
 Fermion complexity
 =#
-dataname = "examples/Heisenberg/data/SU2"
+dataname = "examples/Heisenberg/data/SU2/connect"
 # for D in [2^7,2^8]
-D = 2^9
-Lx = 4
-Ly = 4
+D = 2^7
+Lx = 14
+Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -23,22 +23,14 @@ H = SU2Hamiltonian(Latt; params...)
     ρ
 end
 
-lsβ = vcat(2. .^ (-20:1:-1), 1:10)
-lsF = []
-lsE = []
+lsβ = vcat(2. .^ (-20:1:-1),1)
 
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
 SETTN!(lsβ[1], H, ρ;D=2^7 )
-Env = Environment([ρ,H,ρ'])
-initialize!(Env)
-Z = norm(ρ)^2
-push!(lsF,-log(Z)/lsβ[1]/2)
-push!(lsE,real(scalar(Env)) / Z)
+Z = normalize!(ρ)^2
 
-lsρ,lsinfo,lsFt,lsEt = tanTRG1!(Env, lsβ;trunc = truncdim(D) & truncbelow(1e-12))
-lsF = vcat(lsF,lsFt)
-lsE = vcat(lsE,lsEt)
+lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ, H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12))
 
 @save "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 @save "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF

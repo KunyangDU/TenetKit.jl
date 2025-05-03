@@ -4,9 +4,9 @@ include("../model.jl")
 
 dataname = "examples/Heisenberg/data/U1"
 
-D = 2^9
-Lx = 4
-Ly = 4
+D = 2^7
+Lx = 14
+Ly = 1
 params = (Jz = 1,Jxy = 0.5,h=0)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
@@ -14,11 +14,8 @@ params = (Jz = 1,Jxy = 0.5,h=0)
 @load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 @load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
 @load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
-lsβ2 = 2 * lsβ
+lsβ2 = 2 * lsβ[2:end]
 @save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
-
-
-ρ = lsρ[end]
 
 Obs = MPSObservable()
 LocalSpace = U₁Spin
@@ -27,45 +24,29 @@ for i in 1:size(Latt)
     addObs!(Obs,LocalSpace.Sz,i,"Sz",nothing)
 end
 
-for pair in neighbor(Latt)
-    addObs!(Obs,LocalSpace.SzSz,pair,("Sz","Sz"),nothing)
+for i in 1:size(Latt),j in i+1:size(Latt)
+    addObs!(Obs,LocalSpace.SzSz,(i,j),("Sz","Sz"),nothing)
 end
 
-calObs!(Obs, ρ)
+H = U1Hamiltonian(Latt; params...)
 
-gsdata = Obs.values
+Es = lsE
+Fs = lsF
+E2s = zeros(length(lsβ2))
+for (iβ,β) in enumerate(lsβ2)
+    @show iβ/length(lsβ2)
+    ρ = lsρ[iβ]
+    ρH,_ = mul!(deepcopy(ρ),ρ,H)
+    E2s[iβ] = tr(ρH,ρH')
+    calObs!(Obs,ρ;destroy = false)
+    obs[iβ] = Obs.values
+end
 
-# H = U1Hamiltonian(Latt; params...)
-# Mz = U1Mz(Latt)
-# # Mz2 = U1Mz2(Latt)
+data = Dict(
+    "E" => Es,
+    "F" => Fs,
+    "obs" => obs,
+    "E2" => E2s
+)
 
-# Es = lsE
-# Fs = lsF
-# Mz2s = zeros(length(lsβ))
-# Mzs = zeros(length(lsβ))
-# E2s = zeros(length(lsβ))
-# for (iβ,β) in enumerate(lsβ2[1:end-4])
-#     @show iβ/length(lsβ)
-#     ρ = lsρ[iβ]
-#     # Z = exp(lsβ2[iβ] * lsF[iβ])
-#     Z = iβ == 1 ? tr(ρ) : 1
-#     # @show Z,exp(-lsβ2[iβ] * lsF[iβ])
-#     ρH,_ = mul!(deepcopy(ρ),ρ,H)
-#     ρMz,_ = mul!(deepcopy(ρ),ρ,Mz)
-#     # ρMz2,_ = mul!(deepcopy(ρ),ρ,Mz2)
-
-#     E2s[iβ] = tr(ρH,ρH') / Z
-#     Mz2s[iβ] = tr(ρMz,ρMz') / Z
-#     Mzs[iβ] = tr(ρ,ρMz') / Z
-#     GC.gc()
-# end
-
-# data = Dict(
-#     "E" => Es,
-#     "F" => Fs,
-#     "Mz2" => Mz2s,
-#     "Mz" => Mzs,
-#     "E2" => E2s
-# )
-
-# @save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params).jld2" data
+@save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params).jld2" data

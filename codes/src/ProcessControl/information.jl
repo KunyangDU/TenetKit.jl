@@ -66,6 +66,7 @@ mutable struct TDVPinfo <: AlgorithmInfo
     TDVPinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number,lnZ::Number,E::Number) = new(bond,solver,n,ϵ,lnZ,E)
     TDVPinfo(info::TDVPinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.lnZ,info.E)
     TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0,0,0)
+    TDVPinfo(lnZ::Number) = new(BondInfo(), Lanczosinfo(),0,0,lnZ,0)
 end
 
 mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir

@@ -82,7 +82,7 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
     if isreal(Alg.τ)
         @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
         info.lnZ += 2 * log(d)
-        info.E = scalar(Env)
+        info.E = real(scalar(Env))
     end
 
     GC.gc()
@@ -217,8 +217,7 @@ function tanTRG1!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
         initialize!(Env)
     end
     flush(stdout)
-    lsobj,lsinfo,lsF = tanTRG1!(Env, - lsβ;kwargs...)
-    return lsobj,lsinfo,lsF
+    return tanTRG1!(Env, lsβ;kwargs...)
 end
 function tanTRG2!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
     @time "initialize environment" begin 
@@ -226,24 +225,25 @@ function tanTRG2!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
         initialize!(Env)
     end
     flush(stdout)
-    lsobj,lsinfo,lsF = tanTRG2!(Env, - lsβ;kwargs...)
-    return lsobj,lsinfo,lsF
+    return tanTRG2!(Env, lsβ;kwargs...)
 end
 
 function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
-    
-    lsobj = Vector(undef,1)
-    lsobj[1] = deepcopy(Env.layer[1])
-    info = TDVPinfo()
+
+    lnZ = get(kwargs,:lnZ,0.0)
+    info = TDVPinfo(lnZ)
     lsinfo = []
+
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
     tol = get(kwargs,:tol,Inf)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
     alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver)
 
+    lsobj = []
     lsF = Float64[]
     lsE = Float64[]
+
     for i in 2:length(lsβ)
         τ = (lsβ[i]-lsβ[i-1])/2
         println("t = $(lsβ[i])")
@@ -264,10 +264,10 @@ end
 
 function tanTRG1!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     
-    lsobj = Vector(undef,1)
-    lsobj[1] = deepcopy(Env.layer[1])
-    info = TDVPinfo()
+    lnZ = get(kwargs,:lnZ,0.0)
+    info = TDVPinfo(lnZ)
     lsinfo = []
+
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
     tol = get(kwargs,:tol,Inf)
@@ -275,6 +275,7 @@ function tanTRG1!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     subalgo = get(kwargs,:subalgo,CBEalgo(randSVD(),λ,_getdim(trunc),_getcutoff(trunc)))
     alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver)
 
+    lsobj = []
     lsF = Float64[]
     lsE = Float64[]
     

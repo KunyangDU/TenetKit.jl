@@ -4,47 +4,58 @@ include("../model.jl")
 
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^8
-Lx = 4
-Ly = 4
-params = (J=1,h=0)
+D = 2^7
+Lx = 14
+Ly = 1
+params = (J=1,)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 @load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 @load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 @load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
 @load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
-lsβ2 = 2 * lsβ
+lsβ2 = 2 * lsβ[2:end]
 @save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
 
+Obs = MPSObservable()
+LocalSpace = TrivialSpinOneHalf
+
+for i in 1:size(Latt)
+    addObs!(Obs,LocalSpace.Sx,i,"Sx",nothing)
+    addObs!(Obs,LocalSpace.Sy,i,"Sy",nothing)
+    addObs!(Obs,LocalSpace.Sz,i,"Sz",nothing)
+    addObs!(Obs,LocalSpace.Sz2,i,"Sz2",nothing)
+end
+
+for i in 1:size(Latt),j in i+1:size(Latt)
+    addObs!(Obs,LocalSpace.SxSx,(i,j),("Sx","Sx"),nothing)
+    addObs!(Obs,LocalSpace.SySy,(i,j),("Sy","Sy"),nothing)
+    addObs!(Obs,LocalSpace.SzSz,(i,j),("Sz","Sz"),nothing)
+end 
+
+
 H = TrivialHamiltonian(Latt; params...)
-Mz = TrivialMz(Latt)
 
 Es = lsE
 Fs = lsF
-Mz2s = zeros(length(lsβ))
-Mzs = zeros(length(lsβ))
-E2s = zeros(length(lsβ))
-for (iβ,β) in enumerate(lsβ2)
-    @show iβ/length(lsβ)
-    ρ = lsρ[iβ]
-    # Z = exp(lsβ2[iβ] * lsF[iβ])
-    Z = iβ == 1 ? tr(ρ) : 1
-    # @show Z,exp(-lsβ2[iβ] * lsF[iβ])
-    ρH,_ = mul!(deepcopy(ρ),ρ,H)
-    ρMz,_ = mul!(deepcopy(ρ),ρ,Mz)
 
-    E2s[iβ] = tr(ρH,ρH') / Z
-    Mz2s[iβ] = tr(ρMz,ρMz') / Z
-    Mzs[iβ] = tr(ρ,ρMz') / Z
+E2s = zeros(length(lsβ2))
+obs = repeat([Dict(),],length(lsβ2))
+
+for (iβ,β) in enumerate(lsβ2)
+    @show iβ/length(lsβ2)
+    ρ = lsρ[iβ]
+    ρH,_ = mul!(deepcopy(ρ),ρ,H)
+    E2s[iβ] = tr(ρH,ρH')
+    calObs!(Obs,ρ;destroy = false)
+    obs[iβ] = Obs.values
 end
 
 data = Dict(
     "E" => Es,
     "F" => Fs,
-    "Mz2" => Mz2s,
-    "Mz" => Mzs,
-    "E2" => E2s
+    "E2" => E2s,
+    "obs" => obs
 )
 
 @save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params).jld2" data

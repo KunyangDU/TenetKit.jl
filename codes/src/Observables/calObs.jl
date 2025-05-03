@@ -37,6 +37,7 @@ function calObs(ψ::Union{DenseMPO{L},DenseMPS{L}},
     end
     show(to;title = "Observables ($(Ntot))")
     print("\n")
+    flush(stdout)
     return ObsDict
 end
 

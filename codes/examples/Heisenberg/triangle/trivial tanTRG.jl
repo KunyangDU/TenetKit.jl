@@ -7,16 +7,17 @@ Fermion complexity
 =#
 dataname = "examples/Heisenberg/data/triangle/trivial"
 
-D = 2^4
-Lx = 4
+D = 2^9
+Lx = 6
 Ly = 4
 Latt = XCTria(Lx,Ly)
 L = size(Latt)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 params = (J=1,)
 Latt = YCSqua(Lx,Ly)
-
-H = TrivialHamiltonian(Latt; params...)
+h = 1
+pinh = PINVEC120(Latt,h)
+H = TrivialHamiltonian(Latt; params...,pinh=pinh)
 ρ = let 
     AuxSpaces = repeat([ℂ^1,], size(Latt)+1)
     ρ = IdDenseMPO(TrivialSpinOneHalf.PhySpace, AuxSpaces)
@@ -30,7 +31,7 @@ lsE = []
 
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
-SETTN!(lsβ[1], H, ρ;D=2^3)
+SETTN!(lsβ[1], H, ρ;D=2^7)
 Env = Environment([ρ,H,ρ'])
 initialize!(Env)
 Z = norm(ρ)^2

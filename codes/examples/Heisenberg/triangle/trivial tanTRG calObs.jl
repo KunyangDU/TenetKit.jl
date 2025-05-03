@@ -4,7 +4,7 @@ include("../model.jl")
 
 dataname = "examples/Heisenberg/data/triangle/trivial"
 
-D = 2^4
+D = 2^6
 Lx = 4
 Ly = 4
 params = (J=1,)
@@ -34,23 +34,18 @@ for i in 1:size(Latt),j in i+1:size(Latt)
 end 
 
 H = TrivialHamiltonian(Latt; params...)
-Mz = TrivialMz(Latt)
-Mz2s = zeros(length(lsβ))
-Mzs = zeros(length(lsβ))
+
 E2s = zeros(length(lsβ))
 obs = repeat([Dict(),],length(lsβ))
 
 Es = lsE
 Fs = lsF
 
-for (iβ,β) in enumerate(lsβ2)
+for (iβ,β) in enumerate(lsβ2[1:28])
+    @show iβ
     ρ = lsρ[iβ]
     Z = iβ == 1 ? tr(ρ) : 1
-    # ρH,_ = mul!(deepcopy(ρ),ρ,H)
-    # ρMz,_ = mul!(deepcopy(ρ),ρ,Mz)
-    # E2s[iβ] = tr(ρH,ρH') / Z
-    # Mz2s[iβ] = tr(ρMz,ρMz') / Z
-    # Mzs[iβ] = tr(ρ,ρMz') / Z
+    E2s[iβ] = tr(ρH,ρH') / Z
     calObs!(Obs,ρ;destroy = false)
     obs[iβ] = Obs.values
 end
@@ -58,8 +53,6 @@ end
 data = Dict(
     "E" => Es,
     "F" => Fs,
-    "Mz2" => Mz2s,
-    "Mz" => Mzs,
     "E2" => E2s,
     "obs" => obs
 )

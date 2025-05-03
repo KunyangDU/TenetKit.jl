@@ -5,7 +5,7 @@ dataname = "examples/Heisenberg/data/triangle/pin"
 
 D = 100
 
-Lx = 6
+Lx = 4
 Ly = 4
 
 Latt = XCTria(Lx,Ly)
@@ -20,7 +20,7 @@ params = (J=1,)
     randMPS(TrivialSpinOneHalf.PhySpace ,AuxSpace)
 end
 
-H = TrivialHamiltonian(Latt;params...,h=h)
+H = TrivialHamiltonian(Latt;params...,pinh=h)
 
 lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
 showQuantSweep(lsEg ./ size(Latt) .- 1/4)
