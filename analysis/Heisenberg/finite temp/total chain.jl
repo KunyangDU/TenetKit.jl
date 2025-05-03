@@ -4,41 +4,38 @@ include("../model.jl")
 
 trivialname = "../codes/examples/Heisenberg/data/trivial"
 SU2name = "../codes/examples/Heisenberg/data/SU2"
-U1name = "../codes/examples/Heisenberg/data/U1"
+# U1name = "../codes/examples/Heisenberg/data/U1"
 dataname = "Heisenberg/data"
 D = 2^7
 Lx = 14
 Ly = 1
 # Latt = YCSqua(Lx,Ly)
-@load "$(trivialname)/Latt_$(Lx)x$(Ly).jld2" Latt
+@load "$(SU2name)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-trparams = (J=1,h=0)
+trparams = (J=1,)
 u1params = (Jz = 1,Jxy = 0.5,h=0)
 su2params = (J=1,)
 edparams = (Jz=1,Jxy=1)
 lsβed = vcat(2. .^ (-5:1:-1), 1:10) .* 2
-@load "$(trivialname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(trparams).jld2" lsβ2
+@load "$(SU2name)/lsβ2_$(Lx)x$(Ly)_$(D)_$(trparams).jld2" lsβ2
 
-@load "$(trivialname)/lsE_$(Lx)x$(Ly)_$(D)_$(trparams).jld2" lsE
-lsEtr = real.(lsE)
 @load "$(trivialname)/data_$(Lx)x$(Ly)_$(D)_$(trparams).jld2" data
 datatr = data
 Ctr = @. real((datatr["E2"] - datatr["E"]^2) * lsβ2 ^ 2)
-χtr = @. real((datatr["Mz2"] - datatr["Mz"]^2) * lsβ2)
+χtr = [(calcFDT(Latt,datatr["obs"][i]["SzSz"],datatr["obs"][i]["Sz2"]) - sum([datatr["obs"][i]["Sz"][(j,)] for j in 1:size(Latt)])^2) for i in eachindex(lsβ2)] .* lsβ2
+lsEtr = datatr["E"]
 
-@load "$(U1name)/lsE_$(Lx)x$(Ly)_$(D)_$(u1params).jld2" lsE
-lsEu1 = real.(lsE)
 @load "$(U1name)/data_$(Lx)x$(Ly)_$(D)_$(u1params).jld2" data
 datau1 = data
 Cu1 = @. real((datau1["E2"] - datau1["E"]^2) * lsβ2 ^ 2)
-χu1 = @. real((datau1["Mz2"] - datau1["Mz"]^2) * lsβ2)
+χu1 = [(calcFDT(Latt,datatr["obs"][i]["SzSz"],datatr["obs"][i]["Sz2"]) - sum([datatr["obs"][i]["Sz"][(j,)] for j in 1:size(Latt)])^2) for i in eachindex(lsβ2)] .* lsβ2
+lsEu1 = datau1["E"]
 
-@load "$(SU2name)/lsE_$(Lx)x$(Ly)_$(D)_$(su2params).jld2" lsE
-lsEsu2 = real.(lsE)
 @load "$(SU2name)/data_$(Lx)x$(Ly)_$(D)_$(su2params).jld2" data
 datasu2 = data
 Csu2 = @. real((datasu2["E2"] - datasu2["E"]^2) * lsβ2 ^ 2)
-χsu2 = @. real((datasu2["M2"]) * lsβ2)
+χsu2 = [calcFDT(Latt,datasu2["obs"][i]["SS"]) + 3size(Latt)/4 for i in eachindex(lsβ2)] .* lsβ2
+lsEsu2 = datasu2["E"]
 
 @load "$(dataname)/data_obc_$(Ly)x$(Lx)_$(edparams).jld2" data
 dataed = data
@@ -121,15 +118,15 @@ scatterlines!(axχerr,1 ./ lsβed, χtrerr / size(Latt),color = :gold,label = L"
 
 hidexdecorations!(axeerr,grid = false,ticks = false)
 hidexdecorations!(axcerr,grid = false,ticks = false)
-axislegend(axeerr,position = :rt)
+axislegend(axeerr,position = :cb)
 xlims!(axeerr,1/25,10)
 xlims!(axcerr,1/25,10)
 xlims!(axχerr,1/25,10)
+
 resize_to_layout!(fig)
 display(fig)
 
 save("Heisenberg/figures/total_$(Lx)x$(Ly)_$(D)_$(trparams).png",fig)
 save("Heisenberg/figures/total_$(Lx)x$(Ly)_$(D)_$(trparams).pdf",fig)
-
 
 

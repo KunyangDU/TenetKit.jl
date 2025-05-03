@@ -7,7 +7,7 @@ dataname = "../codes/examples/Heisenberg/data/triangle/$(typename)"
 
 D = 100
 Lx = 6
-Ly = 4
+Ly = 6
 params = (J=1,)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata

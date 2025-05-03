@@ -1,8 +1,8 @@
 using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearAlgebra
-include("../analysis/analysis.jl")
-include("model.jl")
+include("../../analysis/analysis.jl")
+include("../model.jl")
 
-dataname = "../codes/examples/BCAO/data/yeesuan/pin"
+dataname = "../codes/examples/BCAO/data/arxivJ1JzpmJ3/yeesuan/pin"
 
 D = 2^7
 Lx = 4

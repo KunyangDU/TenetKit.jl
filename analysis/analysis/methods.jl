@@ -56,3 +56,16 @@ function ObsMat1(lsObsDict::Vector{Dict},name::String)
 
     return M
 end
+
+function calcFDT(Latt::AbstractLattice,data::Dict,dataonsite = nothing)
+    A = zeros(size(Latt),size(Latt))
+    for i in 1:size(Latt),j in i+1:size(Latt)
+        A[i,j] = data[(i,j)]
+    end
+    if isnothing(dataonsite)
+        return sum(A) + sum(A')
+    else
+        B = [dataonsite[(i,)] for i in 1:size(Latt)]
+        return sum(A) + sum(A') + sum(B)
+    end
+end
