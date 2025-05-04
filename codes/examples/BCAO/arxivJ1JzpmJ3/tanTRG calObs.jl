@@ -7,7 +7,7 @@ dataname = "examples/Heisenberg/data/triangle/trivial"
 D = 2^8
 Lx = 6
 Ly = 4
-params = (J=1,)
+params = (J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 @load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ

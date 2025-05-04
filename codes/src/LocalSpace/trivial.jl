@@ -76,6 +76,9 @@ const SxSx = Sx,Sx
 const SySy = Sy,Sy 
 const SzSz = Sz,Sz 
 const S2 = TensorMap([1 0;0 1]*3/4,PhySpace,PhySpace)
+
+const Sx2 = Sx*Sx 
+const Sy2 = Sy*Sy 
 const Sz2 = Sz*Sz
 
 const SxSy = Sx,Sy
@@ -84,5 +87,6 @@ const SySz = Sy,Sz
 const SzSy = Sz,Sy
 const SxSz = Sx,Sz
 const SzSx = Sz,Sx
+
 end
 
