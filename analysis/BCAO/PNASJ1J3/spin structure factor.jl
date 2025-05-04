@@ -2,18 +2,17 @@ using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearA
 include("../../analysis/analysis.jl")
 include("../model.jl")
 
-dataname = "../codes/examples/BCAO/data/PNASJ1J3"
+dataname = "../codes/examples/BCAO/PNASJ1J3/data"
+figurename = "BCAO/PNASJ1J3/figures"
 
-D = 2^7
+D = 2^6
 Lx = 4
 Ly = 4
-# params = (J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
-# params = (hy = 1.0, J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
-params = (J1xy = -1, J1z = -0.16, Jpm = 0.0, Jzpm = 0.0, J2 = 0.0, J3xy = 0.33, J3z = -0.11)
+params = (hy=1.0,J1xy = -1.0, J1z = -0.16, D = 0.013, E = -0.013, J3xy = 0.33, J3z = -0.11)
+
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
 @load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
-
 
 lskx = 4pi/sqrt(3)*range(-1,1,51)
 lsky = 2*0.999*pi*range(-1,1,51)
@@ -84,7 +83,7 @@ hideydecorations!(axz,grid = false,ticks = false)
 Colorbar(fig[1,3],hmt,label = L"\langle \mathbf{S}\cdot\mathbf{S}\rangle")
 Colorbar(fig[2,3],hmx,label = L"\langle S_\alpha S_\alpha\rangle")
 
-Label(fig[1,1:2][1, 1, Top()], "Structure factor, $(Ly)x$(Lx)x2 ZZ-HC-CY, D = $(D)",
+Label(fig[1,1:2][1, 1, Top()], "Structure factor, $(Ly)x$(Lx)x2 ZZ-HC-CY, D = $(D), J₁-J₃",
 fontsize = 15,
 font = :bold,
 padding = (0, 0, 25, 0),
@@ -93,6 +92,6 @@ halign = :center)
 resize_to_layout!(fig)
 display(fig)
 
-save("BCAO/figures/structure factor_$(Lx)x$(Ly)_$(D)_$(params).png",fig)
-save("BCAO/figures/structure factor_$(Lx)x$(Ly)_$(D)_$(params).pdf",fig)
+save("$(figurename)/structure factor_$(Lx)x$(Ly)_$(D)_$(params).png",fig)
+save("$(figurename)/structure factor_$(Lx)x$(Ly)_$(D)_$(params).pdf",fig)
 

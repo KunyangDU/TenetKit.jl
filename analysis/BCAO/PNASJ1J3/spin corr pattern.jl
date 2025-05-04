@@ -1,15 +1,14 @@
 using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes
 include("../../analysis/analysis.jl")
-include("model.jl")
+include("../model.jl")
 
-dataname = "../codes/examples/BCAO/arxivJ1JzpmJ3/data/yeesuan"
-figurename = "BCAO/arxivJ1JzpmJ3/figures"
+dataname = "../codes/examples/BCAO/PNASJ1J3/data"
+figurename = "BCAO/PNASJ1J3/figures"
 
-D = 2^7
+D = 2^6
 Lx = 4
 Ly = 4
-params = (J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
-# params = (hy = 1.0, J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
+params = (hy=1.0,J1xy = -1.0, J1z = -0.16, D = 0.013, E = -0.013, J3xy = 0.33, J3z = -0.11)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata

@@ -1,8 +1,9 @@
 using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearAlgebra
-include("../analysis/analysis.jl")
+include("../../analysis/analysis.jl")
 include("model.jl")
 
-dataname = "../codes/examples/BCAO/data/yeesuan"
+dataname = "../codes/examples/BCAO/arxivJ1JzpmJ3/data/yeesuan"
+figurename = "BCAO/arxivJ1JzpmJ3/figures"
 
 D = 2^7
 Lx = 4
@@ -50,11 +51,11 @@ xticks = 0:0.5:1.5,yticks = 0:0.15:0.3
 scatterlines!(inset_ax,lsHx * 6.54,lsSx)
 xlims!(inset_ax,0,1.5)
 ylims!(inset_ax,0,0.3)
-
+# scatter!(ax,0.2*6.54,0)
 resize_to_layout!(fig)
 display(fig)
 
-save("BCAO/figures/Magnetization Hx_$(Lx)x$(Ly)_$(D)_$(length(lsHx)).png",fig)
-save("BCAO/figures/Magnetization Hx_$(Lx)x$(Ly)_$(D)_$(length(lsHx)).pdf",fig)
+save("$(figurename)/Magnetization Hx_$(Lx)x$(Ly)_$(D)_$(length(lsHx)).png",fig)
+save("$(figurename)/Magnetization Hx_$(Lx)x$(Ly)_$(D)_$(length(lsHx)).pdf",fig)
 
 

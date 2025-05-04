@@ -2,13 +2,16 @@ using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearA
 include("../../analysis/analysis.jl")
 include("../model.jl")
 
-dataname = "../codes/examples/BCAO/arxivJ1JzpmJ3/data"
-figurename = "BCAO/arxivJ1JzpmJ3/figures"
+dataname = "../codes/examples/BCAO/arxivJKGGp/data"
+figurename = "BCAO/arxivJKGGp/figures"
+
 D = 2^6
-Lx = 4
+Lx = 6
 Ly = 4
-params = (J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
-# params = (hy = 1.0, J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
+# params = (J1=-0.59,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=-0.038,J3xy=0.3,J3z=0.01)
+# params = (J1=-0.59,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=0.0,J3xy=0.0,J3z=0.0)
+# params = (J1=-0.1,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=-0.038,J3xy=0.3,J3z=0.01)
+params = (J1=-0.4,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=-0.038,J3xy=0.3,J3z=0.01)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
@@ -37,7 +40,7 @@ y = map(lsk) do k
 end
 
 Sm = maximum(FSxSx .+ FSySy .+ FSzSz)
-
+Smd = maximum(vcat(FSxSx, FSySy, FSzSz))
 figsize = (width = 180,height = 180*sqrt(3)/2)
 
 fig = Figure()
@@ -58,9 +61,9 @@ xlabel = L"k_x\ /\ \left(2\pi\sqrt{3}/3\right)",ylabel = L"k_y\ /\ 2\pi",
 xticks = (4pi/sqrt(3)*(-1:0.5:1),string.(-2:2)),yticks = (2pi*(-1:0.5:1),string.(-2:1:2)),
 title = L"\langle S_z\cdot S_z\rangle")
 hmt = heatmap!(axt,x,y,FSxSx .+ FSySy .+ FSzSz,colorrange = (0,Sm))
-hmx = heatmap!(axx,x,y,FSxSx,colorrange = (0,Sm/2))
-hmy = heatmap!(axy,x,y,FSySy,colorrange = (0,Sm/2))
-hmz = heatmap!(axz,x,y,FSzSz,colorrange = (0,Sm/2))
+hmx = heatmap!(axx,x,y,FSxSx,colorrange = (0,Smd))
+hmy = heatmap!(axy,x,y,FSySy,colorrange = (0,Smd))
+hmz = heatmap!(axz,x,y,FSzSz,colorrange = (0,Smd))
 
 # L"-\frac{2\pi}{3}",L"0",L"\frac{2\pi}{3}",L"\frac{4\pi}{3}"
 
@@ -82,7 +85,7 @@ hideydecorations!(axz,grid = false,ticks = false)
 Colorbar(fig[1,3],hmt,label = L"\langle \mathbf{S}\cdot\mathbf{S}\rangle")
 Colorbar(fig[2,3],hmx,label = L"\langle S_\alpha S_\alpha\rangle")
 
-Label(fig[1,1:2][1, 1, Top()], "Structure factor, $(Ly)x$(Lx)x2 ZZ-HC-CY, D = $(D)",
+Label(fig[1,1:2][1, 1, Top()], "Structure factor, $(Ly)x$(Lx)x2 ZZ-HC-CY, D = $(D), J₁-J₃",
 fontsize = 15,
 font = :bold,
 padding = (0, 0, 25, 0),

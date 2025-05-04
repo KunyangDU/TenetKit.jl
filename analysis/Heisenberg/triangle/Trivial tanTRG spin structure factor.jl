@@ -1,5 +1,5 @@
 
-using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes
+using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearAlgebra
 include("../../analysis/analysis.jl")
 include("model.jl")
 
@@ -11,10 +11,10 @@ Lx = 4
 Ly = 4
 # Latt = YCSqua(Lx,Ly)
 @load "$(trivialname)/Latt_$(Lx)x$(Ly).jld2" Latt
-trivialparams = (J=1,)
+params = (J=1,)
 
-@load "$(trivialname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(trivialparams).jld2" lsβ2
-@load "$(trivialname)/data_$(Lx)x$(Ly)_$(D)_$(trivialparams).jld2" data
+@load "$(trivialname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
+@load "$(trivialname)/data_$(Lx)x$(Ly)_$(D)_$(params).jld2" data
 
 for (iβ,β) in enumerate(lsβ2)
     obsdata = data["obs"][iβ]
