@@ -1,18 +1,18 @@
 using TensorKit
 include("../../../src/iMPS.jl")
 include("../model.jl")
-dataname = "examples/Heisenberg/data/triangle/pin"
+dataname = "examples/Heisenberg/data/triangle/trivial"
 
-D = 100
+D = 80
 
-Lx = 6
-Ly = 6
+Lx = 4
+Ly = 4
 
 Latt = XCTria(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-h = 1
-h = map(x -> h*x,PINVEC120)
+
+# lsH = vcat(0.:0.5:1,1.2:0.1:2.2,2.5:0.5:5)
 lsH = 0:0.2:5
 for H in lsH
 params = (J=1,H = H)
@@ -21,7 +21,7 @@ params = (J=1,H = H)
     randMPS(TrivialSpinOneHalf.PhySpace ,AuxSpace)
 end
 
-H = TrivialHamiltonian(Latt;params...,h=h)
+H = TrivialHamiltonian(Latt;params...)
 
 lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
 showQuantSweep(lsEg ./ size(Latt) .- 1/4)

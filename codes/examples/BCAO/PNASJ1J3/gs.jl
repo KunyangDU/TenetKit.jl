@@ -3,10 +3,10 @@ include("../../../src/iMPS.jl")
 include("model.jl")
 dataname = "examples/BCAO/PNASJ1J3/data"
 
-D = 2^6
+D = 2^7
 Lx = 4
 Ly = 4
-params = (hy=1.0, J1xy = -1.0, J1z = -0.16, D = 0.013, E = -0.013, J3xy = 0.33, J3z = -0.11)
+params = (J1xy = -1.0, J1z = -0.158, D = 0.0132, E = -0.0132, J3xy = 0.329, J3z = -0.112)
 
 println("$(Lx)x$(Ly), D = $(D), params = $(params)")
 Latt = ZZHoneyComb(Lx,Ly)

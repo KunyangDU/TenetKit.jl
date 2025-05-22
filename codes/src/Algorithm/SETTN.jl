@@ -40,6 +40,8 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo{SingleS
         i == Alg.N && println("SETTN not converged at max $(i)th order with dF = $(ϵ)") 
         # i == 2 && (H2 = deepcopy(Hn))
         F₀ = F
+
+        GC.gc()
     end
     flush(stdout)
 

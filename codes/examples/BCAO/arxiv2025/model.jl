@@ -17,6 +17,28 @@
 #     end
 # end
 
+R1 = [
+    cos(pi/4) -sin(pi/4) 0;
+    sin(pi/4) cos(pi/4) 0;
+    0 0 1
+]
+
+R2 = [
+    1 0 0;
+    0 sqrt(3)/3 -sqrt(6)/3;
+    0 sqrt(6)/3 sqrt(3)/3
+]
+
+Py2c = R2*R1
+
+PY2C = [
+    2/3 1/3 2/3 -sqrt(2)/3;
+    0 0 -2 sqrt(2);
+    -1/3 1/3 -4/3 -sqrt(2)/3;
+    -1/3 1/3 2/3 sqrt(2)/6
+]
+PC2Y = inv(PY2C)
+
 function getxyzbonds(Latt::AbstractLattice;
     shift = [0,1],
     direction = [[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]],tol=1e-8)

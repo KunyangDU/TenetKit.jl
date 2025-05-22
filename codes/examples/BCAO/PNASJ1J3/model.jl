@@ -1,9 +1,25 @@
+# function getxyzbonds(Latt::AbstractLattice;
+#     shift = [0,1],
+#     direction = [[1,0],[1/2,-sqrt(3)/2],[1/2,sqrt(3)/2]],
+#     projection = sqrt(3)/3
+#     )
+
+#     nb = neighbor(Latt)
+#     _,Ly = get_cellsize(Latt)
+#     return map(direction) do v
+#         filter(x -> abs(dot(let 
+#             u = coordinate(Latt,x[1]) .- coordinate(Latt,x[2])
+#             if abs(u[2]) > 1
+#                 u = u .- sign(u[2])*shift*Ly
+#             end
+#             u
+#         end,v)) ≈ projection ,nb)
+#     end
+# end
+
 function getxyzbonds(Latt::AbstractLattice;
     shift = [0,1],
-    direction = [[1,0],[1/2,-sqrt(3)/2],[1/2,sqrt(3)/2]],
-    projection = sqrt(3)/3
-    )
-
+    direction = [[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]],tol=1e-8)
     nb = neighbor(Latt)
     _,Ly = get_cellsize(Latt)
     return map(direction) do v
@@ -13,7 +29,7 @@ function getxyzbonds(Latt::AbstractLattice;
                 u = u .- sign(u[2])*shift*Ly
             end
             u
-        end,v)) ≈ projection ,nb)
+        end,v)) < tol ,nb)
     end
 end
 
@@ -47,8 +63,17 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     # triavals = [(1,0),(-1/2,sqrt(3)/2),(-1/2,-sqrt(3)/2)]
     bonds = getxyzbonds(Latt)
 
-    Az = [J1xy+D E 0.;E J1xy-D 0.;0. 0. J1z]
-    U = [cos(2pi/3) -sin(2pi/3) 0.;sin(2pi/3) cos(2pi/3) 0.;0. 0. 1.]
+    Az = [
+        J1xy+D E 0.;
+        E J1xy-D 0.;
+        0. 0. J1z
+    ]
+    U = [
+        cos(2pi/3) -sin(2pi/3) 0.;
+        sin(2pi/3) cos(2pi/3) 0.;
+        0. 0. 1.
+    ]
+    
     Ay = U'*Az*U
     Ax = U*Az*U'
     As = [Ax,Ay,Az]
@@ -65,7 +90,6 @@ function TrivialHamiltonian(Latt::AbstractLattice;
                 addIntr!(Root,LocalSpace.SySx,pair,("Sy","Sx"),A[2,1],nothing)
             end
         end
-
     end
 
     for pair in neighbor(Latt;level = 3)

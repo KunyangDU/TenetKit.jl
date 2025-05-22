@@ -54,10 +54,10 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
         merge!(info,r2linfo)
         flush(stdout)
 
-        GC.gc()
-
         push!(lsinfo,deepcopy(info))
         push!(lsE,info.E)
+
+        GC.gc()
 
         info.err > Alg.tol && return lsE,lsinfo
     end
@@ -87,10 +87,14 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         @timeit localto "pushright" pushright!(Env,tl, tr)
         merge!(info,localinfo)
         push!(lsE,localinfo.E)
+
+        GC.gc()
     end
+    
 
     info.σE = std(filter(!isnan,lsE))
 
+    GC.gc()
     return localto
 end
 
@@ -117,10 +121,13 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
         merge!(info,localinfo)
         push!(lsE,localinfo.E)
+
+        GC.gc()
     end
 
     info.σE = std(filter(!isnan,lsE))
 
+    GC.gc()
     return localto
 end
 
@@ -139,9 +146,12 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         @timeit localto "pushright" pushright!(Env,tl, tr)
         merge!(info,localinfo)
         push!(lsE,localinfo.E)
+
+        GC.gc()
     end
     info.σE = std(filter(!isnan,lsE))
 
+    GC.gc()
     return localto
 end
 
@@ -160,9 +170,12 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             @timeit localto "pushleft" pushleft!(Env,tl, tr)
         merge!(info,localinfo)
         push!(lsE,localinfo.E)
+
+        GC.gc()
     end
     info.σE = std(filter(!isnan,lsE))
 
+    GC.gc()
     return localto
 end
 

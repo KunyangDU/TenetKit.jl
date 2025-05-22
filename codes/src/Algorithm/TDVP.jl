@@ -23,8 +23,11 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector;kwargs...)
         info.err > alg.tol && break
         push!(lsobj,deepcopy(Env.layer[1]))
         push!(lsinfo,deepcopy(info))
+
+        GC.gc()
     end
 
+    GC.gc()
     return lsobj,lsinfo
 end
 
@@ -51,8 +54,11 @@ function TDVP2!(Env::Environment{3}, lst::AbstractVector;kwargs...)
         info.err > alg.tol && break
         push!(lsobj,deepcopy(Env.layer[1]))
         push!(lsinfo,deepcopy(info))
+
+        GC.gc()
     end
 
+    GC.gc()
     return lsobj,lsinfo
 end
 
@@ -100,10 +106,14 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
         merge!(localto,to)
+
+        GC.gc()
     end    
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L), Alg.τ, Alg.solver)
     Env.layer[3].ts[L] = Env.layer[1].ts[L]'
     merge!(info.solver, solver)
+
+    GC.gc()
     return localto
 end
 
@@ -119,10 +129,14 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
         merge!(localto,to)
+
+        GC.gc()
     end
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1), Alg.τ)
     Env.layer[3].ts[1] = Env.layer[1].ts[1]'
     merge!(info.solver, solver)
+
+    GC.gc()
     return localto
 end
 
@@ -150,10 +164,14 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
         merge!(localto,to)
+
+        GC.gc()
     end
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L), Alg.τ, Alg.solver)
     Env.layer[3].ts[L] = Env.layer[1].ts[L]'
     merge!(info.solver, solver)
+
+    GC.gc()
     return localto
 end
 
@@ -181,10 +199,14 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
         merge!(localto,to)
+
+        GC.gc()
     end
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1), Alg.τ, Alg.solver)
     Env.layer[3].ts[1] = Env.layer[1].ts[1]'
     merge!(info.solver, solver)
+
+    GC.gc()
     return localto
 end
 

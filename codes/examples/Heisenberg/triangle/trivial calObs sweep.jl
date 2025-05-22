@@ -1,11 +1,11 @@
 using TensorKit
 include("../../../src/iMPS.jl")
 include("../model.jl")
-dataname = "examples/Heisenberg/data/triangle/pin"
+dataname = "examples/Heisenberg/data/triangle/trivial"
 
-D = 100
-Lx = 6
-Ly = 6
+D = 80
+Lx = 4
+Ly = 4
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 Obs = MPSObservable()

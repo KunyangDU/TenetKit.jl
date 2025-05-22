@@ -1,7 +1,7 @@
 using TensorKit
 include("../../../src/iMPS.jl")
 include("model.jl")
-dataname = "examples/BCAO/arxivJ1JzpmJ3/data"
+dataname = "examples/BCAO/arxivJ1JzpmJ3/data/pin"
 
 D = 2^6
 Lx = 4
