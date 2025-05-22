@@ -58,6 +58,7 @@ include("Algorithm/TDVP.jl")
 include("Algorithm/SETTN.jl")
 include("Algorithm/CBE.jl")
 include("Algorithm/orthogonalize.jl")
+include("Algorithm/splice.jl")
 include("Algorithm/utils.jl")
 
 include("LocalSpace/Fermion.jl")

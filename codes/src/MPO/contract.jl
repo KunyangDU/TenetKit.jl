@@ -413,19 +413,6 @@ function contract(obj::DenseMPOTensor{4},tl::DenseMPOTensor{2})
     return DenseMPOTensor(@tensor tmp[-1,-2;-3,-4] ≔ obj.A[-1,-2,1,-4] * tl.A[1,-3])
 end
 
-function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
-    site = obj.center[1]
-    if csite == site + 1
-        @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,-2,4,-4] * A.A[2,4,1,3] * obj.ts[csite]'.A[1,3,2,-3]
-        obj.ts[site] = DenseMPOTensor(tmp)
-    elseif csite == site - 1
-        @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,4,-3,-4] * A.A[2,1,4,3] * obj.ts[csite]'.A[-2,3,2,1]
-        obj.ts[site] = DenseMPOTensor(tmp)
-    else
-        @error "index out of range"
-    end
-end
-
 function contract(EnvL::LeftCompositeEnvironmentTensor{2,5}, A::DenseMPOTensor{4})
     LeftCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4,-5] ≔ EnvL.A[1,2,-3,-4,3] * A'.A[4,3,2,1] * A.A[-2,-1,4,-5])
 end

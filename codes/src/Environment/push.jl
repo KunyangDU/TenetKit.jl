@@ -199,6 +199,7 @@ function pushright!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     Env.layer[1].ts[site:site+1] = [tl,tr]
     Env.layer[3].ts[site:site+1] = adjoint(Env.layer[1].ts[site:site+1])
     pushright!(Env)
+    map(x -> Env.layer[x].center .+= 1,[1,3])
 end
 
 function pushleft!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
@@ -206,6 +207,7 @@ function pushleft!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     Env.layer[1].ts[site-1:site] = [tl, tr]
     Env.layer[3].ts[site-1:site] = adjoint(Env.layer[1].ts[site-1:site])
     pushleft!(Env)
+    map(x -> Env.layer[x].center .-= 1,[1,3])
 end
 
 

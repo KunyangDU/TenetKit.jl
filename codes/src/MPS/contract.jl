@@ -232,56 +232,6 @@ function contract(EnvL::RightCompositeEnvironmentTensor{1, 3}, Λ::MPSTensor{2})
     return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3] ≔ Λ.A[-1,1]*EnvL.A[1,-2,-3])
 end
 
-function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
-    tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D)
-    for i in 1:Envorth.D
-        tmp[i] = contract(Envorth.A[i],Λ)
-    end
-    return SparseLeftEnvironmentTensor(tmp)
-end
-
-function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
-    tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D)
-    for i in 1:Envorth.D
-        tmp[i] = contract(Envorth.A[i],Λ)
-    end
-    return SparseRightEnvironmentTensor(tmp)
-end
-
-function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
-    tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D)
-    for i in 1:Envorth.D
-        tmp[i] = contract(Envorth.A[i],A)
-    end
-    return SparseLeftEnvironmentTensor(tmp)
-end
-
-function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
-    tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D)
-    for i in 1:Envorth.D
-        tmp[i] = contract(Envorth.A[i],A)
-    end
-    return SparseRightEnvironmentTensor(tmp)
-end
-
-function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},
-    Λ::Union{MPSTensor{2},AdjointMPSTensor{3},DenseMPOTensor{2},AdjointMPOTensor{4}})
-    Envorth.A = splice(Envorth,Λ).A
-end
-
-function splice!(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
-    site = obj.center[1]
-    if csite == site + 1
-        @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[-1,-2,1] * A.A[1,3,2] * obj.ts[csite]'.A[2,-3,3]
-        obj.ts[site] = MPSTensor(tmp)
-    elseif csite == site - 1
-        @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[1,-2,-3] * A.A[2,3,1] * obj.ts[csite]'.A[-1,2,3]
-        obj.ts[site] = MPSTensor(tmp)
-    else
-        @error "index out of range"
-    end
-end
-
 function contract(EnvL::LeftCompositeEnvironmentTensor{2,4}, A::MPSTensor{3})
     LeftCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4] ≔ EnvL.A[1,2,-3,-4] * A'.A[3,1,2] * A.A[-1,-2,3])
 end
