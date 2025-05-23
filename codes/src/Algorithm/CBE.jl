@@ -80,6 +80,7 @@
 
 function CBE!(env::Environment{3}, alg::CBEalgo{sch}, info::CBEinfo{L2R};kwargs...) where sch
     tl,tr,localto = CBE(env,alg,info)
+    isnothing(tl) && isnothing(tr) && return localto
     site = env.center[1]
 
     env.layer[1].ts[site] = tl
@@ -93,6 +94,7 @@ end
 
 function CBE!(env::Environment{3}, alg::CBEalgo{sch}, info::CBEinfo{R2L};kwargs...) where sch
     tl,tr,localto = CBE(env,alg,info)
+    isnothing(tl) && isnothing(tr) && return localto
     site = env.center[1]
 
     env.layer[1].ts[site-1] = tl
@@ -123,7 +125,7 @@ function randSVD(env::Environment{3}, alg::CBEalgo,info::CBEinfo{L2R})
     B = env.layer[1].ts[csite]
 
     D_i = dims(A)[2][1]
-    D_i == D_f && return localto
+    D_i == D_f && return nothing,nothing,localto
 
     EnvL = env.envs[site]
     EnvR = env.envs[csite + 1]
@@ -142,7 +144,7 @@ function randSVD(env::Environment{3}, alg::CBEalgo,info::CBEinfo{L2R})
 
     @timeit localto "direct-sum" tr = _cbedsum(Q,B,:right)
     @timeit localto "splice" tl = splice(env.layer[1].ts[site:site+1]...,tr,L2R())
-    
+
     return tl,tr,localto
 end
 
@@ -156,7 +158,7 @@ function randSVD(env::Environment{3},alg::CBEalgo,info::CBEinfo{R2L})
     A = env.layer[1].ts[csite]
 
     D_i = dims(A)[2][1]
-    D_i == D_f && return localto
+    D_i == D_f && return nothing,nothing,localto
     
     EnvL = env.envs[csite]
     EnvR = env.envs[site + 1]

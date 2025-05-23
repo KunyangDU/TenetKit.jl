@@ -293,6 +293,22 @@ function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::De
     return tmp
 end
 
+# function contract(EnvL::SparseLeftEnvironmentTensor, A::SparseMPOTensor{N₁,M₁}, B::SparseMPOTensor{N₂,M₂}, C::AdjointMPOTensor{4}, D::AdjointMPOTensor{4}, EnvR::SparseRightEnvironmentTensor) where {N₁,M₁,N₂,M₂}
+#     @assert M₁ == N₂
+#     tmp = nothing
+#     for i in 1:N₁, j in 1:M₁, k in 1:M₂
+#         isnothing(A.m[i,j]) | isnothing(B.m[j,k]) && continue
+#         tmp1 = contract(EnvL.A[i], A.m[i,j], C)
+#         tmp2 = contract(D, B.m[j,k], EnvR.A[k])
+#         if isnothing(tmp)
+#             tmp = contract(tmp1, tmp2)
+#         else
+#             tmp += contract(tmp1, tmp2)
+#         end
+#     end
+#     return tmp
+# end
+
 """
 composite ENVL (ENVL + MPO 1) + ENVR
 make eff MPO

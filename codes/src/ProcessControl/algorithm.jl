@@ -9,11 +9,11 @@ end
 
 mutable struct SETTNalgo{Sch} <: AbstractAlgorithm where {Sch}
     scheme::AbstractScheme
+    trunc::TruncationScheme
     N::Int64
-    D::Int64
     tol::Number
-    function SETTNalgo(scheme::AbstractScheme, N::Int64, D::Int64, tol::Number)
-        new{typeof(scheme)}(scheme,N,D,tol)
+    function SETTNalgo(scheme::AbstractScheme, trunc::TruncationScheme, N::Int64, tol::Number)
+        new{typeof(scheme)}(scheme,trunc,N,tol)
     end
 end
 
@@ -47,6 +47,17 @@ mutable struct CBEalgo{Sch} <: AbstractAlgorithm where {Sch}
     D::Int64 
     ϵ::Number
     CBEalgo(scheme::AbstractScheme,λ::Number,D::Int64,ϵ::Number) = new{typeof(scheme)}(scheme,λ,D,ϵ)
+end
+
+mutable struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
+    scheme::AbstractScheme
+    alg::AbstractAlgorithm
+    trunc::TruncationScheme
+    N::Int64
+    tol::Number
+    function Algebraalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme,N::Int64, tol::Number)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol)
+    end
 end
 
 #= ========================= =#

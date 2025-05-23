@@ -14,14 +14,10 @@ The result is stored in C by overwriting it. Note that C must not be aliased wit
 D_MPO: MPO bond dimension. Default is the maximum D of C, A, B.
 Nsweep: times of variational calculation (sweep). Default is 2.
 """
-function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,SparseMPO}, α::Number, β::Number; kwargs...)
-    #D_MPO = get(kwargs, :D_MPO, maximum(vcat(map(size, filter(x -> typeof(x) <: DenseMPO.[A,B])[1].ts)...)))
+function mul!(C::DenseMPO, A::Union{DenseMPO{L₁},SparseMPO{L₁}}, B::Union{DenseMPO{L₂},SparseMPO{L₂}}, α::Number, β::Number, Alg::Algebraalgo; kwargs...) where {L₁,L₂}
+
+    @assert L₁ == L₂
     to = TimerOutput()
-    D = get(kwargs, :D, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
-    Nsweep = get(kwargs, :Nsweep, 10)
-    tol = get(kwargs, :tol, 1e-12)
-    @assert length(A) == length(B)
-    L = length(A)
 
     tmp = deepcopy(C)'
     
@@ -31,128 +27,79 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
         initialize!(EnvAB)
         initialize!(EnvC)
     end
-
-    for i in 1:Nsweep
+    info = Algebrainfo()
+    while info.n ≤ Alg.N
         localto = TimerOutput()
-        ϵ = 0
-        
-        for site in 1:L-1
-            x₀ = composite(EnvC.layer[1].ts[site:site+1]...)
-            @timeit localto "contract" ts = map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])
-            @timeit localto "SVD" tl, tr, ~ = tsvd(axpby!(α, β, ts...); direction=:right,trunc = truncdim(D))
-            @timeit localto "push right" map(z -> pushright!(z, tl, tr),[EnvAB,EnvC])
-            x = composite(EnvC.layer[1].ts[site:site+1]...)
-            ϵ = max(ϵ,norm(x-x₀))
-        end
-        for site in L:-1:2
-            x₀ = composite(EnvC.layer[1].ts[site-1:site]...)
-            @timeit localto "contract" ts = map(z -> contract(z.envs[site-1], vcat(map(u -> z.layer[u].ts[site-1:site],1:length(z.layer)-1)...)..., z.envs[site+1]),[EnvAB,EnvC])
-            @timeit localto "SVD" tl, tr, ~ = tsvd(axpby!(α, β,ts...); direction=:left,trunc = truncdim(D))
-            @timeit localto "push left" map(z -> pushleft!(z, tl, tr),[EnvAB,EnvC])
-            x = composite(EnvC.layer[1].ts[site-1:site]...)
-            ϵ = max(ϵ,norm(x-x₀))
-        end
-        # show(localto;title = "mul!")
+
+        l2rinfo = Algebrasweepinfo(L2R())
+        mto = mul!(EnvC,EnvAB,α,β,Alg,l2rinfo)
+        merge!(localto,mto)
+        merge!(info,l2rinfo)
+
+        r2linfo = Algebrasweepinfo(R2L())
+        mto = mul!(EnvC,EnvAB,α,β,Alg,r2linfo)
+        merge!(localto,mto)
+        merge!(info,r2linfo)
+
+        show(localto;title = "mul!")
+        print("\n")
+        show(info)
         merge!(to,localto)
 
-        ϵ < tol && break
+        info.err < Alg.tol && break
     end
 
     @assert EnvAB.layer[end] == EnvC.layer[end]
-    return xpy!(EnvAB.layer[end]',C),to
+    return xp!(EnvAB.layer[end]',C),to,info
+end
+
+function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Number, Alg::Algebraalgo{DoubleSite}, sweepinfo::Algebrasweepinfo{L2R}; kwargs...)
+    localto = TimerOutput()
+    L = length(EnvC.layer[1])
+    for site in 1:L-1
+        localinfo = Algebrasiteinfo()
+        x₀ = composite(EnvC.layer[1].ts[site:site+1]...)
+        @timeit localto "composite" ts = map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])
+        @timeit localto "SVD" tl, tc, tr, ~ = tsvd(axpby!(α, β, ts...); direction=:center,trunc = Alg.trunc)
+        localinfo.bond = BondInfo(tc)
+        @timeit localto "contract" tr = contract(tc,tr) 
+        # @timeit localto "SVD" tl, tr, ~ = tsvd(axpby!(α, β, ts...); direction=:right,trunc = Alg.trunc)
+        @timeit localto "push right" map(z -> pushright!(z, tl, tr),[EnvAB,EnvC])
+        x = composite(EnvC.layer[1].ts[site:site+1]...)
+        localinfo.err = norm(x-x₀)
+        merge!(sweepinfo,localinfo)
+    end
+
+    return localto
+end
+
+function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Number, Alg::Algebraalgo{DoubleSite}, sweepinfo::Algebrasweepinfo{R2L}; kwargs...)
+    localto = TimerOutput()
+    L = length(EnvC.layer[1])
+    for site in L:-1:2
+        localinfo = Algebrasiteinfo()
+        x₀ = composite(EnvC.layer[1].ts[site-1:site]...)
+        @timeit localto "composite" ts = map(z -> contract(z.envs[site-1], vcat(map(u -> z.layer[u].ts[site-1:site],1:length(z.layer)-1)...)..., z.envs[site+1]),[EnvAB,EnvC])
+        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(axpby!(α, β, ts...); direction=:center,trunc = Alg.trunc)
+        localinfo.bond = BondInfo(tc)
+        @timeit localto "contract" tl = contract(tl,tc) 
+        # @timeit localto "SVD" tl, tr, ~ = tsvd(axpby!(α, β,ts...); direction=:left,trunc = Alg.trunc)
+        @timeit localto "push left" map(z -> pushleft!(z, tl, tr),[EnvAB,EnvC])
+        x = composite(EnvC.layer[1].ts[site-1:site]...)
+        localinfo.err = norm(x-x₀)
+        merge!(sweepinfo,localinfo)
+    end
+
+    return localto
 end
 
 function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,SparseMPO}; kwargs...)
-    to = TimerOutput()
-    D = get(kwargs, :D, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
-    Nsweep = get(kwargs, :Nsweep, 10)
-    tol = get(kwargs, :tol, 1e-12)
-    @assert length(A) == length(B)
-    L = length(A)
-
-    tmp = deepcopy(C)'
-    
-    @timeit to "initialize ABC Env" begin
-        EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
-        initialize!(EnvAB)
-    end
-
-    for i in 1:Nsweep
-        localto = TimerOutput()
-        ϵ = 0
-        
-        for site in 1:L-1
-            x₀ = composite(EnvAB.layer[1].ts[site:site+1]...)
-            @timeit localto "contract" ts = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u].ts[site:site+1],1:length(EnvAB.layer)-1)...)..., EnvAB.envs[site+2])
-            @timeit localto "SVD" tl, tr, ~ = tsvd(ts; direction=:right,trunc = truncdim(D))
-            @timeit localto "push right" pushright!(EnvAB, tl, tr)
-            x = composite(EnvAB.layer[1].ts[site:site+1]...)
-            ϵ = max(ϵ,norm(x-x₀))
-        end
-        for site in L:-1:2
-            x₀ = composite(EnvAB.layer[1].ts[site-1:site]...)
-            @timeit localto "contract" ts = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u].ts[site-1:site],1:length(EnvAB.layer)-1)...)..., EnvAB.envs[site+1])
-            @timeit localto "SVD" tl, tr, ~ = tsvd(ts; direction=:left,trunc = truncdim(D))
-            @timeit localto "push left" pushleft!(EnvAB, tl, tr)
-            x = composite(EnvAB.layer[1].ts[site-1:site]...)
-            ϵ = max(ϵ,norm(x-x₀))
-        end
-        # show(localto;title = "mul!")
-        merge!(to,localto)
-
-        ϵ < tol && break
-    end
-
-    return xpy!(EnvAB.layer[end]',C),to
+    trunc = get(kwargs,:trunc,notrunc())
+    N  = get(kwargs,:N,3)
+    tol = get(kwargs,:tol,1e-12)
+    algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol)
+    return mul!(C,A,B,1,1,algo;kwargs...)
 end
-
-# function mul!(C::DenseMPO, A::DenseMPO, B::SparseMPO; kwargs...)
-#     to = TimerOutput()
-#     D = get(kwargs, :D, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
-#     Nsweep = get(kwargs, :Nsweep, 10)
-#     tol = get(kwargs, :tol, 1e-12)
-#     @assert length(A) == length(B)
-#     L = length(A)
-
-#     tmp = deepcopy(C)'
-    
-#     @timeit to "initialize ABC Env" begin
-#         EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
-#         initialize!(EnvAB)
-#     end
-
-#     for i in 1:Nsweep
-#         localto = TimerOutput()
-#         ϵ = 0
-        
-#         for site in 1:L-1
-#             x₀ = composite(EnvAB.layer[1].ts[site:site+1]...)
-#             projH = proj2(EnvAB,site,site+1)
-#             ts = action(projH,x₀)
-#             #@timeit localto "contract" ts = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u].ts[site:site+1],1:length(EnvAB.layer)-1)...)..., EnvAB.envs[site+2])
-#             @timeit localto "SVD" tl, tr, ~ = tsvd(ts; direction=:right,trunc = truncdim(D))
-#             @timeit localto "push right" pushright!(EnvAB, tl, tr)
-#             x = composite(EnvAB.layer[1].ts[site:site+1]...)
-#             ϵ = max(ϵ,norm(x-x₀))
-#         end
-#         for site in L:-1:2
-#             x₀ = composite(EnvAB.layer[1].ts[site-1:site]...)
-#             projH = proj2(EnvAB,site-1,site)
-#             ts = action(projH,x₀)
-#             # @timeit localto "contract" ts = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u].ts[site-1:site],1:length(EnvAB.layer)-1)...)..., EnvAB.envs[site+1])
-#             @timeit localto "SVD" tl, tr, ~ = tsvd(ts; direction=:left,trunc = truncdim(D))
-#             @timeit localto "push left" pushleft!(EnvAB, tl, tr)
-#             x = composite(EnvAB.layer[1].ts[site-1:site]...)
-#             ϵ = max(ϵ,norm(x-x₀))
-#         end
-#         # show(localto;title = "mul!")
-#         merge!(to,localto)
-
-#         ϵ < tol && break
-#     end
-
-#     return xpy!(EnvAB.layer[end]',C),to
-# end
 
 """
 axpy!(α, x, y) -> y
@@ -162,10 +109,15 @@ D_MPO: MPO bond dimension. Default is the maximum D of x, y.
 Nsweep: times of variational calculation (sweep). Default is 2.
 
 """
-function axpy!(α::Number, x::DenseMPO{L}, y::DenseMPO{L};kwargs...) where L
-    D = get(kwargs, :D, max(map(y -> maximum(vcat(collect.(map(size, y.ts))...)),[x,y])...))
-    N = get(kwargs, :N, 10)
-    tol = get(kwargs, :tol, 1e-12)
+function axpby!(α::Number, β::Number, x::DenseMPO{L}, y::DenseMPO{L};kwargs...) where L
+    trunc = get(kwargs,:trunc,notrunc())
+    N  = get(kwargs,:N,3)
+    tol = get(kwargs,:tol,1e-12)
+    algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol)
+    return axpby!(α,β,x,y,algo;kwargs...)
+end
+
+function axpby!(α::Number, β::Number, x::DenseMPO{L}, y::DenseMPO{L}, Alg::Algebraalgo;kwargs...) where L
     tmp = deepcopy(y)'
     
     to = TimerOutput()
@@ -176,38 +128,70 @@ function axpy!(α::Number, x::DenseMPO{L}, y::DenseMPO{L};kwargs...) where L
         initialize!(Envy)
     end
 
-    for i in 1:N
-        ϵ = 0
+    info = Algebrainfo()
+    while info.n ≤ Alg.N
         localto = TimerOutput()
-        for site in 1:L-1
-            x₀ = composite(Envx.layer[1].ts[site:site+1]...)
-            @timeit localto "contract" ts = map(z -> contract(z.envs[site], z.layer[1].ts[site:site+1]..., z.envs[site+2]),[Envx,Envy])
-            @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpy!(α,ts...); direction=:right,trunc = truncdim(D))
-            @timeit localto "push right" map(z -> pushright!(z, tl, tr),[Envx,Envy])
-            x = composite(Envx.layer[1].ts[site:site+1]...)
-            ϵ = max(ϵ,norm(x-x₀))
-        end
-        for site in L:-1:2
-            x₀ = composite(Envx.layer[1].ts[site-1:site]...)
-            @timeit localto "contract" ts = map(z -> contract(z.envs[site-1], z.layer[1].ts[site-1:site]..., z.envs[site+1]),[Envx,Envy])
-            @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpy!(α,ts...); direction=:left,trunc = truncdim(D))
-            @timeit localto "push left" map(z -> pushleft!(z, tl, tr),[Envx,Envy])
-            x = composite(Envx.layer[1].ts[site-1:site]...)
-            ϵ = max(ϵ,norm(x-x₀))
-        end
 
-        # show(localto;title = "axpy!")
+        l2rinfo = Algebrasweepinfo(L2R())
+        mto = axpby!(α,β,Envx,Envy,Alg,l2rinfo)
+        merge!(localto,mto)
+        merge!(info,l2rinfo)
+
+        r2linfo = Algebrasweepinfo(R2L())
+        mto = axpby!(α,β,Envx,Envy,Alg,r2linfo)
+        merge!(localto,mto)
+        merge!(info,r2linfo)
+
+        show(localto;title = "axpy!")
+        print("\n")
+        show(info)
         merge!(to,localto)
 
-        ϵ < tol && break
+        info.err < Alg.tol && break
     end
 
     @assert Envx.layer[2] == Envy.layer[2]
-    return xpy!(Envx.layer[2]',y),to
+    return xp!(Envx.layer[2]',y),to,info
 end
 
-function axpy!(α::Number, x::CompositeMPOTensor{N₁,R₁}, y::CompositeMPOTensor{N₂,R₂}) where {N₁,R₁,N₂,R₂}
-    return axpby!(α,1,x,y)
+function axpby!(α::Number, β::Number, Envx::Environment{2}, Envy::Environment{2}, Alg::Algebraalgo{DoubleSite}, sweepinfo::Algebrasweepinfo{L2R};kwargs...)
+    localto = TimerOutput()
+    L = length(Envx.layer[1])
+    for site in 1:L-1
+        localinfo = Algebrasiteinfo()
+        x₀ = composite(Envx.layer[1].ts[site:site+1]...)
+        @timeit localto "composite" ts = map(z -> contract(z.envs[site], z.layer[1].ts[site:site+1]..., z.envs[site+2]),[Envx,Envy])
+        @timeit localto "SVD" tl, tc, tr, ~ = tsvd(axpby!(α, β, ts...); direction=:center,trunc = Alg.trunc)
+        localinfo.bond = BondInfo(tc)
+        @timeit localto "contract" tr = contract(tc,tr) 
+        # @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpby!(α,β,ts...); direction=:right,trunc = Alg.trunc)
+        @timeit localto "push right" map(z -> pushright!(z, tl, tr),[Envx,Envy])
+        x = composite(Envx.layer[1].ts[site:site+1]...)
+        localinfo.err = norm(x-x₀)
+
+        merge!(sweepinfo,localinfo)
+    end
+    return localto
+end
+
+function axpby!(α::Number, β::Number, Envx::Environment{2}, Envy::Environment{2}, Alg::Algebraalgo{DoubleSite}, sweepinfo::Algebrasweepinfo{R2L};kwargs...)
+    localto = TimerOutput()
+    L = length(Envx.layer[1])
+    for site in L:-1:2
+        localinfo = Algebrasiteinfo()
+        x₀ = composite(Envx.layer[1].ts[site-1:site]...)
+        @timeit localto "composite" ts = map(z -> contract(z.envs[site-1], z.layer[1].ts[site-1:site]..., z.envs[site+1]),[Envx,Envy])
+        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(axpby!(α, β, ts...); direction=:center,trunc = Alg.trunc)
+        localinfo.bond = BondInfo(tc)
+        @timeit localto "contract" tl = contract(tl,tc) 
+        # @timeit localto "SVD" tl, tr, temptruncerr = tsvd(axpby!(α,β,ts...); direction=:left,trunc = Alg.trunc)
+        @timeit localto "push left" map(z -> pushleft!(z, tl, tr),[Envx,Envy])
+        x = composite(Envx.layer[1].ts[site-1:site]...)
+        localinfo.err = norm(x-x₀)
+
+        merge!(sweepinfo,localinfo)
+    end
+    return localto
 end
 
 function axpby!(α::Number, β::Number, x::CompositeMPOTensor{N₁,R₁}, y::CompositeMPOTensor{N₂,R₂}) where {N₁,R₁,N₂,R₂}
@@ -221,7 +205,19 @@ function axpby!(::Number, β::Number, ::Nothing, y::CompositeMPOTensor)
     return y
 end
 
+function axpy!(α::Number, x::DenseMPO, y::DenseMPO;kwargs...)
+    return axpby!(α,1,x,y;kwargs...)
+end
+
+function axpy!(α::Number, x::CompositeMPOTensor, y::CompositeMPOTensor)
+    return axpby!(α,1,x,y)
+end
+
 function xpy!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO}
+    return axpby!(1,1,x,y)
+end
+
+function xp!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO}
     y.ts[:] = x.ts[:]
     y.center = x.center
     return y

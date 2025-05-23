@@ -87,6 +87,49 @@ mutable struct TDVPsiteinfo <: AlgorithmInfo
     TDVPsiteinfo() = new(BondInfo(), Lanczosinfo(),0)
 end
 
+mutable struct SETTNinfo <: AlgorithmInfo
+    bond::BondInfo
+    n::Int64
+    err::Number
+    lnZ::Number
+    SETTNinfo(bond::BondInfo,n::Int64,ϵ::Number,lnZ::Number) = new(bond,n,ϵ,lnZ)
+    SETTNinfo(info::SETTNinfo) = new(BondInfo(),info.n,NaN,NaN)
+    SETTNinfo() = new(BondInfo(),0,NaN,NaN)
+end
+
+mutable struct SETTNsweepinfo <: AlgorithmInfo
+    bond::BondInfo
+    err::Number
+    lnZ::Number
+    SETTNsweepinfo(bond::BondInfo, ϵ::Number, lnZ::Number) = new(bond,ϵ,lnZ)
+    SETTNsweepinfo(err::Number) = new(BondInfo(),err,0)
+    SETTNsweepinfo() = new(BondInfo(),0,0)
+end
+
+mutable struct Algebrainfo <: AlgorithmInfo
+    bond::BondInfo
+    n::Int64
+    err::Number
+    Algebrainfo(bond::BondInfo, n::Int64, ϵ::Number) = new(bond,n,ϵ)
+    Algebrainfo(info::Algebrainfo) = new(BondInfo(),info.n,0)
+    Algebrainfo() = new(BondInfo(),0,0)
+end
+
+mutable struct Algebrasweepinfo{Dir} <: AlgorithmInfo where Dir
+    direction::SweepDirection
+    bond::BondInfo
+    err::Number
+    Algebrasweepinfo(direction::SweepDirection, bond::BondInfo, ϵ::Number) = new{typeof(direction)}(direction, bond, ϵ)
+    Algebrasweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), 0)
+end
+
+mutable struct Algebrasiteinfo <: AlgorithmInfo
+    bond::BondInfo
+    err::Number
+    Algebrasiteinfo(bond::BondInfo, ϵ::Number) = new(bond,ϵ)
+    Algebrasiteinfo() = new(BondInfo(),0)
+end
+
 # function merge(A::DMRGsweepinfo{dir₁},B::DMRGsweepinfo{dir₂}) where {dir₁,dir₂}
 #     @assert dir₁ == dir₂ "direction mismatch"
 #     return DMRGsweepinfo(sch₁,merge(A.bond, B.bond),merge(A.solver, B.solver),min(A.E,B.E),max(A.σE,B.σE))
@@ -109,6 +152,20 @@ function TimerOutputs.merge!(A::TDVPinfo,B::TDVPsweepinfo{dir}) where dir
     return A
 end
 
+function TimerOutputs.merge!(A::Algebrainfo,B::Algebrasweepinfo{dir}) where dir
+    merge!(A.bond, B.bond)
+    A.err = max(A.err,B.err)
+    dir <: R2L && (A.n += 1)
+    return A
+end
+
+function TimerOutputs.merge!(A::SETTNinfo,B::SETTNsweepinfo)
+    merge!(A.bond, B.bond)
+    A.lnZ = B.lnZ
+    A.n += 1
+    return A
+end
+
 function TimerOutputs.merge!(A::T₁,B::T₂) where {T₁<:Union{DMRGsweepinfo,TDVPsweepinfo},T₂<:Union{DMRGsiteinfo,TDVPsiteinfo}}
     merge!(A.bond, B.bond)
     merge!(A.solver, B.solver)
@@ -121,6 +178,12 @@ function TimerOutputs.merge!(A::T₁,B::T₂) where {T₁<:Union{DMRGsweepinfo,T
         A.err = A.err + B.err
     end
 
+    return A
+end
+
+function TimerOutputs.merge!(A::Algebrasweepinfo,B::Algebrasiteinfo)
+    merge!(A.bond, B.bond)
+    A.err = max(A.err,B.err)
     return A
 end
 
@@ -173,12 +236,28 @@ function BondInfo(A::TensorMap{<:ComplexSpace,1,1})
     return BondInfo(length(λ),length(λ),vonNeumann(A))
 end
 
+function Base.show(io::IO,info::Algebrainfo)
+    println(io,info.bond,", ProjErr = $(info.err)")
+end
+
+function Base.show(io::IO,info::SETTNinfo)
+    println(io,info.bond,", lnZ = $(info.lnZ), lnZ Err = $(info.err)")
+end
+
 function Base.show(io::IO,info::DMRGsweepinfo)
     println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err), E = $(info.E), σE = $(info.σE)")
 end
 
 function Base.show(io::IO,info::TDVPsweepinfo)
     println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err)")
+end
+
+function Base.show(io::IO,info::SETTNsweepinfo)
+    println(io,info.bond,", lnZ = $(info.lnZ), AlgebraErr = $(info.err)")
+end
+
+function Base.show(io::IO,info::Algebrasweepinfo)
+    println(io,info.bond,", ProjErr = $(info.err)")
 end
 
 function Base.show(io::IO,info::BondInfo)

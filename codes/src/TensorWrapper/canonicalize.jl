@@ -22,3 +22,8 @@ function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},si::Int64) where {L}
     return canonicalize!(obj,si,si)
 end
 
+function canonicalize!(obj::Union{AdjointMPO{L},AdjointMPS{L}},si::Int64) where {L}
+    @assert 1 ≤ si ≤ L 
+    return adjoint(canonicalize!(obj',si,si))
+end
+
