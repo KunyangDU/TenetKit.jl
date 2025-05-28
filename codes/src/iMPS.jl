@@ -1,4 +1,6 @@
 using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees
+TensorKit.usebraidcache_abelian[] = false
+TensorKit.usebraidcache_nonabelian[] = false
 
 include("init.jl")
 
@@ -16,6 +18,7 @@ include("ProcessControl/algorithm.jl")
 include("ProcessControl/direction.jl")
 include("ProcessControl/information.jl")
 include("ProcessControl/scheme.jl")
+include("ProcessControl/structure.jl")
 
 include("default.jl")
 
@@ -45,9 +48,14 @@ include("Observables/calObs.jl")
 
 include("tools/algebra.jl")
 include("tools/geometry.jl")
-include("tools/operations.jl")
 include("tools/tools.jl")
 include("tools/lattice.jl")
+
+include("Algebra/inner.jl")
+include("Algebra/mul1.jl")
+include("Algebra/mul2.jl")
+include("Algebra/axpby.jl")
+include("Algebra/operations.jl")
 
 include("utils/benchmarktools.jl")
 include("utils/KrylovKit.jl")
@@ -57,6 +65,9 @@ include("Algorithm/DMRG.jl")
 include("Algorithm/TDVP.jl")
 include("Algorithm/SETTN.jl")
 include("Algorithm/CBE.jl")
+include("Algorithm/CBE2.jl")
+include("Algorithm/CBE3.jl")
+include("Algorithm/CBE-SVD.jl")
 include("Algorithm/orthogonalize.jl")
 include("Algorithm/splice.jl")
 include("Algorithm/utils.jl")

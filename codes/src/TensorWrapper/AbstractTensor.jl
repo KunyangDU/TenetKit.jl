@@ -17,7 +17,7 @@ In particular, R == 2 for bond tensor.
 # Constructors
      MPSTensor(::AbstractTensorMap) 
 """
-mutable struct MPSTensor{R} <: AbstractMPSTensor{R}
+mutable struct MPSTensor{R} <: AbstractMPSTensor 
     A::AbstractTensorMap
 
     function MPSTensor(ts::AbstractTensorMap)
@@ -58,7 +58,7 @@ In particular, R == 2 for bond tensor.
 # Constructors
      MPSTensor(::AbstractTensorMap) 
 """
-mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor{R}
+mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor
     A::AbstractTensorMap
 
     function AdjointMPSTensor(ts::AbstractTensorMap)
@@ -83,7 +83,7 @@ todo {}
          | \
          2' 3'...(R-1)'
 """
-mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
+mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor
     A::AbstractTensorMap
 
     function CompositeMPSTensor(A::AbstractTensorMap)
@@ -99,11 +99,15 @@ mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
     end
 end
 
-mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
+mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor
     A::AbstractTensorMap
 
     function AdjointCompositeMPSTensor(A::AbstractTensorMap)
         return new{length(domain(A))-1, rank(A)}(A)
+    end
+
+    function AdjointCompositeMPSTensor{n,r}(A::AbstractTensorMap) where {n,r}
+        return new{n, r}(A)
     end
 
     function AdjointCompositeMPSTensor(fc::Function,codom,dom)
@@ -145,6 +149,10 @@ mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
         A = TensorMap(fc,codomain,domain)
         return new{rank(A)}(A)
     end
+
+    function AdjointMPOTensor{r}(t::AbstractTensorMap) where r
+        return new{r}(t)
+    end
 end
 
 Base.adjoint(t::DenseMPOTensor) = AdjointMPOTensor(t.A')
@@ -174,6 +182,10 @@ mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
 
     function AdjointCompositeMPOTensor(A::AbstractTensorMap)
         return new{length(domain(A))-1, rank(A)}(A)
+    end
+
+    function AdjointCompositeMPOTensor{n,r}(A::AbstractTensorMap) where {n,r}
+        return new{n,r}(A)
     end
 
     function AdjointCompositeMPOTensor(fc::Function,codom,dom)

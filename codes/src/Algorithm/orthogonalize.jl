@@ -36,16 +36,95 @@ function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor
     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
 end
 
-function orthogonalize!(Q::T,A::T,direction::Symbol;tol::Number=1e-4) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
+# function orthogonalize!(H::SparseMPOTensor,B::Union{DenseMPOTensor{4},MPSTensor{3}},EnvR::SparseRightEnvironmentTensor)
+#     w,w2 = size(H)
+#     EnvRorth = Vector(undef,w)
+#     EnvRorth .= nothing
+
+#     for i in 1:w, j in 1:w2
+#         Hij = H.m[i,j]
+#         isnothing(Hij) && continue
+#         tmp = contract(B,Hij,EnvR.A[j])
+#         if isnothing(EnvRorth[i])
+#             EnvRorth[i] = tmp - contract(tmp,B)
+#         else
+#             EnvRorth[i] += tmp - contract(tmp,B)
+#         end
+#     end
+
+#     return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
+# end
+
+# function orthogonalize!(H::SparseMPOTensor,A::Union{DenseMPOTensor{4},MPSTensor{3}},EnvL::SparseLeftEnvironmentTensor)
+#     w1,w = size(H.m)
+#     EnvLorth = Vector(undef,w)
+#     EnvLorth .= nothing
+
+#     for i in 1:w1, j in 1:w
+#         Hij = H.m[i,j]
+#         isnothing(Hij) && continue
+#         tmp = contract(EnvL.A[i],A,Hij)
+#         if isnothing(EnvLorth[j])
+#             EnvLorth[j] = tmp - contract(tmp,A)
+#         else
+#             EnvLorth[j] += tmp - contract(tmp,A)
+#         end
+#     end
+
+#     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
+# end
+
+function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+    w,w2 = size(H)
+    EnvRorth = Vector(undef,w)
+    EnvRorth .= nothing
+
+    for i in 1:w, j in 1:w2
+        Hij = H.m[i,j]
+        isnothing(Hij) && continue
+        tmp = contract(B,Hij,EnvR.A[j])
+        if isnothing(EnvRorth[i])
+            EnvRorth[i] = tmp - contract(tmp,B′)
+        else
+            EnvRorth[i] += tmp - contract(tmp,B′)
+        end
+    end
+
+    return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
+end
+
+function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+    w1,w = size(H.m)
+    EnvLorth = Vector(undef,w)
+    EnvLorth .= nothing
+
+    for i in 1:w1, j in 1:w
+        Hij = H.m[i,j]
+        isnothing(Hij) && continue
+        tmp = contract(EnvL.A[i],A,Hij)
+        if isnothing(EnvLorth[j])
+            EnvLorth[j] = tmp - contract(tmp,A′)
+        else
+            EnvLorth[j] += tmp - contract(tmp,A′)
+        end
+    end
+
+    return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
+end
+
+function orthogonalize!(A::Union{DenseMPOTensor{4},MPSTensor{3}},A′::Union{DenseMPOTensor{4},MPSTensor{3}},Env::Union{DenseLeftEnvironmentTensor,DenseRightEnvironmentTensor})
+    tmp = contract(Env.A,A)
+    Envorth = tmp - contract(tmp,A′)
+    return Envorth
+end
+
+function orthogonalize!(Q::T,A::T,direction::AbstractDirection;tol::Number=1e-4) where T <: Union{MPSTensor{3},DenseMPOTensor{4},AdjointMPOTensor{4}}
     ϵ = norm(_cbeinner(Q,A,direction))
     ϵ > tol && (ϵ = _cbeorth!(Q,A,direction))
     @assert ϵ < tol ϵ
     return Q
 end
 
-function _cbeorth!(Q::T,A::T,direction::Symbol) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
-    Q.A -= _cbeproj(Q,A,direction)
-    return norm(_cbeinner(Q,A,direction))
-end
+
 
 

@@ -1,6 +1,6 @@
 abstract type AbstractTensorWrapper end
 
-abstract type AbstractMPSTensor{R} <: AbstractTensorWrapper end
+abstract type AbstractMPSTensor <: AbstractTensorWrapper end
 abstract type AbstractMPOTensor <: AbstractTensorWrapper end
 abstract type AbstractEnvironmentTensor <: AbstractTensorWrapper end
 

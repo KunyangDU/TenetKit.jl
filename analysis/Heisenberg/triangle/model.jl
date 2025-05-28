@@ -29,7 +29,7 @@ function TrivialSSFT(Latt::AbstractLattice,data::Dict,lstk,points = 1:size(Latt)
 
     So = zeros(LL)
     So[points] .= 1
-    FSxSx,FSySy,FSzSz = map(x -> LL/L*FT2(x .+= x',Latt,lstk),[SxSx,SySy,SzSz])
+    FSxSx,FSySy,FSzSz = map(x -> LL/L*FT2(x .+= x' + diagm(So/4),Latt,lstk),[SxSx,SySy,SzSz])
     return FSxSx,FSySy,FSzSz
 end
 

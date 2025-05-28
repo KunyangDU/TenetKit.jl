@@ -2,13 +2,14 @@ using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes
 include("../../analysis/analysis.jl")
 include("../model.jl")
 
-dataname = "../codes/examples/BCAO/PNASJ1J3/data"
+dataname = "../codes/examples/BCAO/PNASJ1J3/data/yeesuan"
 figurename = "BCAO/PNASJ1J3/figures"
 
-D = 2^6
-Lx = 4
+D = 2^7
+Lx = 6
 Ly = 4
-params = (hy=1.0,J1xy = -1.0, J1z = -0.16, D = 0.013, E = -0.013, J3xy = 0.33, J3z = -0.11)
+# params = (J1xy = -1.0, J1z = -0.16, D = 0.013, E = -0.013, J3xy = 0.33, J3z = -0.11)
+params = (J1xy = -1.0, J1z = -0.158, D = 0.0132, E = -0.0132, J3xy = 0.329, J3z = -0.112)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
@@ -28,11 +29,10 @@ yticks = (1:0.5:Ly+0.5,string.(1:2Ly)),
 title = "$(2Lx)x$(2Ly) ZZ-HC-CY, D=$(D)")
 plotLatt!(ax,Latt,[0,1];site = true,sitelabel = false)
 
-
-intensity = 0.3 / maximum(sum(abs.(Sy))/length(Sy))
+intensity = 0.3 / maximum(sum((@. sqrt(Sx^2 + Sy^2)))/length(Sy))
 colors = get(colorschemes[:bwr],Sy,(-Sm/3,Sm/3))
 for i in 1:size(Latt)
-    arrowc!(ax,coordinate(Latt,i)...,intensity*Sz[i],intensity*Sy[i];color = colors[i],linewidth = 2)
+    arrowc!(ax,coordinate(Latt,i)...,intensity*Sx[i],intensity*Sy[i];color = colors[i],linewidth = 2)
 end
 
 Colorbar(fig[1,2],limits = (-Sm,Sm),colormap = :bwr,label = L"\langle S_y\rangle")

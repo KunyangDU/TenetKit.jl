@@ -11,8 +11,14 @@ mutable struct DenseMPS{L, T<:Union{Float64, ComplexF64}} <: AbstractMPS
         return new{L,T}(ts,ct)
     end
 
-    function DenseMPS{L,T}(ts::Vector{MPSTensor}) where {L,T}
-        return new{L,T}(ts,[1,L])
+    function DenseMPS{L,t}(ts::Vector{T}) where T <: Union{MPSTensor,MPSTensor{R}} where {L,t,R}
+        return new{L,t}(ts,[1,L])
+    end
+
+    function DenseMPS(ts::Vector{T}) where T <: Union{MPSTensor,MPSTensor{R}} where R
+        L = length(ts)
+        t = eltype(ts[1].A)
+        return new{L,t}(ts,[1,L])
     end
 
     function DenseMPS{L,T}(ts::Vector{AbstractTensorMap}) where {L,T}
@@ -41,6 +47,7 @@ mutable struct AdjointMPS{L, T<:Union{Float64, ComplexF64}} <: AbstractMPS
 end
 
 Base.adjoint(A::DenseMPS{L,T}) where {L,T} = AdjointMPS{L,T}(deepcopy(adjoint(A.ts)), deepcopy(A.center))
+Base.adjoint(A::AdjointMPS{L,T}) where {L,T} = DenseMPS{L,T}(deepcopy(adjoint(A.ts)), deepcopy(A.center))
 
 
 

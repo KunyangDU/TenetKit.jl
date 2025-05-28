@@ -13,6 +13,28 @@ end
 MFBZpoint = [[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]]
 dZZFBZpoint = map(x -> x/2,FBZpoint)
 
+R1 = [
+    cos(pi/4) -sin(pi/4) 0;
+    sin(pi/4) cos(pi/4) 0;
+    0 0 1
+]
+
+R2 = [
+    1 0 0;
+    0 sqrt(3)/3 -sqrt(6)/3;
+    0 sqrt(6)/3 sqrt(3)/3
+]
+
+Py2c = R2*R1
+
+PY2C = [
+    2/3 1/3 2/3 -sqrt(2)/3;
+    0 0 -2 sqrt(2);
+    -1/3 1/3 -4/3 -sqrt(2)/3;
+    -1/3 1/3 2/3 sqrt(2)/6
+]
+PC2Y = inv(PY2C)
+
 
 function getxyzbonds(Latt::AbstractLattice;
     shift = [0,1],
@@ -63,3 +85,24 @@ function calcSSfactor(Latt::AbstractLattice,k::Vector,datas::Vector,points = 1:s
     return S
 end
 
+
+function getCorrMat(Latt::AbstractLattice,data::Dict,dataonsite = nothing;selected_point = 1:size(Latt))
+    L = length(selected_point)
+    A = zeros(L,L)
+    for i in 1:L,j in i+1:L
+        A[i,j] = data[(selected_point[i],selected_point[j])]
+    end
+    A = A + A'
+    if !isnothing(dataonsite)
+        if typeof(dataonsite) <: Dict
+            for i in 1:L 
+                A[i,i] = dataonsite[(i,)]
+            end
+        elseif typeof(dataonsite) <: Vector
+            A .+= diagm(dataonsite)
+        elseif typeof(dataonsite) <: Number 
+            A .+= diagm(dataonsite*ones(L))
+        end
+    end
+    return A
+end

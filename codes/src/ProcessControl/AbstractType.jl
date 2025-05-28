@@ -15,7 +15,7 @@ abstract type AbstractScheme end
 abstract type SweepScheme <: AbstractScheme end
 abstract type CBEscheme <: AbstractScheme end
 
-
-
+abstract type AbstractStructure end
+abstract type EnvironmentStructure <: AbstractStructure end
 
 

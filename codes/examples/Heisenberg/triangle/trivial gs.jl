@@ -11,10 +11,10 @@ Ly = 4
 Latt = XCTria(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-h = 1
+h = 0
 h = PINVEC120(Latt,h)
 
-params = (J=1,)
+params = (J=1,H = 0.)
 ψ = let 
     AuxSpace = repeat([ℂ^1,], Lx*Ly)
     randMPS(TrivialSpinOneHalf.PhySpace ,AuxSpace)

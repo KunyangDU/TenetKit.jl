@@ -1,15 +1,8 @@
 using FiniteLattices,CairoMakie
 include("../analysis/analysis.jl")
 
-function ZZHoneyComb(L::Int64,W::Int64)
-    shift = ((-1/2sqrt(3),1/2),(0.0,0.0),(1/sqrt(3),0.0),(sqrt(3)/2,1/2))
-    return CompositeLattice([YCRect(L,W,(sqrt(3),1.0)) for _ in 1:4]..., shift) |> Snake!    
-end
 
-
-
-
-Lx = 8
+Lx = 4
 Ly = 4
 shift = ((0.0,0.0),(sqrt(3)/6,1/2))
 Latt = CompositeLattice([YCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake!    

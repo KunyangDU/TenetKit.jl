@@ -58,6 +58,7 @@ rank(A::AbstractTensorMap) = length(codomain(A)) + length(domain(A))
 
 composite(A::MPSTensor{3}, B::MPSTensor{3}) = CompositeMPSTensor(@tensor tmp[-1 -2 -3; -4] ≔ A.A[-1,-2,1]*B.A[1,-3,-4])
 composite(A::DenseMPOTensor{4}, B::DenseMPOTensor{4}) = CompositeMPOTensor(@tensor tmp[-1 -2 -3;-4 -5 -6] ≔ A.A[-2,-3,1,-6] * B.A[-1,1,-4,-5])
+composite(A::T, B::T) where T <: Union{AdjointMPSTensor{3},AdjointMPOTensor{4}} = composite(A',B')'
 
 getPhySpace(t::DenseMPS) = getPhySpace(t.ts[1])
 getPhySpace(t::MPSTensor{R}) where R = 3 ≤ R ? codomain(t.A)[2] : nothing

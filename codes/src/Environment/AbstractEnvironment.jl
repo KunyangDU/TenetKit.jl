@@ -34,30 +34,57 @@ mutable struct LeftEnvironmentTensor{R} <: AbstractEnvironmentTensor
     end
 end
 
+Base.adjoint(A::LeftEnvironmentTensor{2}) = LeftEnvironmentTensor{2}(A.A')
+Base.adjoint(A::RightEnvironmentTensor{2}) = RightEnvironmentTensor{2}(A.A')
+
+# function Base.adjoint(A::LeftEnvironmentTensor{3})
+#     tmp = A.A'
+#     LeftEnvironmentTensor{3}(permute(tmp,(2,),(1,3)))
+# end
+
+# function Base.adjoint(A::RightEnvironmentTensor{3})
+#     tmp = A.A'
+#     RightEnvironmentTensor{3}(permute(tmp,(1,),(3,2)))
+# end
+
 """
 
 """
-mutable struct LeftCompositeEnvironmentTensor{N,R} <: AbstractEnvironmentTensor
+mutable struct LeftCompositeEnvironmentTensor{Rcd,Rt,N,I} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
 
     function LeftCompositeEnvironmentTensor(t::AbstractTensorMap)
-        return new{length(codomain(t)),rank(t)}(t)
+        return new{length(codomain(t)),rank(t),3,3}(t)
     end
 
     function LeftCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
-        return new{length(codomain(t)),rank(t)}(t)
+        return new{length(codomain(t)),rank(t),3,3}(t)
+    end
+
+    function LeftCompositeEnvironmentTensor(t::AbstractTensorMap,n::Int64,i::Int64)
+        return new{length(codomain(t)),rank(t),n,i}(t)
+    end
+
+    function LeftCompositeEnvironmentTensor{rcd,rt,n,i}(t::AbstractTensorMap) where {rcd,rt,n,i}
+        return new{rcd,rt,n,i}(t)
     end
 end
 
-mutable struct RightCompositeEnvironmentTensor{N,R} <: AbstractEnvironmentTensor
+mutable struct RightCompositeEnvironmentTensor{Rcd,Rt,N,I} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
 
     function RightCompositeEnvironmentTensor(t::AbstractTensorMap)
-        return new{length(domain(t)),rank(t)}(t)
+        return new{length(domain(t)),rank(t),3,3}(t)
     end
 
     function RightCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
-        return new{length(domain(t)),rank(t)}(t)
+        return new{length(domain(t)),rank(t),3,3}(t)
+    end
+    function RightCompositeEnvironmentTensor(t::AbstractTensorMap,n::Int64,i::Int64)
+        return new{length(domain(t)),rank(t),n,i}(t)
+    end
+    function RightCompositeEnvironmentTensor{rcd,rt,n,i}(t::AbstractTensorMap) where {rcd,rt,n,i}
+        return new{rcd,rt,n,i}(t)
     end
 end
 
@@ -163,6 +190,9 @@ mutable struct DenseRightEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
     end
 end
 
+Base.adjoint(A::DenseLeftEnvironmentTensor{2}) = DenseLeftEnvironmentTensor(A.A')
+Base.adjoint(A::DenseRightEnvironmentTensor{2}) = DenseRightEnvironmentTensor(A.A')
+
 """
 Monolayer Environment, i.e., only one layer MPO is considered.
 """
@@ -185,4 +215,47 @@ mutable struct Environment{N,L} <: AbstractEnvironment
     end
 
 end
+
+mutable struct CBEenvironment <: AbstractEnvironment
+    tL₀::AbstractTensorWrapper
+    tR₀::AbstractTensorWrapper
+    tL::Union{AbstractTensorWrapper,Nothing}
+    tR::Union{AbstractTensorWrapper,Nothing}
+    D_i::Int64
+    D_f::Int64
+    Λ::Union{AbstractTensorWrapper,Nothing}
+    Lorth::Union{SparseLeftEnvironmentTensor,LeftCompositeEnvironmentTensor,LeftEnvironmentTensor,Nothing}
+    Rorth::Union{SparseRightEnvironmentTensor,RightCompositeEnvironmentTensor,RightEnvironmentTensor,Nothing}
+
+    # function CBEenvironment(env::Environment{N,L},ind::Int64,D_i::Int64,D_f::Int64) where {N,L}
+    #     return new(env,nothing,nothing,nothing,ind,D_i,D_f,N,L)
+    # end
+
+    # function CBEenvironment(
+    #     Λ::AbstractTensorWrapper,
+    #     tl₀::AbstractTensorWrapper,
+    #     tr₀::AbstractTensorWrapper,
+    #     tl::AbstractTensorWrapper,
+    #     tr::AbstractTensorWrapper,
+    #     Lorth::LeftCompositeEnvironmentTensor,
+    #     Rorth::RightCompositeEnvironmentTensor,
+    #     D_i::Int64,
+    #     D_f::Int64,
+    # )
+    # return new(Λ,tl₀,tr₀,tl,tr,Lorth,Rorth,D_i,D_f)
+    # end
+end
+
+# function _fullCBEenv(tL₀::AbstractTensorWrapper,tR₀::AbstractTensorWrapper,D_i::Int64,D_f::Int64)
+#     return CBEenvironment(tL₀,tR₀,nothing,nothing,D_i,D_f,nothing,nothing,nothing)
+# end
+
+# function _randCBEenv(
+#     tL₀::AbstractTensorWrapper,tR₀::AbstractTensorWrapper,
+#     tL::Union{AbstractTensorWrapper,Nothing},tR::Union{AbstractTensorWrapper,Nothing},
+#     D_i::Int64,D_f::Int64,Λ::AbstractTensorWrapper,
+#     Lorth::Union{SparseLeftEnvironmentTensor,LeftCompositeEnvironmentTensor,LeftEnvironmentTensor},
+#     Rorth::Union{SparseRightEnvironmentTensor,RightCompositeEnvironmentTensor,RightEnvironmentTensor})
+#     return CBEenvironment(tL₀,tR₀,tL,tR,D_i,D_f,Λ,Lorth,Rorth)
+# end
 

@@ -1,14 +1,17 @@
 using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearAlgebra
-include("../analysis/analysis.jl")
+include("../../analysis/analysis.jl")
 include("model.jl")
 
-dataname = "../codes/examples/BCAO/arxivJ1JzpmJ3/data/yeesuan/pin"
-
-D = 2^8
-Lx = 8
+dataname = "../codes/examples/BCAO/arxivJKGGp/data"
+figurename = "BCAO/arxivJKGGp/figures"
+D = 2^6
+Lx =4
 Ly = 4
-# params = (J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
-params = (hy = 1.0, J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
+# params = (J1=-0.59,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=-0.038,J3xy=0.3,J3z=0.01)
+# params = (J1=-0.59,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=0.0,J3xy=0.0,J3z=0.0)
+# params = (J1=-0.1,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=-0.038,J3xy=0.3,J3z=0.01)
+# params = (J1=-0.59,K1=-1.0,Γ1=0.54,Γ1′=0.11,J2=-0.038,J3xy=0.3,J3z=0.01)
+params = (J1=-0.5,K1=-0.86,Γ1=0.45,Γ1′=0.09,J2=-0.038,J3xy=0.3,J3z=0.01)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
@@ -25,14 +28,13 @@ fig = Figure()
 ax = Axis(fig[1,1];autolimitaspect = true,figsize...,
 xticks = (sqrt(3)*11/12 .+ sqrt(3)/2 .* (0:2Lx-1),string.(1:2Lx)),
 yticks = (1:0.5:Ly+0.5,string.(1:2Ly)),
-title = "$(2Lx)x$(2Ly) ZZ-HC-CY, D=$(D)")
-plotLatt!(ax,Latt,[0,1];site = true,sitelabel = false)
+title = "$(2Lx)x$(2Ly) ZZ-HC-CY, xy, D=$(D)")
+plotLatt!(ax,Latt,[0,1];site = false,sitelabel = false)
 
-
-intensity = 0.3 / maximum(sum(abs.(Sy))/length(Sy))
+intensity = 0.45 / maximum(sum(sqrt.(Sx.^2 + Sy.^2))/length(Sy))
 colors = get(colorschemes[:bwr],Sy,(-Sm/3,Sm/3))
 for i in 1:size(Latt)
-    arrowc!(ax,coordinate(Latt,i)...,intensity*Sz[i],intensity*Sy[i];color = colors[i],linewidth = 2)
+    arrowc!(ax,coordinate(Latt,i)...,intensity*Sx[i],intensity*Sy[i];color = colors[i],linewidth = 2)
 end
 
 Colorbar(fig[1,2],limits = (-Sm,Sm),colormap = :bwr,label = L"\langle S_y\rangle")
@@ -51,5 +53,5 @@ Colorbar(fig[1,2],limits = (-Sm,Sm),colormap = :bwr,label = L"\langle S_y\rangle
 
 resize_to_layout!(fig)
 display(fig)
-save("BCAO/figures/spin pattern_$(Lx)x$(Ly)_$(D)_$(params).png",fig)
-save("BCAO/figures/spin pattern_$(Lx)x$(Ly)_$(D)_$(params).pdf",fig)
+save("$(figurename)/spin pattern_$(Lx)x$(Ly)_$(D)_$(params)_xy.png",fig)
+save("$(figurename)/spin pattern_$(Lx)x$(Ly)_$(D)_$(params)_xy.pdf",fig)

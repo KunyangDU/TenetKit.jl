@@ -2,22 +2,23 @@ struct NoAlgorithm <: AbstractAlgorithm NoAlgorithm() = new() end
 # struct noalgorithm <: NoAlgorithm noalgorithm() = new() end
 
 
-mutable struct Krylovalgo <: SolverAlgo
+struct Krylovalgo <: SolverAlgo
     Alg::KrylovKit.KrylovAlgorithm
     Krylovalgo(Alg::KrylovKit.KrylovAlgorithm) = new(Alg)
 end
 
-mutable struct SETTNalgo{Sch} <: AbstractAlgorithm where {Sch}
+struct SETTNalgo{Sch} <: AbstractAlgorithm where {Sch}
     scheme::AbstractScheme
+    alg::AbstractAlgorithm
     trunc::TruncationScheme
     N::Int64
     tol::Number
-    function SETTNalgo(scheme::AbstractScheme, trunc::TruncationScheme, N::Int64, tol::Number)
-        new{typeof(scheme)}(scheme,trunc,N,tol)
+    function SETTNalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, tol::Number)
+        new{typeof(scheme)}(scheme,alg,trunc,N,tol)
     end
 end
 
-mutable struct DMRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
+struct DMRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     scheme::AbstractScheme
     alg::AbstractAlgorithm
     trunc::TruncationScheme
@@ -41,15 +42,19 @@ mutable struct TDVPalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     end
 end
 
-mutable struct CBEalgo{Sch} <: AbstractAlgorithm where {Sch}
+struct CBEalgo{Sch,Struc,Tar} <: AbstractAlgorithm where {Sch,Struc,Tar}
     scheme::AbstractScheme
-    λ::Number
+    structure::AbstractStructure
+    target::Int64
     D::Int64 
     ϵ::Number
-    CBEalgo(scheme::AbstractScheme,λ::Number,D::Int64,ϵ::Number) = new{typeof(scheme)}(scheme,λ,D,ϵ)
+    CBEalgo(alg::CBEalgo, scheme::AbstractScheme) = new{typeof(scheme), typeof(alg.structure), alg.target}(scheme, alg.structure, alg.target, alg.D, alg.ϵ)
+    CBEalgo(scheme::AbstractScheme,structure::AbstractStructure,target::Int64,D::Int64,ϵ::Number) = new{typeof(scheme),typeof(structure),target}(scheme,structure,target,D,ϵ)
+    CBEalgo(alg::CBEalgo,structure::AbstractStructure) = new{typeof(alg.scheme),typeof(structure),alg.target}(alg.scheme,structure,alg.target,alg.D,alg.ϵ)
+    CBEalgo(alg::CBEalgo,structure::AbstractStructure,target::Int64) = new{typeof(alg.scheme), typeof(structure), target}(alg.scheme, structure, target, alg.D, alg.ϵ)
 end
 
-mutable struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
+struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     scheme::AbstractScheme
     alg::AbstractAlgorithm
     trunc::TruncationScheme

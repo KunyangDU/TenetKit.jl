@@ -31,12 +31,12 @@ for (i,Lx) in enumerate(lsLx)
     su2Eg[i] = lsEgsu2[end] / Lx / Ly - 1/4
     u1Eg[i] = lsEgu1[end] / Lx / Ly - 1/4
 end
-figsize = (width = 400,height = 200)
+figsize = (width = 200,height = 300)
 
 fig = Figure()
 ax = Axis(fig[1,1];figsize...,
 xlabel = L"L_x",ylabel = L"(E-E_A)/N",
-title = "Heisenberg, SquaCY, D = $(D)",
+# title = "Heisenberg, SquaCY, D = $(D)",
 xticks = lsLx)
 scatter!(ax,lsLx,su2Eg,strokewidth = 2,markersize = 16,strokecolor = :red,color = :white,label = L"\mathrm{SU(2)}")
 scatterlines!(ax,lsLx,trivialEg,markersize = 13,label = L"\mathrm{NonSym.}")

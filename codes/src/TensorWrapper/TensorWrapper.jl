@@ -40,10 +40,22 @@ function axpy!(α::Number, A::T, B::T) where {T<:AbstractTensorWrapper}
     axpy!(α, A.A, B.A)
     return B
 end
-axpy!(::Number, ::Nothing, A::AbstractTensorWrapper) = A
-axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
-axpby!(α::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
-axpby!(α::Number, A::AbstractTensorWrapper, β::Number, ::Nothing) = axpy!(α, A, nothing)
+# axpy!(::Number, ::Nothing, A::AbstractTensorWrapper) = A
+# axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
+# axpby!(α::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
+# axpby!(α::Number, A::AbstractTensorWrapper, β::Number, ::Nothing) = axpy!(α, A, nothing)
+
+# axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
+# axpby!(::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
+# axpby!(α::Number, A::AbstractTensorWrapper, β::Number, ::Nothing) = axpy!(α, A, nothing)
+function axpby!(α::Number, A::AbstractTensorWrapper, β::Number, B::AbstractTensorWrapper)
+    B.A = α * A.A + β * B.A
+    return B
+end
+axpby!(α::Number, A::AbstractTensorWrapper, ::Number, ::Nothing) = α * A
+axpby!(::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
+axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = axpby!(α,A,0,nothing)
+axpy!(::Number, ::Nothing, B::AbstractTensorWrapper) = B
 
 add!(A::AbstractTensorWrapper, B::AbstractTensorWrapper) = axpy!(true, B, A)
 add!(A::AbstractTensorWrapper, ::Nothing) = A
@@ -72,7 +84,7 @@ TensorKit.space(A::AbstractTensorWrapper) = space(A.A)
 
 TensorKit.dims(A::AbstractTensorWrapper) = dims(A.A)
 
-issparse(::Union{DenseMPO,AdjointMPO}) = false
+issparse(::T) where T <: Union{DenseMPS,AdjointMPS,DenseMPO,AdjointMPO} = false
 issparse(::SparseMPO) = return true
 Base.size(t::DenseMPOTensor{4}) = map(dim,t.A |> x -> (codomain(x)[2],domain(x)[1]))
 Base.length(::DenseMPO{L}) where L = return L

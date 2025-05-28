@@ -14,20 +14,45 @@ params = (J1xy = -1, J1z = -0.36, Jpm = 0.023, Jzpm = -0.57, J2 = -0.032, J3xy =
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
 @load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 
+
 lskx = 4pi/sqrt(3)*range(-1,1,51)
 lsky = 2*0.999*pi*range(-1,1,51)
 lsk = filter(x -> isinside(x,MFBZpoint;isboundary = true),[[kx,ky] for kx in lskx,ky in lsky][:])
 lstk = map(x -> Tuple(x),lsk)
 
-SxSx = zeros(size(Latt),size(Latt))
-SySy = zeros(size(Latt),size(Latt))
-SzSz = zeros(size(Latt),size(Latt))
-for i in 1:size(Latt),j in i+1:size(Latt)
-    SxSx[i,j] = gsdata["SxSx"][(i,j)]
-    SySy[i,j] = gsdata["SySy"][(i,j)]
-    SzSz[i,j] = gsdata["SzSz"][(i,j)]
+function getCorrMat(Latt::AbstractLattice,data::Dict,dataonsite = nothing;selected_point = 1:size(Latt))
+    L = length(selected_point)
+    A = zeros(L,L)
+    for i in 1:L,j in i+1:L
+        A[i,j] = data[(selected_point[i],selected_point[j])]
+    end
+    A = A + A'
+    if !isnothing(dataonsite)
+        if typeof(dataonsite) <: Dict
+            for i in 1:L 
+                A[i,i] = dataonsite[(i,)]
+            end
+        elseif typeof(dataonsite) <: Vector
+            A .+= diagm(dataonsite)
+        elseif typeof(dataonsite) <: Number 
+            A .+= diagm(dataonsite*ones(L))
+        end
+    end
+    return A
 end
-FSxSx,FSySy,FSzSz = map(x -> FT2(x .+= x' .+ diagm(ones(size(Latt)))/4,Latt,lstk),[SxSx,SySy,SzSz])
+
+# SxSx1 = getCorrMat(Latt,gsdata["SxSx"],1/4)
+
+# SxSx = zeros(size(Latt),size(Latt))
+# SySy = zeros(size(Latt),size(Latt))
+# SzSz = zeros(size(Latt),size(Latt))
+# for i in 1:size(Latt),j in i+1:size(Latt)
+#     SxSx[i,j] = gsdata["SxSx"][(i,j)]
+#     SySy[i,j] = gsdata["SySy"][(i,j)]
+#     SzSz[i,j] = gsdata["SzSz"][(i,j)]
+# end
+
+FSxSx,FSySy,FSzSz = map(x -> FT2(getCorrMat(Latt,gsdata[x],1/4),Latt,lstk),["SxSx","SySy","SzSz"])
 
 x = map(lsk) do k
     k[1]
@@ -37,7 +62,7 @@ y = map(lsk) do k
 end
 
 Sm = maximum(FSxSx .+ FSySy .+ FSzSz)
-
+Smd = maximum(vcat(FSxSx,FSySy,FSzSz))
 figsize = (width = 180,height = 180*sqrt(3)/2)
 
 fig = Figure()
@@ -58,9 +83,9 @@ xlabel = L"k_x\ /\ \left(2\pi\sqrt{3}/3\right)",ylabel = L"k_y\ /\ 2\pi",
 xticks = (4pi/sqrt(3)*(-1:0.5:1),string.(-2:2)),yticks = (2pi*(-1:0.5:1),string.(-2:1:2)),
 title = L"\langle S_z\cdot S_z\rangle")
 hmt = heatmap!(axt,x,y,FSxSx .+ FSySy .+ FSzSz,colorrange = (0,Sm))
-hmx = heatmap!(axx,x,y,FSxSx,colorrange = (0,Sm/2))
-hmy = heatmap!(axy,x,y,FSySy,colorrange = (0,Sm/2))
-hmz = heatmap!(axz,x,y,FSzSz,colorrange = (0,Sm/2))
+hmx = heatmap!(axx,x,y,FSxSx,colorrange = (0,Smd))
+hmy = heatmap!(axy,x,y,FSySy,colorrange = (0,Smd))
+hmz = heatmap!(axz,x,y,FSzSz,colorrange = (0,Smd))
 
 # L"-\frac{2\pi}{3}",L"0",L"\frac{2\pi}{3}",L"\frac{4\pi}{3}"
 

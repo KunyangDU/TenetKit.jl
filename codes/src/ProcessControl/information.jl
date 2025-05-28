@@ -154,7 +154,7 @@ end
 
 function TimerOutputs.merge!(A::Algebrainfo,B::Algebrasweepinfo{dir}) where dir
     merge!(A.bond, B.bond)
-    A.err = max(A.err,B.err)
+    A.err = B.err
     dir <: R2L && (A.n += 1)
     return A
 end
@@ -194,6 +194,8 @@ end
 function TimerOutputs.merge!(info1::TDVPsiteinfo, info2::CBEinfo)
     info1.err = info1.err + info2.err
 end
+
+TimerOutputs.merge!(::Algebrasiteinfo, ::CBEinfo) = nothing
 
 #= ========================= =#
 

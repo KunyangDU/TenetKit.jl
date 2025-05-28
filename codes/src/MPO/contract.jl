@@ -462,3 +462,13 @@ end
 
 #= ================================================ =#
 
+function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4})
+    @tensor tmp[-1 -2;-3 -4] ≔ EnvL.A[-1,1] * A.A[-2,1,-3,-4]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvR::RightEnvironmentTensor{2}, A::DenseMPOTensor{4})
+    @tensor tmp[-1 -2;-3 -4] ≔ A.A[-2,-1,1,-4] * EnvR.A[1,-3]
+    return RightCompositeEnvironmentTensor(tmp)
+end
+

@@ -14,12 +14,17 @@ end
 
 function action(O::SparseProjectiveHamiltonian{1}, obj::Union{MPSTensor{3},DenseMPOTensor{4}})
     N,M = O.H.D[1]
-    ts = zerovector(obj,Float64)
+    ts = nothing
 
     for i in 1:N, j in 1:M
         isnothing(O.H.ts[1].m[i,j]) && continue
         tmp = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j])
-        ts += contract(tmp,O.EnvR.A[j])
+        t = contract(tmp,O.EnvR.A[j])
+        if isnothing(ts)
+            ts = contract(tmp,O.EnvR.A[j])
+        else
+            ts += t
+        end
     end
 
     return ts
@@ -45,5 +50,30 @@ function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor
     return ts
 end
 
+function action(O::DenseProjectiveHamiltonian{2,1}, obj::DenseMPOTensor{4})
+    @tensor tmp[-1 -2;-3 -4] ≔ O.EnvL.A.A[-2,1] * obj.A[-1,1,2,-4] * O.EnvR.A.A[2,-3]
+    return DenseMPOTensor(tmp)
+end
+
+function action(O::SparseProjectiveHamiltonian{2}, tl::T, tr::T) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
+    N,M1 = O.H.D[1]
+    M2,R = O.H.D[2]
+    @assert M1 == M2
+
+    ts = nothing
+    for i in 1:N, j in 1:M1, k in 1:R
+        isnothing(O.H.ts[1].m[i,j]) | isnothing(O.H.ts[2].m[j,k]) && continue
+        EL = contract(O.EnvL.A[i], tl, O.H.ts[1].m[i,j])
+        ER = contract(tr, O.H.ts[2].m[j,k],O.EnvR.A[k])
+        tmp = contract(EL, ER)
+        if isnothing(ts)
+            ts = tmp
+        else
+            ts += tmp
+        end
+    end
+
+    return ts
+end
 
 

@@ -5,8 +5,8 @@ include("model.jl")
 typename = "pin"
 dataname = "../codes/examples/Heisenberg/data/triangle/$(typename)"
 
-D = 100
-Lx = 6
+D = 128
+Lx = 8
 Ly = 6
 params = (J=1,)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -17,20 +17,21 @@ Sz = [gsdata["Sz"][(i,)] for i in 1:size(Latt)]
 
 Sm = maximum(sqrt.(Sx .^ 2 + Sy .^ 2))
 
-figsize = (width = 60*Lx,height = 60*(Ly)*sqrt(3)/2)
+figsize = (width = 40*Lx,height = 40*(Ly)*sqrt(3)/2)
 
 fig = Figure()
 ax = Axis(fig[1,1];autolimitaspect = true,figsize...,
 xticks = (0.5 .+ (1:Lx),string.(1:Lx)),yticks = (sqrt(3)/2*(1:Ly),string.(1:Ly)),
-title = "$(Lx)x$(Ly) ZZ-HC-CY, D=$(D)")
-plotLatt!(ax,Latt,[0,sqrt(3)/2];site = false,sitelabel = false,sitesize = 12*ones(size(Latt)))
+# title = "$(Lx)x$(Ly) ZZ-HC-CY, D=$(D)",
+)
+plotLatt!(ax,Latt,[0,sqrt(3)/2];site = false,sitelabel = false,sitesize = 12*ones(size(Latt)),linewidth = 1.2)
 
 intensity = 0.7 / (sqrt.(Sx .^ 2 + Sy .^ 2) |> x -> sum(x)/length(x))
 arrcolor = [:Reds,:Blues,:Greens]
-arrowcolors(x) = get(colorschemes[arrcolor[x[1]]],x[2],(0.,1/2))
+arrowcolors(x) = get(colorschemes[arrcolor[x[1]]],x[2],(0.,1/3))
 colors = map(x -> arrowcolors(orientate3(x)),collect.(eachcol(hcat(Sx,Sy)')))
 for i in 1:size(Latt)
-    arrowc!(ax,coordinate(Latt,i)...,intensity*Sx[i],intensity*Sy[i];color = colors[i],linewidth = 2)
+    arrowc!(ax,coordinate(Latt,i)...,intensity*Sx[i],intensity*Sy[i];color = colors[i],linewidth = 1.2)
 end
 
 Colorbar(fig[1,2],limits = (0,1/2),colormap = :Reds,width = 8,ticksvisible = true,ticklabelsvisible = false)

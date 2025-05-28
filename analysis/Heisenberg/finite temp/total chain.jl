@@ -4,7 +4,7 @@ include("../model.jl")
 
 trivialname = "../codes/examples/Heisenberg/data/trivial"
 SU2name = "../codes/examples/Heisenberg/data/SU2"
-# U1name = "../codes/examples/Heisenberg/data/U1"
+U1name = "../codes/examples/Heisenberg/data/U1"
 dataname = "Heisenberg/data"
 D = 2^7
 Lx = 14
@@ -48,7 +48,7 @@ figsize = (width = 300,height = 150)
 
 fig = Figure()
 axe = Axis(fig[1,1];figsize...,
-title = "Heisenberg chain $(Lx)x$(Ly), D = $(D)",titlealign = :left,
+# title = "Heisenberg chain $(Lx)x$(Ly), D = $(D)",titlealign = :left,
 xscale = log10,
 xlabel = L"T\cdot J",ylabel=L"E/N")
 axc = Axis(fig[2,1];figsize...,
@@ -100,7 +100,7 @@ Etrerr = abs.((Eed .- lsEtr[end-length(lsβed)+1:end]) ./ Eed)
 Csu2err = abs.((Ced .- Csu2[end-length(lsβed)+1:end]) ./ Ced)
 Cu1err = abs.((Ced .- Cu1[end-length(lsβed)+1:end]) ./ Ced)
 Ctrerr = abs.((Ced .- Ctr[end-length(lsβed)+1:end]) ./ Ced)
-χsu2err = abs.((χed .- χsu2[end-length(lsβed)+1:end]) ./ χed)
+χsu2err = abs.((χed .- χsu2[end-length(lsβed)+1:end]/3) ./ χed)
 χu1err = abs.((χed .- χu1[end-length(lsβed)+1:end]) ./ χed)
 χtrerr = abs.((χed .- χtr[end-length(lsβed)+1:end]) ./ χed)
 
@@ -130,3 +130,4 @@ save("Heisenberg/figures/total_$(Lx)x$(Ly)_$(D)_$(trparams).png",fig)
 save("Heisenberg/figures/total_$(Lx)x$(Ly)_$(D)_$(trparams).pdf",fig)
 
 
+χsu2err

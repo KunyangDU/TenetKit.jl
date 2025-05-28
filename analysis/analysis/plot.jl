@@ -57,10 +57,12 @@ function plotLatt!(ax::Axis,Latt::AbstractLattice,shift::Vector;kwargs...)
     bond = get(kwargs, :bond, true)
     tplevel = get(kwargs, :tplevel, (1))
     site = get(kwargs, :site, false)
+    selectedsite = get(kwargs,:selectedsite,1:size(Latt))
     sitelabel = get(kwargs, :sitelabel, true)
-    sitesize = get(kwargs, :sitesize, 16 .* ones(size(Latt)))
-    sitecolor = get(kwargs, :sitecolor, [:grey for _ in 1:size(Latt)])
-    sitealpha = get(kwargs, :sitealpha, ones(size(Latt)))
+    sitesize = get(kwargs, :sitesize, 16 .* ones(length(selectedsite)))
+    sitecolor = get(kwargs, :sitecolor, [:grey for _ in 1:length(selectedsite)])
+    sitealpha = get(kwargs, :sitealpha, ones(length(selectedsite)))
+    
     
     linewidth = get(kwargs, :linewidth, 2)
     linecolor = get(kwargs, :linecolor, RGBf(0.5, 0.5, 0.5))
@@ -92,15 +94,15 @@ function plotLatt!(ax::Axis,Latt::AbstractLattice,shift::Vector;kwargs...)
     end
 
     if site
-        for i in 1:size(Latt)
-                x, y = coordinate(Latt, i)
+        for (i,s) in enumerate(selectedsite)
+                x, y = coordinate(Latt, s)
 
                 CairoMakie.scatter!(ax, x, y;
                     markersize=sitesize[i],
                     color=sitecolor[i],
                     alpha = sitealpha[i])
         
-                sitelabel && text!(ax, x + 0.05, y + 0.05; text = "$i")
+                sitelabel && text!(ax, x + 0.05, y + 0.05; text = "$s")
         end
     end
     

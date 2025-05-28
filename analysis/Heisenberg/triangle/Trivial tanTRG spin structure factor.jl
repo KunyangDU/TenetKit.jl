@@ -3,11 +3,11 @@ using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearA
 include("../../analysis/analysis.jl")
 include("model.jl")
 
-trivialname = "../codes/examples/Heisenberg/data/triangle/trivial"
+trivialname = "../codes/examples/Heisenberg/data/triangle/pin"
 figurename = "tanTRG/structure factor"
 
-D = 2^4
-Lx = 4
+D = 2^9
+Lx = 6
 Ly = 4
 # Latt = YCSqua(Lx,Ly)
 @load "$(trivialname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -25,7 +25,7 @@ for (iβ,β) in enumerate(lsβ2)
     lstk = map(x -> Tuple(x),lsk)
     FSxSx,FSySy,FSzSz = TrivialSSFT(Latt,obsdata,lstk,Ly+1:size(Latt)-Ly)
 
-    Sm = max(1/4, maximum(FSzSz .+ FSxSx .+ FSySy))
+    Sm = (maximum(FSzSz .+ FSxSx .+ FSySy))
 
     x = map(lsk) do k
         k[1]
@@ -50,7 +50,7 @@ for (iβ,β) in enumerate(lsβ2)
     xlabel = L"k_x\ /\ 2\pi",ylabel = L"k_y\ /\ \left(2\pi\sqrt{3}/3\right)",
     xticks = (2pi*(-1:0.5:1),string.(-2:2)),yticks = (4pi/sqrt(3)*(-1:0.5:1),string.(-2:1:2)),
     title = L"\langle S_z S_z\rangle")
-
+    
 
     hmt = heatmap!(axt,x,y,FSxSx .+ FSySy .+ FSzSz,colorrange = (0., Sm))
     hmxy = heatmap!(axxy,x,y,FSxSx .+ FSySy,colorrange = (0., Sm))
@@ -76,7 +76,7 @@ for (iβ,β) in enumerate(lsβ2)
     resize_to_layout!(fig)
     display(fig)
 
-    save("Heisenberg/triangle/figures/$(figurename)/structure factor_$(Lx)x$(Ly)_$(D)_$(params).png",fig)
-    save("Heisenberg/triangle/figures/$(figurename)/structure factor_$(Lx)x$(Ly)_$(D)_$(params).pdf",fig)
+    save("Heisenberg/triangle/figures/$(figurename)/structure factor_$(Lx)x$(Ly)_$(D)_$(params)_β=$(round(β;digits=3)).png",fig)
+    save("Heisenberg/triangle/figures/$(figurename)/structure factor_$(Lx)x$(Ly)_$(D)_$(params)_β=$(round(β;digits=3)).pdf",fig)
 end
 

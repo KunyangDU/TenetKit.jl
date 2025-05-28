@@ -10,7 +10,7 @@ mutable struct SparseMPO{L} <: AbstractMPO
         return new{length(ts)}(ts,D)
     end
 
-    function SparseMPO(ts::Vector{SparseMPOTensor})
+    function SparseMPO(ts::Vector{T}) where T <: Union{SparseMPOTensor,SparseMPOTensor{N,M}} where {N,M}
         D = map(size,ts)
         return new{length(ts)}(ts,convert(Vector{NTuple{2,Int64}},D))
     end

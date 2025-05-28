@@ -1,14 +1,15 @@
-using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes
+using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LinearAlgebra
 include("../../analysis/analysis.jl")
 include("model.jl")
 
 typename = "trivial"
 dataname = "../codes/examples/Heisenberg/data/triangle/$(typename)"
-D = 100
+D = 2^9
 Lx = 6
 Ly = 6
 
-lsH = 0:0.2:5
+# lsH = 0:0.2:5
+lsH = vcat(0:0.25:5)
 Sz = zeros(length(lsH))
 for (i,H) in enumerate(lsH)
 params = (J=1,H=H)

@@ -41,4 +41,24 @@ function proj2(env::Environment{3},site1::Int64,site2::Int64)
 end
 projright2(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1])) : nothing
 projleft2(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site])) : nothing
+proj2(EnvL::SparseLeftEnvironmentTensor,hl::SparseMPOTensor,hr::SparseMPOTensor,EnvR::SparseRightEnvironmentTensor) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO([hl,hr]))
+
+mutable struct DenseProjectiveHamiltonian{N,L} <: AbstractProjectiveHamiltonian
+    EnvL::DenseLeftEnvironmentTensor
+    EnvR::DenseRightEnvironmentTensor
+    H::Union{Nothing,Array}
+
+    function DenseProjectiveHamiltonian(EnvL::DenseLeftEnvironmentTensor,
+        EnvR::DenseRightEnvironmentTensor,
+        H::Array) 
+        return new{3,length(H.ts)}(EnvL,EnvR,H)
+    end
+
+    function DenseProjectiveHamiltonian{N,L}(EnvL::DenseLeftEnvironmentTensor,
+        EnvR::DenseRightEnvironmentTensor) where {N,L}
+        return new{N,L}(EnvL,EnvR,nothing)
+    end
+end
+
+proj1(env::Environment{2},site::Int64) = DenseProjectiveHamiltonian{2,1}(env.envs[site:site+1]...)
 

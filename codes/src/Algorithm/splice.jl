@@ -122,3 +122,14 @@ function splice(tl::MPSTensor{3}, tr::MPSTensor{3}, A::MPSTensor{3}, ::R2L)
     return MPSTensor(tmp)
 end
 
+splice(tl::T, tr::T, A::T, direction::AbstractDirection) where T <: Union{AdjointMPOTensor{4},AdjointMPSTensor{3}}= splice(tl',tr',A',direction)'
+
+splice(Envorth::T,A::Union{DenseMPOTensor{2},MPSTensor{2}}) where T <: Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor} = contract(Envorth,A)
+
+splice(Envorth::T,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}}) where T <: Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor} = contract(Envorth,A)
+
+function splice!(Envorth::Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor},
+    Λ::Union{MPSTensor{2},AdjointMPSTensor{3},DenseMPOTensor{2},AdjointMPOTensor{4}})
+    Envorth = splice(Envorth,Λ)
+end
+
