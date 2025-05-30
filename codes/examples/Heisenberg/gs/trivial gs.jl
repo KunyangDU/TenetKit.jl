@@ -4,11 +4,11 @@ include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
 D = 2^7
-lsLx = 4:2:12
-for Lx in lsLx
-    # Lx = 4
+# lsLx = 4:2:12
+# for Lx in lsLx
+    Lx = 4
     Ly = 4
-    params = (J=1,h=0)
+    params = (J=1,H=5)
 
     Latt = YCSqua(Lx,Ly)
     @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -25,4 +25,4 @@ for Lx in lsLx
     @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
     @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
     @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
-end
+# end

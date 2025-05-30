@@ -14,6 +14,12 @@ mutable struct IdentityOperator <: AbstractLocalOperator
     function IdentityOperator(site::Int64, name::Union{String,Tuple})
         return new(nothing, site, NaN ,name)
     end
+
+    function IdentityOperator(site::Int64)
+        return new(nothing, site, NaN ,nothing)
+    end
+
+    IdentityOperator() = IdentityOperator(0)
 end
 
 function Base.show(io::IO,Opr::IdentityOperator)
@@ -49,13 +55,13 @@ function Base.show(io::IO,Opr::LocalOperator)
 end
 
 
-Base.isequal(::AbstractLocalOperator, ::AbstractLocalOperator) = false
+# Base.isequal(::AbstractLocalOperator, ::AbstractLocalOperator) = false
 Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.name == B.name)
 function Base.isequal(A::LocalOperator, B::LocalOperator)
     A.name ≠ B.name && return false
     A.site ≠ B.site && return false
-    A.strength ≠ B.strength && return false
-    return A.Opri == B.Opri
+    !(A.strength ≈ B.strength) && return false
+    return A.Opri ≈ B.Opri
 end
 
 function getIdTensor(Opr::AbstractLocalOperator)

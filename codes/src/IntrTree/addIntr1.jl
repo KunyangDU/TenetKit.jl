@@ -1,12 +1,12 @@
-function addIntr1!(Root::InteractionTreeNode,
+function addIntr1!(Root::AbstractTreeNode,
     Opri::AbstractTensorMap,site::Int64,name::String,strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-    tempOpr = LocalOperator(Opri,name,site)
-    addIntr1!(Root,tempOpr,strength,Z)
+    tempOpr = LocalOperator(Opri,name,site,strength)
+    addIntr1!(Root,tempOpr,Z)
 end
 
-function addIntr1!(Root::InteractionTreeNode,
-    Opr::LocalOperator,strength::Number,
+function addIntr1!(Root::AbstractTreeNode,
+    Opr::LocalOperator,
     Z::Union{Nothing,AbstractTensorMap})
     current_node = Root
     current_site = 1
@@ -33,6 +33,6 @@ function addIntr1!(Root::InteractionTreeNode,
 
     # add the onsite Opr 
     addchild!(current_node, Opr)
-    current_node.children[end].Opr.strength = strength
-
+    # current_node.children[end].Opr.strength = strength
+    typeof(Root) <: ObservableTreeNode && (current_node.children[end].name = Tuple(Opr.site))
 end

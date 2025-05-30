@@ -1,4 +1,4 @@
-function addIntr!(Root::InteractionTreeNode,
+function addIntr!(Root::AbstractTreeNode,
     Opri::AbstractTensorMap,
     site::Int64,
     name::String,
@@ -8,7 +8,7 @@ function addIntr!(Root::InteractionTreeNode,
     addIntr1!(Root,Opri,site,name,strength,Z)
 end
 
-function addIntr!(Root::InteractionTreeNode,
+function addIntr!(Root::AbstractTreeNode,
     Opri::NTuple{1,AbstractTensorMap},
     site::NTuple{1,Int64},
     name::NTuple{1,String},
@@ -18,7 +18,7 @@ function addIntr!(Root::InteractionTreeNode,
     addIntr1!(Root,Opri[1],site[1],name[1],strength,Z)
 end
 
-function addIntr!(Root::InteractionTreeNode,
+function addIntr!(Root::AbstractTreeNode,
     Opri::NTuple{2,AbstractTensorMap},
     site::NTuple{2,Int64},
     name::NTuple{2,String},
@@ -60,7 +60,7 @@ end
 
 ############# k ####################
 
-function addIntr!(Root::InteractionTreeNode,
+function addIntr!(Root::AbstractTreeNode,
     Opri::AbstractTensorMap,
     Latt::AbstractLattice,k::Vector,
     name::String,
@@ -84,7 +84,7 @@ function addIntr!(Tree::InteractionTree,
 end
 
 # c⁺ = exp(-1im)* ... 
-function addIntr!(Root::InteractionTreeNode,
+function addIntr!(Root::AbstractTreeNode,
     Opri::Tuple,
     Latt::AbstractLattice,k::Vector,
     name::Tuple,

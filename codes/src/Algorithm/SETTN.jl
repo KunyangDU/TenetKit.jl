@@ -53,7 +53,7 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo) where 
         flush(stdout)
 
         if info.err < Alg.tol
-            println("SETTN converged at $(info.n))th order with dF = $(info.err)")
+            println("SETTN converged at $(info.n)-th order with dF = $(info.err)")
             break
         end
              

@@ -1,19 +1,18 @@
 function addIntr2!(
-    Root::InteractionTreeNode,
+    Root::AbstractTreeNode,
     Opris::NTuple{2,AbstractTensorMap},
     sites::NTuple{2,Int64},
     names::NTuple{2,String},
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap}
     )
-    OprL,OprR = map(x -> LocalOperator(Opris[x],names[x],sites[x]),1:2)
-    addIntr2!(Root,OprL,OprR,strength,Z)
+    OprL,OprR = map(x -> LocalOperator(Opris[x],names[x],sites[x],strength),1:2)
+    addIntr2!(Root,OprL,OprR,Z)
 end
 
 function addIntr2!(
-    Root::InteractionTreeNode,
+    Root::AbstractTreeNode,
     OprL::LocalOperator,OprR::LocalOperator,
-    strength::Number,
     Z::Union{Nothing,AbstractTensorMap}
     )
     @assert OprL.site < OprR.site
@@ -53,7 +52,7 @@ function addIntr2!(
     end
 
     addchild!(current_node, OprR)
-    current_node.children[end].Opr.strength = strength
+    typeof(Root) <: ObservableTreeNode && (current_node.children[end].name = tuple(OprL.site,OprR.site))
 end
 
 function _addZ!(OprR::LocalOperator, Z::AbstractTensorMap)

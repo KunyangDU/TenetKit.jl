@@ -1,6 +1,8 @@
 using AbstractTrees
 
-mutable struct InteractionTreeNode
+abstract type AbstractTreeNode end
+
+mutable struct InteractionTreeNode <: AbstractTreeNode
 
     Opr::Union{Nothing,AbstractLocalOperator}
     parent::Union{Nothing,InteractionTreeNode}
@@ -24,31 +26,31 @@ mutable struct InteractionTreeNode
     InteractionTreeNode() = InteractionTreeNode(IdentityOperator(0))
 end
 
-AbstractTrees.nodevalue(node::InteractionTreeNode) = node.Opr
-AbstractTrees.parent(node::InteractionTreeNode) = node.parent
-AbstractTrees.children(node::InteractionTreeNode) = node.children
-AbstractTrees.ParentLinks(::Type{InteractionTreeNode}) = StoredParents()
-AbstractTrees.ChildIndexing(::Type{InteractionTreeNode}) = IndexedChildren()
-AbstractTrees.NodeType(::Type{InteractionTreeNode}) = HasNodeType()
-AbstractTrees.nodetype(::Type{InteractionTreeNode}) = InteractionTreeNode
+AbstractTrees.nodevalue(node::AbstractTreeNode) = node.Opr
+AbstractTrees.parent(node::AbstractTreeNode) = node.parent
+AbstractTrees.children(node::AbstractTreeNode) = node.children
+AbstractTrees.ParentLinks(::Type{AbstractTreeNode}) = StoredParents()
+AbstractTrees.ChildIndexing(::Type{AbstractTreeNode}) = IndexedChildren()
+AbstractTrees.NodeType(::Type{AbstractTreeNode}) = HasNodeType()
+AbstractTrees.nodetype(::T) where T <: AbstractTreeNode = T
 
-function addchild!(node::InteractionTreeNode, child::InteractionTreeNode)
+function addchild!(node::AbstractTreeNode, child::AbstractTreeNode)
     isnothing(child.parent) ? child.parent = node : @assert child.parent == node
     push!(node.children, child)
     return nothing
 end
 
-function addchild!(node::InteractionTreeNode, Opr::AbstractLocalOperator)
-    addchild!(node,InteractionTreeNode(Opr))
+function addchild!(node::T, Opr::AbstractLocalOperator) where T <: AbstractTreeNode
+    addchild!(node,T(Opr))
     return nothing
 end
 
-function cutparent!(node::InteractionTreeNode)
+function cutparent!(node::AbstractTreeNode)
     node.parent = nothing
 end
 
 
-function Base.show(io::IO,Root::InteractionTreeNode)
+function Base.show(io::IO,Root::AbstractTreeNode)
     print_tree(Root;maxdepth = 16)
     return nothing
 end

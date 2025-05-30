@@ -13,7 +13,7 @@ Ly = 2
 Ds = 2^4
 
 params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
-params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092, Hx = inputHx)
+params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092, Hx = 0.)
 paramsh = (pinh=0.,)
 
 Latt = ZZHoneyComb(Lx,Ly)

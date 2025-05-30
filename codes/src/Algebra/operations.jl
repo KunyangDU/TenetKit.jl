@@ -32,6 +32,10 @@ function _scalar(Env::Environment{N}) where N
     return tmp
 end
 
+function _scalar(EnvL::LeftEnvironmentTensor{2})
+    return @tensor EnvL.A[1,1]
+end
+
 function scalar(Env::Environment{3})
     @assert Env.center[1] == Env.center[2]
     contract(Env.layer[3].ts[Env.center[1]], action(proj1(Env, Env.center[1]), Env.layer[1].ts[Env.center[1]]))
