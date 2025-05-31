@@ -36,7 +36,7 @@ mutable struct LocalOperator <: AbstractLocalOperator
     Opri::Union{Nothing,AbstractTensorMap}
     name::String
     site::Int64
-    strength::Number
+    strength::Union{Nothing,Number}
 
     function LocalOperator(Opri::AbstractTensorMap, name::String, site::Int64)
         return new(Opri, name, site, NaN)
@@ -60,7 +60,7 @@ Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.
 function Base.isequal(A::LocalOperator, B::LocalOperator)
     A.name ≠ B.name && return false
     A.site ≠ B.site && return false
-    !(A.strength ≈ B.strength) && return false
+    !(isnan(A.strength) && isnan(B.strength)) && !(A.strength ≈ B.strength) && return false
     return A.Opri ≈ B.Opri
 end
 

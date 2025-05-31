@@ -6,7 +6,10 @@ function addIntr2!(
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap}
     )
-    OprL,OprR = map(x -> LocalOperator(Opris[x],names[x],sites[x],strength),1:2)
+    # OprL,OprR = map(x -> LocalOperator(Opris[x],names[x],sites[x],strength),1:2)
+    OprL = LocalOperator(Opris[1],names[1],sites[1])
+    OprR = LocalOperator(Opris[2],names[2],sites[2],strength)
+
     addIntr2!(Root,OprL,OprR,Z)
 end
 

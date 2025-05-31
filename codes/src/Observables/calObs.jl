@@ -100,7 +100,7 @@ function initialize!(root::ObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}
 end
 
 function tree2dict(root::ObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}}) where L
-    obs = Dict{NTuple{2,Int64},Float64}()
+    obs = Dict{Tuple,Float64}()
     initialize!(root,obj)
     parents = [root,]
     children = root.children
@@ -116,11 +116,11 @@ end
 
 function node2dict(parents::Vector,obj::Union{DenseMPS{L},DenseMPO{L}},site::Int64) where L
     childrens = Vector{ObservableTreeNode}()
-    obs = Dict{NTuple{2,Int64},Float64}()
+    obs = Dict{Tuple,Float64}()
     for p in parents
         p.Env = contract(obj.ts[site],DenseMPOTensor(p.Opr.Opri),obj.ts[site]',p.parent.Env)
         push!(childrens,p.children...)
-        isempty(p.children) && (obs[p.name] = _scalar(p.Env))
+        isempty(p.children) && (obs[p.name] = real(_scalar(p.Env)))
     end
     return childrens,obs
 end

@@ -4,23 +4,24 @@ include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
 D = 2^7
-Lx = 6
-Ly = 6
-params = (J=1,h=1)
+Lx = 4
+Ly = 4
+params = (J=1,H=0.)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
-@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
+@load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @load "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
 
 @time "calculate observables" begin
-    Obs = MPSObservable()
+    Obs = Observable()
     LocalSpace = TrivialSpinOneHalf
 
-    # for pair in neighbor(Latt)
-    #     addObs!(Obs,LocalSpace.SxSx,pair,("Sx","Sx"),nothing)
-    #     addObs!(Obs,LocalSpace.SySy,pair,("Sy","Sy"),nothing)
-    #     addObs!(Obs,LocalSpace.SzSz,pair,("Sz","Sz"),nothing)
-    # end
+    for i in 1:size(Latt), j in i+1:size(Latt)
+        pair = (i,j)
+        addObs!(Obs,LocalSpace.SxSx,pair,("Sx","Sx"),nothing)
+        addObs!(Obs,LocalSpace.SySy,pair,("Sy","Sy"),nothing)
+        addObs!(Obs,LocalSpace.SzSz,pair,("Sz","Sz"),nothing)
+    end
 
     for i in 1:size(Latt)
         addObs!(Obs,LocalSpace.Sx,i,"Sx",nothing)

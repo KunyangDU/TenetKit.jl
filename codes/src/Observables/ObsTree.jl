@@ -28,7 +28,7 @@
 #     ObserableForest() = ObserableForest{0}()
 # end
 
-struct ObserableForest <: AbstractObservableForest
+mutable struct ObserableForest <: AbstractObservableForest
      Roots::Dict{String,ObservableTreeNode}
      width::Int64
      function ObserableForest(A::Vector{Tuple{String,ObservableTreeNode}})
