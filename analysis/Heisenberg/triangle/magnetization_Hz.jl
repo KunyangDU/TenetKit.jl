@@ -9,7 +9,9 @@ Lx = 6
 Ly = 6
 
 # lsH = 0:0.2:5
-lsH = vcat(0:0.25:5)
+lsH = sort(vcat(
+    0:0.25:5,1.1:0.1:1.6,1.15:0.1:1.65
+))
 Sz = zeros(length(lsH))
 for (i,H) in enumerate(lsH)
 params = (J=1,H=H)
@@ -27,26 +29,35 @@ title = "Magnetization, $(Lx)x$(Ly) ZZ-HC-CY, D=$(D)",
 # xticks = 0:0.1:1,
 xticks = 0:0.5:10,
 yticks = 0:0.5:3,
+xgridvisible=false,    # 关闭网格
+ygridvisible=false,
 )
-scatterlines!(ax,lsH,Sz*2*3)
-# xlims!(ax,0,5.0)
-# ylims!(ax,0,0.5)
+lines!(ax,collect(extrema(lsH)),3*ones(2);color = :grey,linestyle = :dash)
+lines!(ax,lsH,Sz*2*3,linewidth = 2)
+xlims!(ax,0,5.0)
+ylims!(ax,0,3.1)
+# hidedecorations!(ax)
 
-# insetsize = (width = 160,height = 90)
-# inset_ax = Axis(fig[1,1];insetsize...,
-# halign=0.83,    # 水平居中
-# # valign=0.34,    # 垂直底部
-# # halign=0.665,    # 水平居中
-# valign=0.2,    # 垂直底部
-# backgroundcolor = :white,
+insetsize = (width = 160,height = 90)
+inset_ax = Axis(fig[1,1];insetsize...,
+halign=0.95,    # 水平居中
+# valign=0.34,    # 垂直底部
+# halign=0.665,    # 水平居中
+valign=0.22,    # 垂直底部
+backgroundcolor = :white,
 # xgridvisible=false,    # 关闭网格
 # ygridvisible=false,
-# # xticks = ([0.66,0.71],[L"λ_{c1}",L"λ_{c2}"])
+# xticks = ([0.66,0.71],[L"λ_{c1}",L"λ_{c2}"])
 # xticks = 0:0.5:1.5,yticks = 0:0.15:0.3
-# )
+yticks = ([1,],[L"1/3",]),
+xticks = 1:0.2:2
+)
 # scatterlines!(inset_ax,lsHx * 6.54,lsSx)
-# xlims!(inset_ax,0,1.5)
-# ylims!(inset_ax,0,0.3)
+
+scatterlines!(inset_ax,lsH,Sz*2*3,linewidth = 2)
+
+xlims!(inset_ax,1,2)
+ylims!(inset_ax,0.6,1.4)
 
 resize_to_layout!(fig)
 display(fig)

@@ -8,7 +8,7 @@ D = 2^6
 Lx = 4
 Ly = 4
 
-params1_Kitaev = (J1 = -0.45, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
+params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
 params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092)
 paramsh = (pinh=0.,)
 

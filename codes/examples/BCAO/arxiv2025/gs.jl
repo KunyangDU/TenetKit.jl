@@ -6,8 +6,8 @@ dataname = "examples/BCAO/arxiv2025/data"
 D = 2^6
 Lx = 4
 Ly = 4
-for J1 in -0.45:-0.05:-0.55
-params1_Kitaev = (J1 = J1, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
+# for J1 in -0.45:-0.05:-0.55
+params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
 params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092)
 paramsh = (pinh=0.,)
 
@@ -38,6 +38,6 @@ showQuantSweep(lsEg)
 @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" lsEg
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" ψ
-end
+# end
 
 

@@ -13,8 +13,8 @@ Ly = 4
 #     Γ1′=0.09431637824122263
 # )
 # params23 = (J2 = -0.032, J3xy = 0.26, J3z = 0.0078)
-for J1 in -0.45:-0.05:-0.55
-params1_Kitaev = (J1 = J1, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
+# for J1 in -0.45:-0.05:-0.55
+params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
 params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092)
 paramsh = (pinh=0.,)
 
@@ -32,7 +32,7 @@ params_Kitaev = merge(params1_Kitaev,params23,paramsh)
 xbonds,ybonds,zbonds = getxyzbonds(Latt)
 
 @time "calculate observables" begin
-    Obs = MPSObservable()
+    Obs = Observable()
     LocalSpace = TrivialSpinOneHalf
 
     for i in 1:size(Latt)
@@ -53,4 +53,4 @@ end
 gsdata = Obs.values
 
 @save "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" gsdata
-end
+# end

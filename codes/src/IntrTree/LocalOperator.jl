@@ -60,6 +60,9 @@ Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.
 function Base.isequal(A::LocalOperator, B::LocalOperator)
     A.name ≠ B.name && return false
     A.site ≠ B.site && return false
+    # if both NaN -> True
+    # else check strength
+    # repeat interaction added without merging
     !(isnan(A.strength) && isnan(B.strength)) && !(A.strength ≈ B.strength) && return false
     return A.Opri ≈ B.Opri
 end
