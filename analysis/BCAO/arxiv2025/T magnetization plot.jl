@@ -45,7 +45,7 @@ figsize = (width = 400,height = 200)
 fig = Figure()
 ax = Axis(fig[1,1];
 xlabel = L"H\ /\ J",ylabel = L"3\langle\mathbf{S}\cdot\mathbf{\hat{H}}\rangle\ /\ S",
-title = "Magnetization, $(Lx)x$(Ly) ZZ-HC-CY, D=$(D)",
+title = "Magnetization, $(Lx)x$(2Ly)x2 ZZ-HC-CY, D=$(D)",
 # xticks = 0:0.1:1,
 xgridvisible=false,    # 关闭网格
 ygridvisible=false,
@@ -57,6 +57,9 @@ xlims!(ax,0.5,1.5)
 ylims!(ax,0,3)
 selectedβ = reverse(length(lsβ2):-4:17)
 colors = [:blue,:green,:red]
+
+lines!(ax,lsHx, lsSx * 6, linewidth = 2,label = "DMRG\nD=$(Dgs)")
+
 lines!(ax,[0,5],ones(2);color = :grey,linestyle = :dash)
 for i in selectedβ
     scatterlines!(ax,lsH * 5.6,6*Sx[i,:];linewidth = 2,markersize = 8,
@@ -64,10 +67,9 @@ for i in selectedβ
     label = "$(round(1/lsβ2[i];digits = 2))")
 end
 
-lines!(ax,lsHx, lsSx * 6, linewidth = 2,label = "DMRG\nD=$(Dgs)")
 
 # insetsize = (width = 120,height = 90)
-insetsize = (width = 150,height = 90)
+# insetsize = (width = 150,height = 90)
 
 # inset_ax = Axis(fig[1,1];insetsize...,
 # # halign=0.12,    # 水平居中
