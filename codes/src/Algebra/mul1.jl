@@ -38,7 +38,6 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(EnvAB.layer[3].ts[site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-         
         @timeit localto "composite" t = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u].ts[site:site+1],1:2)...)..., EnvAB.envs[site+2])
         @timeit localto "SVD" tl, tc, tr, ~ = tsvd(axpy!(α,t,nothing); direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
@@ -93,7 +92,6 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
             merge!(localinfo,cbeinfo)
             merge!(localto,cbetoAB,tree_point = ["CBE_AB"])
         end
-
         @timeit localto "projection" projH = proj1(EnvAB,site)
         @timeit localto "action" t = action(projH,EnvAB.layer[1].ts[site])
         @timeit localto "orthogonalize" begin
