@@ -19,6 +19,12 @@ for (i,Hx) in enumerate(lsHx)
     @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
     lsSx[i] = [gsdata["Sx"][(i,)] for i in select_point] |> x -> sum(x) / length(x)
 end
+
+lsHx *= 6.54
+
+@save "$(dataname)/lsSx_$(Lx)x$(Ly)_$(D).jld2" lsSx
+@save "$(dataname)/lsHx_$(Lx)x$(Ly)_$(D).jld2" lsHx
+
 figsize = (width = 400,height = 200)
 figsizeinset = (width = 200,height = 100)
 
@@ -34,7 +40,7 @@ xgridvisible=false,    # 关闭网格
 ygridvisible=false,
 )
 # xlims!(ax,extrema(lsHx))
-scatterlines!(ax,lsHx * 6.54,lsSx)
+lines!(ax,lsHx,lsSx)
 xlims!(ax,0,5.0)
 ylims!(ax,0,0.45)
 
@@ -48,7 +54,7 @@ backgroundcolor = :white,
 # xticks = ([0.66,0.71],[L"λ_{c1}",L"λ_{c2}"])
 xticks = 0:0.5:1.5,yticks = ([0,1/6,1/3],[L"0",L"1/3",L"2/3"]),
 )
-scatterlines!(inset_ax,lsHx * 6.54,lsSx)
+scatterlines!(inset_ax,lsHx,lsSx)
 xlims!(inset_ax,0,1.5)
 ylims!(inset_ax,0,1/3)
 # scatter!(ax,0.2*6.54,0)

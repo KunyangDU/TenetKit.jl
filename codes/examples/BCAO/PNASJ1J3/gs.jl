@@ -4,8 +4,8 @@ include("model.jl")
 dataname = "examples/BCAO/PNASJ1J3/data"
 
 D = 2^7
-Lx = 4
-Ly = 4
+Lx = 2
+Ly = 2
 params = (J1xy = -1.0, J1z = -0.158, D = 0.0132, E = -0.0132, J3xy = 0.329, J3z = -0.112)
 
 println("$(Lx)x$(Ly), D = $(D), params = $(params)")

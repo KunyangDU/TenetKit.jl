@@ -6,8 +6,8 @@ dataname = "examples/Heisenberg/data/trivial"
 D = 2^7
 # lsLx = 4:2:12
 # for Lx in lsLx
-    Lx = 4
-    Ly = 4
+    Lx = 2
+    Ly = 2
     params = (J=1,H=5)
 
     Latt = YCSqua(Lx,Ly)

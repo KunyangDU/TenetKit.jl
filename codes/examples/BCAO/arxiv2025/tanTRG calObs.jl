@@ -33,7 +33,7 @@ lsβ2 = 2 * lsβ[2:end]
 @save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" lsβ2
 
 
-Obs = MPSObservable()
+Obs = Observable()
 LocalSpace = TrivialSpinOneHalf
 
 for i in 1:size(Latt)
