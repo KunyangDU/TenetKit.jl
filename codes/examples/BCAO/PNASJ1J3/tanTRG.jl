@@ -33,7 +33,7 @@ lsβ = vcat(2. .^ (-20:1:-1), 1:10)
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 SETTN1!(lsβ[1], H, ρ;
 trunc = truncdim(Ds),tol = 1e-6,
-algo = CBEalgo(dynamicSVD(1.2,2),NoStruc(),0,Ds,-Inf),max_order = 10)
+algo = CBEalgo(dynamicSVD(1.2,2),NoStruc(),0,Ds),max_order = 10)
 # SETTN2!(lsβ[1], H, ρ;
 # trunc = truncdim(Ds),tol = 1e-6,max_order = 10)
 Z = normalize!(ρ)^2

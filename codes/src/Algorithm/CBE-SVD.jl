@@ -2,7 +2,7 @@ function fullSVD!(env::CBEenvironment, alg::CBEalgo,info::CBEinfo{L2R})
     localto = TimerOutput()
     @timeit localto "projection" H = proj2(env.Lorth,env.tL,env.tR,env.Rorth)
     @timeit localto "action" obj = action(H,env.tL₀,env.tR₀)
-    @timeit localto "SVD" env.tL,env.tR,info.err = tsvd(obj;direction = :left,trunc = truncdim(env.D_f) & truncbelow(alg.ϵ))
+    @timeit localto "SVD" env.tL,env.tR,info.err = tsvd(obj;direction = :left,trunc = truncdim(env.D_f))
     return localto
 end
 
@@ -10,7 +10,7 @@ function fullSVD!(env::CBEenvironment,alg::CBEalgo,info::CBEinfo{R2L})
     localto = TimerOutput()
     @timeit localto "projection" H = proj2(env.Lorth,env.tL,env.tR,env.Rorth)
     @timeit localto "action" obj = action(H,env.tL₀,env.tR₀)
-    @timeit localto "SVD" env.tL,env.tR,info.err = tsvd(obj;direction = :right,trunc = truncdim(env.D_f) & truncbelow(alg.ϵ))
+    @timeit localto "SVD" env.tL,env.tR,info.err = tsvd(obj;direction = :right,trunc = truncdim(env.D_f))
     return localto
 end
 
@@ -25,7 +25,7 @@ function randSVD!(env::CBEenvironment, alg::CBEalgo,info::CBEinfo{L2R})
     @timeit localto "splice Q'" env.Lorth = splice(env.Lorth,Q')
     @timeit localto "contract" obj = contract(env.Lorth,env.Rorth)
     # @timeit localto "pre-orthogonalize" orthogonalize!(obj,tR₀,:right)
-    @timeit localto "SVD" ~,Q,info.err = tsvd(obj;direction = :left,trunc = truncdim(env.D_f - env.D_i) & truncbelow(alg.ϵ))
+    @timeit localto "SVD" ~,Q,info.err = tsvd(obj;direction = :left,trunc = truncdim(env.D_f - env.D_i))
     @timeit localto "after-orthogonalize" orthogonalize!(Q,env.tR₀,L2R())
 
     @timeit localto "direct-sum" env.tR = _cbedsum(Q,env.tR₀,L2R())
@@ -45,7 +45,7 @@ function randSVD!(env::CBEenvironment,alg::CBEalgo,info::CBEinfo{R2L})
     @timeit localto "splice Q'" env.Rorth = splice(env.Rorth,Q')
     @timeit localto "contract" obj = contract(env.Lorth,env.Rorth)
     # @timeit localto "pre-orthogonalize" orthogonalize!(obj,tL₀,:left)
-    @timeit localto "SVD" Q,~,info.err = tsvd(obj;direction = :right,trunc = truncdim(env.D_f - env.D_i) & truncbelow(alg.ϵ))
+    @timeit localto "SVD" Q,~,info.err = tsvd(obj;direction = :right,trunc = truncdim(env.D_f - env.D_i))
     @timeit localto "after-orthogonalize" orthogonalize!(Q,env.tL₀,R2L())
 
     @timeit localto "direct-sum" env.tL = _cbedsum(Q,env.tL₀,R2L())

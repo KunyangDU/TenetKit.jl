@@ -47,11 +47,11 @@ struct CBEalgo{Sch,Struc,Tar} <: AbstractAlgorithm where {Sch,Struc,Tar}
     structure::AbstractStructure
     target::Int64
     D::Int64 
-    ϵ::Number
-    CBEalgo(alg::CBEalgo, scheme::AbstractScheme) = new{typeof(scheme), typeof(alg.structure), alg.target}(scheme, alg.structure, alg.target, alg.D, alg.ϵ)
-    CBEalgo(scheme::AbstractScheme,structure::AbstractStructure,target::Int64,D::Int64,ϵ::Number) = new{typeof(scheme),typeof(structure),target}(scheme,structure,target,D,ϵ)
-    CBEalgo(alg::CBEalgo,structure::AbstractStructure) = new{typeof(alg.scheme),typeof(structure),alg.target}(alg.scheme,structure,alg.target,alg.D,alg.ϵ)
-    CBEalgo(alg::CBEalgo,structure::AbstractStructure,target::Int64) = new{typeof(alg.scheme), typeof(structure), target}(alg.scheme, structure, target, alg.D, alg.ϵ)
+    # ϵ::Number
+    CBEalgo(alg::CBEalgo, scheme::AbstractScheme) = new{typeof(scheme), typeof(alg.structure), alg.target}(scheme, alg.structure, alg.target, alg.D)
+    CBEalgo(scheme::AbstractScheme,structure::AbstractStructure,target::Int64,D::Int64) = new{typeof(scheme),typeof(structure),target}(scheme,structure,target,D)
+    CBEalgo(alg::CBEalgo,structure::AbstractStructure) = new{typeof(alg.scheme),typeof(structure),alg.target}(alg.scheme,structure,alg.target,alg.D)
+    CBEalgo(alg::CBEalgo,structure::AbstractStructure,target::Int64) = new{typeof(alg.scheme), typeof(structure), target}(alg.scheme, structure, target, alg.D)
 end
 
 struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}

@@ -11,7 +11,7 @@ function DMRG1!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     tol = get(kwargs,:tol,Inf)
     λ = get(kwargs,:λ,1.2)
     Nfull = get(kwargs,:Nfull,4)
-    subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc),_getcutoff(trunc)))
+    subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
     alg = DMRGalgo(SingleSite(),subalgo,trunc,N,tol,solver)
     lsE,lsinfo = DMRG!(Env,alg)
     return lsE,lsinfo
