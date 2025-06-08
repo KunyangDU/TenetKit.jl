@@ -50,4 +50,54 @@ const Sz2 = Sz*Sz
 
 end
 
+module U₁Spin1
+
+using TensorKit
+
+const PhySpace = Rep[U₁](1 => 1, 0 => 1, -1 => 1)
+
+const Sz = let 
+    Op = TensorMap(zeros, PhySpace, PhySpace )
+    block(Op, Irrep[U₁](1)) .= 1
+    block(Op, Irrep[U₁](-1)) .= -1
+    Op
+end
+
+const SzSz = Sz, Sz
+
+const S₊S₋ = let 
+    AuxSpace = Rep[U₁](1 => 1)
+    OpL = sqrt(2)*TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
+end
+
+const S₋S₊ = let 
+    AuxSpace = Rep[U₁](-1 => 1)
+    OpL = sqrt(2)*TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
+end
+const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 2 
+const Sz2 = Sz*Sz
+
+end
+
+module SU₂Spin1
+
+using TensorKit
+
+const PhySpace = Rep[SU₂](1 => 1)
+
+# S⋅S interaction
+const SS = let
+    AuxSpace = Rep[SU₂](1 => 1)
+    OpL = TensorMap(ones, Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(2)
+    OpR = permute(OpL', ((2,1), (3,)))
+    OpL, OpR
+end
+
+const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 2
+end
+
 

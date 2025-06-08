@@ -13,32 +13,16 @@ end
 
 module TrivialSpinfulFermion
 using TensorKit
-function diagm(dg::Vector{T}) where T
-    L = length(dg)
-    mat = zeros(T,L,L)
-    for (dgi,dge) in enumerate(dg)
-        mat[dgi,dgi] = dge
-    end
-    return mat
-end
 const PhySpace = ℂ^4
-function diagm(pair::Pair{Int64, Vector{T}}) where T
-    L = length(pair[2]) + abs(pair[1])
-    mat = zeros(T,L,L)
-    if pair[1] > 0
-        for (ii,ie) in enumerate(pair[2])
-            mat[ii,ii+pair[1]] = ie
-        end
-    elseif pair[1] < 0
-        for (ii,ie) in enumerate(pair[2])
-            mat[ii-pair[1],ii] = ie
-        end
-    else
-        mat = diagm(pair[2])
+function diagm(A::Pair{Int64, Vector{T}}) where T
+    L = abs(A.first) + length(A.second)
+    B = zeros(T,L,L)
+    for i in 1:length(A.second)
+        B[(A.first > 0 ? (i,abs(A.first) + i) : (abs(A.first) + i,i))...] = A.second[i]
     end
-    
-    return mat
+    return B
 end
+diagm(A::Vector) = diagm(0 => A)
 const Z = TensorMap(diagm([1,-1,-1,1]),PhySpace,PhySpace)
 const F₊⁺ = TensorMap(diagm(2 => [1,1]),PhySpace,PhySpace)
 const F₋⁺ = TensorMap(diagm(1 => [1,0,1]),PhySpace,PhySpace)
@@ -53,6 +37,31 @@ const n₊ = F₊⁺*F₊
 const n₋ = F₋⁺*F₋
 const n = F₊⁺*F₊ + F₋⁺*F₋
 const nn = n, n
+# function diagm(dg::Vector{T}) where T
+#     L = length(dg)
+#     mat = zeros(T,L,L)
+#     for (dgi,dge) in enumerate(dg)
+#         mat[dgi,dgi] = dge
+#     end
+#     return mat
+# end
+# function diagm(pair::Pair{Int64, Vector{T}}) where T
+#     L = length(pair[2]) + abs(pair[1])
+#     mat = zeros(T,L,L)
+#     if pair[1] > 0
+#         for (ii,ie) in enumerate(pair[2])
+#             mat[ii,ii+pair[1]] = ie
+#         end
+#     elseif pair[1] < 0
+#         for (ii,ie) in enumerate(pair[2])
+#             mat[ii-pair[1],ii] = ie
+#         end
+#     else
+#         mat = diagm(pair[2])
+#     end
+    
+#     return mat
+# end
 end
 
 module TrivialSpinOneHalf
@@ -76,6 +85,47 @@ const SxSx = Sx,Sx
 const SySy = Sy,Sy 
 const SzSz = Sz,Sz 
 const S2 = TensorMap([1 0;0 1]*3/4,PhySpace,PhySpace)
+
+const Sx2 = Sx*Sx 
+const Sy2 = Sy*Sy 
+const Sz2 = Sz*Sz
+
+const SxSy = Sx,Sy
+const SySx = Sy,Sx
+const SySz = Sy,Sz
+const SzSy = Sz,Sy
+const SxSz = Sx,Sz
+const SzSx = Sz,Sx
+
+end
+
+module TrivialSpinOne
+using TensorKit
+function diagm(A::Pair{Int64, Vector{T}}) where T
+    L = abs(A.first) + length(A.second)
+    B = zeros(T,L,L)
+    for i in 1:length(A.second)
+        B[(A.first > 0 ? (i,abs(A.first) + i) : (abs(A.first) + i,i))...] = A.second[i]
+    end
+    return B
+end
+diagm(A::Vector) = diagm(0 => A)
+const PhySpace = ℂ^3
+const Sz = let 
+    MatOp = diagm([1,0,-1])
+    TensorMap(MatOp,PhySpace,PhySpace)
+end
+const S₊ = let 
+    MatOp = diagm(1 => sqrt(2)*[1,1])
+    TensorMap(MatOp,PhySpace,PhySpace)
+end
+const S₋ = S₊'
+const Sx = (S₊ + S₋) / 2
+const Sy = (S₊ - S₋) / 2im 
+const SxSx = Sx,Sx 
+const SySy = Sy,Sy 
+const SzSz = Sz,Sz 
+const S2 = TensorMap(diagm(ones(3))*2,PhySpace,PhySpace)
 
 const Sx2 = Sx*Sx 
 const Sy2 = Sy*Sy 
