@@ -4,10 +4,10 @@ include("model.jl")
 typename = "pin"
 dataname = "../codes/examples/Heisenberg/data/triangle/$(typename)"
 
-D = 128
-Lx = 8
-Ly = 6
-params = (J=1,)
+D = 100
+Lx = 4
+Ly = 4
+params = (J=1,H = 0.)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
@@ -85,5 +85,5 @@ save("Heisenberg/triangle/figures/$(typename)/structure factor_$(Lx)x$(Ly)_$(D)_
 
 
 
-
+FSzSz .+ FSxSx .+ FSySy
 
