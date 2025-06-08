@@ -3,6 +3,7 @@ mutable struct ObservableTreeNode <: AbstractTreeNode
     Env::Union{Nothing,AbstractEnvironmentTensor}
     parent::Union{Nothing,ObservableTreeNode}
     children::Vector{ObservableTreeNode}
+    value::Union{Nothing,Number}
     name::Union{Nothing,Tuple}
 
     function ObservableTreeNode(
@@ -10,14 +11,14 @@ mutable struct ObservableTreeNode <: AbstractTreeNode
         parent::ObservableTreeNode,
         children::Vector{ObservableTreeNode}=ObservableTreeNode[],
     )
-    return new(Opr,nothing,parent,children,nothing)
+    return new(Opr,nothing,parent,children,NaN,nothing)
     end
 
     function ObservableTreeNode(
         Opr::Union{Nothing,AbstractLocalOperator},
         children::Vector{ObservableTreeNode}=ObservableTreeNode[],
     )
-    return new(Opr,nothing,nothing,children,nothing)
+    return new(Opr,nothing,nothing,children,NaN,nothing)
     end
 
     ObservableTreeNode() = ObservableTreeNode(IdentityOperator(0))

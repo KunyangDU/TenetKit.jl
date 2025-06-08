@@ -14,7 +14,7 @@ Latt = XCTria(Lx,Ly)
 h = 0
 h = PINVEC120(Latt,h)
 
-params = (J=1,H = 1.)
+params = (J=1,H = 0.)
 ψ = let 
     AuxSpace = repeat([ℂ^1,], Lx*Ly)
     randMPS(TrivialSpinOneHalf.PhySpace ,AuxSpace)

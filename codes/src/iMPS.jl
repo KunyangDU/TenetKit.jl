@@ -1,7 +1,6 @@
 using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees
-TensorKit.usebraidcache_abelian[] = false
-TensorKit.usebraidcache_nonabelian[] = false
 
+include("Globals.jl")
 include("init.jl")
 
 include("TensorWrapper/AbstractType.jl")
@@ -21,7 +20,7 @@ include("ProcessControl/information.jl")
 include("ProcessControl/scheme.jl")
 include("ProcessControl/structure.jl")
 
-include("default.jl")
+include("Defaults.jl")
 
 include("TensorWrapper/TensorWrapper.jl")
 include("TensorWrapper/canonicalize.jl")
@@ -47,10 +46,10 @@ include("IntrTree/Automata.jl")
 include("Observables/addObs.jl")
 include("Observables/calObs.jl")
 
-include("Tools/algebra.jl")
-include("Tools/geometry.jl")
-include("Tools/Tools.jl")
-include("Tools/lattice.jl")
+include("tools/algebra.jl")
+include("tools/geometry.jl")
+include("tools/tools.jl")
+include("tools/lattice.jl")
 
 include("Algebra/inner.jl")
 include("Algebra/mul1.jl")
@@ -100,9 +99,9 @@ include("LocalSpace/trivial.jl")
 # include("MPO/Operators.jl")
 # include("MPO/ObsMPO.jl")
 
-# include("Tools/Tools.jl")
-# include("Tools/geometry.jl")
-# include("Tools/algebra.jl")
+# include("tools/tools.jl")
+# include("tools/geometry.jl")
+# include("tools/algebra.jl")
 
 # include("IntrTree/LocalOperator.jl")
 # include("IntrTree/Node.jl")

@@ -4,16 +4,16 @@ include("../model.jl")
 dataname = "examples/Heisenberg/data/triangle/pin"
 
 D = 100
-Lx = 6
+Lx = 4
 Ly = 4
-params = (J=1,)
+params = (J=1,H = 0.)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @load "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
 
 @time "calculate observables" begin
-    Obs = MPSObservable()
+    Obs = Observable()
     LocalSpace = TrivialSpinOneHalf
 
     for i in 1:size(Latt),j in i+1:size(Latt)

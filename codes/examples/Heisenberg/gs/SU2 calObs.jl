@@ -3,17 +3,17 @@ include("../../../src/iMPS.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/SU2"
 
-D = 2^8
+D = 2^6
 Lx = 4
 Ly = 4
 params = (J=1,)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
-@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
+@load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @load "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
 
 @time "calculate observables" begin
-    Obs = MPSObservable()
+    Obs = Observable()
     LocalSpace = SU₂Spin
 
     for pair in neighbor(Latt)

@@ -8,7 +8,7 @@ end
 
 function __multithreading_init__()
     println("* Multi-threading infomation:")
-    println("  - Julia: $(Threads.nthreads())")
+    println("  - Julia: $(get_num_threads_julia())")
     println("  - BLAS: $(MKL.BLAS.get_num_threads())")
     println("* BLAS infomation: $(MKL.BLAS.get_config())")
 end

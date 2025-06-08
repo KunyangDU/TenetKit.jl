@@ -1,4 +1,4 @@
-using TensorKit
+using TensorKit,Base.Threads
 include("../../../src/iMPS.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
@@ -28,11 +28,8 @@ params = (J=1,)
         addObs!(Obs,LocalSpace.Sy,i,"Sy",nothing)
         addObs!(Obs,LocalSpace.Sz,i,"Sz",nothing)
     end
-
-    calObs!(Obs, ψ)
 end
 
-gsdata = Obs.values
 
-@save "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
+calObs!(Obs,ψ)
 
