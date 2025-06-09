@@ -136,6 +136,7 @@ function calObs!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
     @timeit to "tree2dict" Obs.values = Dict(Obs)
     show(to,title = "Observable")
     print("\n")
+    flush(stdout)
 
     get(kwargs,:destroy,true) && (Obs.forest = nothing)
 
@@ -188,6 +189,7 @@ function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwarg
             if remain % showspacing == 0
                 show(to,title = "$(total - remain)/$(total)")
                 print("\n")
+                flush(stdout)
             end
         end
     end

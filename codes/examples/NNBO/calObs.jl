@@ -1,15 +1,15 @@
 using TensorKit
-include("../../../src/iMPS.jl")
+include("../../src/iMPS.jl")
 include("model.jl")
-dataname = "examples/BCAO/arxiv2025/data"
+dataname = "examples/NNBO/data"
 
-D = 2^6
+D = 3^4
 Lx = 4
 Ly = 4
 
-params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
-params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092)
-paramsh = (pinh=0.,)
+params1_Kitaev = (J1 = -1, K1 = 0.6, Γ1 = 0, Γ1′ = 0)
+params3DH = (J3 = 1, D = -3,  H = 0.)
+paramsh = (h=0.01,)
 
 params1 = let 
     v = collect(params1_Kitaev)
@@ -17,15 +17,16 @@ params1 = let
     (J1xy = v1[1], J1z = v1[2], Jpm = v1[3], Jzpm = v1[4])
 end
 
-params = merge(params1,params23,paramsh)
-params_Kitaev = merge(params1_Kitaev,params23,paramsh)
+params = merge(params1,params3DH,paramsh)
+params_Kitaev = merge(params1_Kitaev,params3DH,paramsh)
+
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" lsEg
 @load "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" ψ
 
 @time "calculate observables" begin
     Obs = Observable()
-    LocalSpace = TrivialSpinOneHalf
+    LocalSpace = TrivialSpinOne
 
     for i in 1:size(Latt)
         addObs!(Obs,LocalSpace.Sx,i,"Sx",nothing)
@@ -40,9 +41,12 @@ params_Kitaev = merge(params1_Kitaev,params23,paramsh)
     end
 
     calObs!(Obs, ψ)
+    # _calObs_threading!(Obs, ψ)
 end
 
 gsdata = Obs.values
 
 @save "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" gsdata
 # end
+
+
