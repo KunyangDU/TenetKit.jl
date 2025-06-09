@@ -1,20 +1,13 @@
-
-
-
-
-
-
 using TensorKit
 include("../../../src/iMPS.jl")
 include("model.jl")
 dataname = "examples/Heisenberg/spin 1/data/U1"
 
-
-D = 3^4
-Lx = 8
+D = 3^5
+for Lx in [60,80,100]
+# Lx = 8
 Ly = 1
-for DD in [0,]
-params = (Jz=1, Jxy = 1/2, D = DD)
+params = (Jz=1, Jxy = 1/2, )
 
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -27,7 +20,7 @@ end
 H = U1Hamiltonian(Latt;params...)
 
 lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
-showQuantSweep(lsEg ./ size(Latt) .- 1/4 .- params.D)
+showQuantSweep(lsEg ./ size(Latt) .- 1/4)
 @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ

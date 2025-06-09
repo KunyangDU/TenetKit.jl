@@ -5,10 +5,10 @@ dataname = "examples/Heisenberg/spin 1/data/trivial"
 
 
 D = 3^4
-Lx = 4
-Ly = 4
-for DD in [0,]
-params = (J=1, D = DD)
+for Lx in [4,6,8,10,20,40,60,80,100]
+# Lx = 8
+Ly = 1
+params = (J=1,)
 
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -21,7 +21,7 @@ end
 H = TrivialHamiltonian(Latt;params...)
 
 lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
-showQuantSweep(lsEg ./ size(Latt) .- 1/4 .- params.D)
+showQuantSweep(lsEg ./ size(Latt) .- 1/4)
 @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ

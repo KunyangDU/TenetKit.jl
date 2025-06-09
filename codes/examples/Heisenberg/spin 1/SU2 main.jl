@@ -11,7 +11,8 @@ dataname = "examples/Heisenberg/spin 1/data/SU2"
 
 
 D = 3^4
-Lx = 8
+for Lx in [4,6,8,10,20,40,60,80,100]
+# Lx = 8
 Ly = 1
 
 params = (J=1,)
@@ -32,5 +33,5 @@ showQuantSweep(lsEg ./ size(Latt) .- 1/4)
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
 
-
+end
 
