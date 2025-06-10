@@ -1,6 +1,6 @@
 using CairoMakie,JLD2,TensorKit,LaTeXStrings,FiniteLattices,ColorSchemes,LsqFit
 include("../../analysis/analysis.jl")
-include("../model.jl")
+include("model.jl")
 
 trivialname = "../codes/examples/Heisenberg/spin 1/data/trivial"
 su2name = "../codes/examples/Heisenberg/spin 1/data/SU2"

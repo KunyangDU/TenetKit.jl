@@ -5,8 +5,8 @@ include("model.jl")
 dataname = "../codes/examples/NNBO/data/H"
 figurename = "NNBO/figures/H"
 
-D = 3^4
-Lx = 4
+D = 3^5
+Lx = 6
 Ly = 4
 for H in 0:0.2:2.8
 params1_Kitaev = (J1 = -1, K1 = 0.6, Γ1 = 0, Γ1′ = 0)

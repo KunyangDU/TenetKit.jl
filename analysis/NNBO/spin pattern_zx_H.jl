@@ -11,7 +11,7 @@ Ly = 4
 for H in 0:0.2:2.8
 params1_Kitaev = (J1 = -1, K1 = 0.6, Γ1 = 0, Γ1′ = 0)
 params3DH = (J3 = 1, D = -3,  H = H)
-paramsh = (h = 0.01,)
+paramsh = (h = 0.0,)
 
 params1 = let 
     v = collect(params1_Kitaev)

@@ -5,12 +5,13 @@ include("model.jl")
 dataname = "../codes/examples/NNBO/data/H"
 figurename = "NNBO/figures/H"
 
-D = 3^4
-Lx = 4
+D = 3^5
+Lx = 6
 Ly = 4
+for H in 0:0.2:2.8
 params1_Kitaev = (J1 = -1, K1 = 0.6, Γ1 = 0, Γ1′ = 0)
-params3DH = (J3 = 1, D = -3,  H = 0.0)
-paramsh = (h = 0.0,)
+params3DH = (J3 = 1, D = -3,  H = H)
+paramsh = (h = 0.01,)
 
 params1 = let 
     v = collect(params1_Kitaev)
@@ -37,14 +38,14 @@ fig = Figure()
 ax = Axis(fig[1,1];autolimitaspect = true,figsize...,
 xticks = (sqrt(3)*11/12 .+ sqrt(3)/2 .* (0:2Lx-1),string.(1:2Lx)),
 yticks = (1:0.5:Ly+0.5,string.(1:2Ly)),
-title = "$(2Lx)x$(Ly)x2 ZZ-HC-CY, xy, D=$(D)")
+title = "$(2Lx)x$(Ly)x2 ZZ-HC-CY, zy, D=$(D)")
 plotLatt!(ax,Latt,[0,1];site = false,sitelabel = false)
 
 
-intensity = 0.45 / maximum(sum(sqrt.(Sz.^2 + Sx.^2))/length(Sy))
+intensity = 0.45 / maximum(sum(sqrt.(Sy.^2 + Sz.^2))/length(Sy))
 colors = get(colorschemes[:bwr],Sz,(-Sm,Sm))
 for i in 1:size(Latt)
-    arrowc!(ax,coordinate(Latt,i)...,intensity*Sx[i],intensity*Sz[i];color = colors[i],linewidth = 2)
+    arrowc!(ax,coordinate(Latt,i)...,intensity*Sy[i],intensity*Sz[i];color = colors[i],linewidth = 2)
 end
 
 Colorbar(fig[1,2],limits = (-Sm,Sm),colormap = :bwr,label = L"\langle S_y\rangle")
@@ -63,5 +64,6 @@ Colorbar(fig[1,2],limits = (-Sm,Sm),colormap = :bwr,label = L"\langle S_y\rangle
 
 resize_to_layout!(fig)
 display(fig)
-save("$(figurename)/spin pattern_$(Lx)x$(Ly)_$(D)_$(params_Kitaev)_xy.png",fig)
-save("$(figurename)/spin pattern_$(Lx)x$(Ly)_$(D)_$(params_Kitaev)_xy.pdf",fig)
+save("$(figurename)/spin pattern_$(Lx)x$(Ly)_$(D)_$(params_Kitaev)_zy.png",fig)
+save("$(figurename)/spin pattern_$(Lx)x$(Ly)_$(D)_$(params_Kitaev)_zy.pdf",fig)
+end
