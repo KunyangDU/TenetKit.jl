@@ -3,9 +3,10 @@ include("../analysis/analysis.jl")
 include("model.jl")
 
 dataname = "../codes/examples/NNBO/data/H"
+figurename = "NNBO/figures"
 
-D = 3^4
-Lx = 4
+D = 3^5
+Lx = 6
 Ly = 4
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
@@ -13,10 +14,11 @@ select_point = 1:size(Latt)
 
 lsH = 0:0.2:2.8
 lsSz = zeros(length(lsH))
+params1_Kitaev = (J1 = -1, K1 = 0.6, Γ1 = 0, Γ1′ = 0)
+params3DH = (J3 = 1, D = -3)
+paramsh = (h = 0.0,)
 for (i,H) in enumerate(lsH)
-    params1_Kitaev = (J1 = -1, K1 = 0.6, Γ1 = 0, Γ1′ = 0)
-    params3DH = (J3 = 1, D = -3,  H = H)
-    paramsh = (h = 0.0,)
+    paramsH = (H = H,)
 
     params1 = let 
         v = collect(params1_Kitaev)
@@ -24,8 +26,8 @@ for (i,H) in enumerate(lsH)
         (J1xy = v1[1], J1z = v1[2], Jpm = v1[3], Jzpm = v1[4])
     end
 
-    params = merge(params1,params3DH,paramsh)
-    params_Kitaev = merge(params1_Kitaev,params3DH,paramsh)
+    params = merge(params1,params3DH,paramsH,paramsh)
+    params_Kitaev = merge(params1_Kitaev,params3DH,paramsH,paramsh)
     @load "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" gsdata
     lsSz[i] = [gsdata["Sz"][(i,)] for i in select_point] |> x -> sum(x) / length(x)
 end
@@ -43,3 +45,7 @@ scatterlines!(ax,lsH,lsSz)
 
 resize_to_layout!(fig)
 display(fig)
+
+save("$(figurename)/magnetization_$(Lx)x$(Ly)_$(D)_$(merge(params1_Kitaev,params3DH,paramsh)).png",fig)
+save("$(figurename)/magnetization_$(Lx)x$(Ly)_$(D)_$(merge(params1_Kitaev,params3DH,paramsh)).pdf",fig)
+

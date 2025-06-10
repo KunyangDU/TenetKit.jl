@@ -14,7 +14,7 @@ select_point = div(size(Latt),Ly) |> x -> x+1:size(Latt)-x
 # select_point = 1:size(Latt)
 lsHx = 0:0.02:0.34
 lsSx = zeros(length(lsHx))
-params1_Kitaev = (J1 = -0.59, K1 = -2.5, Γ1 = 0.4, Γ1′ = 0.11)
+params1_Kitaev = (J1 = -0.59, K1 = -2.5, Γ1 = 0.35, Γ1′ = 0.11)
 paramsh = (pinh=0.,)
 for (i,Hx) in enumerate(lsHx)
     params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092, Hx = Hx)

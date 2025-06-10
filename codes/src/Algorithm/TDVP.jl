@@ -9,7 +9,7 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector;kwargs...)
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
     tol = get(kwargs,:tol,1e-4)
     λ = get(kwargs,:λ,1.2)
-    Nfull = get(kwargs,:Nfull,4)
+    Nfull = get(kwargs,:Nfull,-1)
     subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
     alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver)
     
@@ -148,10 +148,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         if alg <: CBEalgo 
             @timeit localto "CBE" begin
                 cbeinfo = CBEinfo(L2R())
-                # B = deepcopy(Env.layer[1].ts[site+1])
                 cbeto = CBE!(Env,Alg.alg,cbeinfo)
-                # splice!(Env.layer[1],B,site+1)
-                # Env.layer[3].ts[site] = Env.layer[1].ts[site]'
                 merge!(localinfo,cbeinfo)
             end
             merge!(localto,cbeto,tree_point = ["CBE"])
@@ -183,10 +180,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         if alg <: CBEalgo 
             @timeit localto "CBE" begin
                 cbeinfo = CBEinfo(R2L())
-                # A = deepcopy(Env.layer[1].ts[site-1])
                 cbeto = CBE!(Env,Alg.alg,cbeinfo)
-                # splice!(Env.layer[1],A,site-1)
-                # Env.layer[3].ts[site] = Env.layer[1].ts[site]'
                 merge!(localinfo,cbeinfo)
             end
             merge!(localto,cbeto,tree_point = ["CBE"])
