@@ -7,13 +7,13 @@ dataname = "examples/Heisenberg/data/SU2"
 D = 2^6
 # lsLx = 6:2:12
 # for Lx in lsLx
-Lx = 4
-Ly = 4
+Lx = 10
+Ly = 1
 params = (J=1,)
 Latt = YCSqua(Lx,Ly)
 
 ψ = let 
-    AuxSpace = vcat(Rep[SU₂](0 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:1),], size(Latt)-1))
+    AuxSpace = vcat(Rep[SU₂](1 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:1),], size(Latt)-1))
     randMPS(SU₂Spin.PhySpace ,AuxSpace)
 end
 

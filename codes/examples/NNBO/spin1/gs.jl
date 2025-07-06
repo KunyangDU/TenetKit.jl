@@ -1,6 +1,7 @@
 using TensorKit
-include("../../src/iMPS.jl")
+include("../../../src/iMPS.jl")
 include("model.jl")
+include("../geometry.jl")
 dataname = "examples/NNBO/data"
 
 D = 3^4

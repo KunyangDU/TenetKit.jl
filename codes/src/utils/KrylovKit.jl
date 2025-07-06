@@ -89,22 +89,6 @@
 #     return obj, K
 # end
 
-function _initialMPS(O::SparseProjectiveHamiltonian{1})
-    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, O.H.ts[1].m[1,1].A])...)
-    dom = collect(codomain(O.EnvR.A[1].A))[1]
-    tmp = MPSTensor(randn,codom,dom)
-    normalize!(tmp)
-    return tmp
-end
-
-function _initialMPS(O::SparseProjectiveHamiltonian{2})
-    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, [O.H.ts[i].m[1,1].A for i in 1:2]...])...)
-    dom = collect(codomain(O.EnvR.A[1].A))[1]
-    tmp = CompositeMPSTensor(randn,codom,dom)
-    normalize!(tmp)
-    return tmp
-end
-
 # function groundEig(O::SparseProjectiveHamiltonian{N},alg::KrylovKit.KrylovAlgorithm = DMRGDefaultLanczos.Alg) where N
 #     Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR,alg)
 #     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
@@ -122,8 +106,25 @@ end
 #     return obj, Lanczosinfo(info)
 # end
 
-function groundEig(O::SparseProjectiveHamiltonian{N},alg::Krylovalgo = DMRGDefaultLanczos) where N
-    Eg,Ev,info = eigsolve(x -> action(O,x), _initialMPS(O), 1, :SR, alg.Alg)
+function _initialMPS(O::SparseProjectiveHamiltonian{1})
+    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, O.H.ts[1].m[1,1].A])...)
+    dom = collect(codomain(O.EnvR.A[1].A))[1]
+    tmp = MPSTensor(randn,codom,dom)
+    normalize!(tmp)
+    return tmp
+end
+
+function _initialMPS(O::SparseProjectiveHamiltonian{2})
+    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, [O.H.ts[i].m[1,1].A for i in 1:2]...])...)
+    dom = collect(codomain(O.EnvR.A[1].A))[1]
+    tmp = CompositeMPSTensor(randn,codom,dom)
+    normalize!(tmp)
+    return tmp
+end
+
+function groundEig(O::SparseProjectiveHamiltonian{N},alg::Krylovalgo = DMRGDefaultLanczos;x₀ = _initialMPS(O)) where N
+    reset_timer!(get_timer("action"))
+    Eg,Ev,info = eigsolve(x -> action(O,x), x₀, 1, :SR, alg.Alg)
     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
 end
 

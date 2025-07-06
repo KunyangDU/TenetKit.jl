@@ -4,16 +4,49 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     EnvL::SparseLeftEnvironmentTensor
     EnvR::SparseRightEnvironmentTensor
     H::Union{Nothing,SparseMPO}
+    validinds::Tuple
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
         EnvR::SparseRightEnvironmentTensor,
-        H::SparseMPO) 
-        return new{length(H.ts)}(EnvL,EnvR,H)
+        H::SparseMPO{2}) 
+        N,M1 = H.D[1]
+        M2,R = H.D[2]
+        @assert M1 == M2
+        @assert EnvL.D == N 
+        @assert EnvR.D == R
+
+        viv = []
+        for i in 1:N,j in 1:M1, k in 1:R
+            isnothing(H.ts[1].m[i,j]) | isnothing(H.ts[2].m[j,k]) && continue
+            push!(viv,(i,j,k))
+        end
+
+        return new{2}(EnvL,EnvR,H,Tuple(viv))
+    end
+
+    function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
+        EnvR::SparseRightEnvironmentTensor,
+        H::SparseMPO{1}) 
+        N,R = H.D[1]
+        @assert EnvL.D == N 
+        @assert EnvR.D == R
+
+        viv = []
+        for i in 1:N, j in 1:R
+            isnothing(H.ts[1].m[i,j]) && continue
+            push!(viv,(i,j))
+        end
+
+        return new{1}(EnvL,EnvR,H,Tuple(viv))
     end
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
         EnvR::SparseRightEnvironmentTensor) 
-        return new{0}(EnvL,EnvR,nothing)
+        N = EnvL.D
+        M = EnvR.D
+        @assert M == N 
+        
+        return new{0}(EnvL,EnvR,nothing,Tuple(1:N))
     end
 end
 

@@ -37,7 +37,7 @@ function add!!(A::AbstractTensorWrapper,
 end
 
 function axpy!(α::Number, A::T, B::T) where {T<:AbstractTensorWrapper}
-    axpy!(α, A.A, B.A)
+    TensorKit.LinearAlgebra.axpy!(α, A.A, B.A)
     return B
 end
 # axpy!(::Number, ::Nothing, A::AbstractTensorWrapper) = A
@@ -54,7 +54,7 @@ function axpby!(α::Number, A::AbstractTensorWrapper, β::Number, B::AbstractTen
 end
 axpby!(α::Number, A::AbstractTensorWrapper, ::Number, ::Nothing) = α * A
 axpby!(::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
-axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = axpby!(α,A,0,nothing)
+axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
 axpy!(::Number, ::Nothing, B::AbstractTensorWrapper) = B
 
 add!(A::AbstractTensorWrapper, B::AbstractTensorWrapper) = axpy!(true, B, A)

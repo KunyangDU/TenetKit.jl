@@ -157,7 +157,7 @@ function mul!(C::Union{DenseMPO,DenseMPS}, A::Union{DenseMPO,DenseMPS}, B::Union
     λ = get(kwargs,:λ,1.2)
     Nfull = get(kwargs,:Nfull,4)
     Nmul = get(kwargs,:Nmul,3)
-    alg = get(kwargs,:alg,Algebraalgo(SingleSite(),CBEalgo(dynamicSVD(λ,Nfull),NoStruc(),0,D,ϵ),trunc,Nmul,ϵ))
+    alg = get(kwargs,:alg,Algebraalgo(SingleSite(),CBEalgo(dynamicSVD(λ,Nfull),NoStruc(),0,D),trunc,Nmul,ϵ))
     
     return mul!(C,A,B,α,alg)
 end

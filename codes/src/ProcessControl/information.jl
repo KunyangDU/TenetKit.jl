@@ -12,7 +12,7 @@ mutable struct Lanczosinfo <: SolverInfo
     converged::Int
     numiter::Int
     Lanczosinfo(converged::Int, numiter::Int) = new(converged,numiter)
-    Lanczosinfo(info::KrylovKit.ConvergenceInfo) = new(info.converged, info.numiter)
+    Lanczosinfo(info::KrylovKit.ConvergenceInfo) = new(info.converged, info.numops)
     Lanczosinfo() = new(1,0)
 end
 

@@ -183,13 +183,13 @@ function U1Hamiltonian(Latt::AbstractLattice;Jz::Number=1, Jxy::Number=1/2, h::N
             addIntr!(Root,LocalSpace.S₋S₊,pair,("S₋","S₊"),Jxy,nothing)
         end
 
-        if H != 0
-            for i in 1:size(Latt)
-                addIntr!(Root,LocalSpace.Sz,i,"Sz",-H,nothing)
-            end
+        # if H != 0
+        for i in 1:size(Latt)
+            addIntr!(Root,LocalSpace.Sz,i,"Sz",-H,nothing)
         end
+        # end
 
-        addIntr!(Root,LocalSpace.Sz,div(size(Latt),2),"Sz",h,nothing)
+        # addIntr!(Root,LocalSpace.Sz,div(size(Latt),2),"Sz",h,nothing)
 
         AutomataSparseMPO(InteractionTree(Root),size(Latt))
     end

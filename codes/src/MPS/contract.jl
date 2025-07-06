@@ -337,6 +337,7 @@ function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::MPSTens
         isnothing(C.m[i,j]) | isnothing(D.m[j,k]) && continue
         tmp1 = contract(EnvL.A[i], A, C.m[i,j])
         tmp2 = contract(B, D.m[j,k], EnvR.A[k])
+        # @show typeof(tmp1),typeof(tmp2)
         if isnothing(tmp)
             tmp = contract(tmp1, tmp2)
         else

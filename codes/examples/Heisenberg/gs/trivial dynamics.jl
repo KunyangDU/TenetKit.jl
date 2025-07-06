@@ -3,9 +3,9 @@ include("../../../src/iMPS.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^6
-Lx = 10
-Ly = 1
+D = 2^7
+Lx = 4
+Ly = 4
 params = (J=1,)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -37,7 +37,7 @@ for k in lsk
     end
 
     lsSS = map(ψs) do ψ1
-        lst, lsψ,lsinfo = TDVP1!(deepcopy(ψ1),H,t,Nt;trunc = truncdim(D) & truncbelow(1e-12))  
+        lst, lsψ,lsinfo = TDVP2!(deepcopy(ψ1),H,t,Nt;trunc = truncdim(D) & truncbelow(1e-12))  
         map(enumerate(lsψ)) do (i,ψ′)
             inner(ψ′,ψ1') * exp(1im * lst[i] * lsEg[end])
         end

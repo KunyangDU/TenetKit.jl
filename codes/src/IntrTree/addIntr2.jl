@@ -7,6 +7,14 @@ function addIntr2!(
     Z::Union{Nothing,AbstractTensorMap}
     )
     # OprL,OprR = map(x -> LocalOperator(Opris[x],names[x],sites[x],strength),1:2)
+    # if sites[1] > sites[2]
+    #     A,B = _swap(Opris)
+    #     OprL = LocalOperator(A,names[2],sites[2])
+    #     OprR = LocalOperator(B,names[1],sites[1],strength)
+    # else
+    #     OprL = LocalOperator(Opris[1],names[1],sites[1])
+    #     OprR = LocalOperator(Opris[2],names[2],sites[2],strength)
+    # end
     OprL = LocalOperator(Opris[1],names[1],sites[1])
     OprR = LocalOperator(Opris[2],names[2],sites[2],strength)
 
@@ -18,7 +26,12 @@ function addIntr2!(
     OprL::LocalOperator,OprR::LocalOperator,
     Z::Union{Nothing,AbstractTensorMap}
     )
-    @assert OprL.site < OprR.site
+    # @assert OprL.site < OprR.site
+    if OprL.site > OprR.site
+        OprL.Opri,OprR.Opri = _swap(OprL.Opri,OprR.Opri,Z)
+        OprL.site,OprR.site = OprR.site,OprL.site
+        OprL.name,OprR.name = OprR.name,OprL.name
+    end
 
     current_node = Root
     current_site = 1
@@ -72,4 +85,12 @@ function _addZ(Opri::AbstractTensorMap{S₁,1,1}, Z::AbstractTensorMap{S₂,1,1}
     @tensor tmp[-1;-2] ≔ Z[-1,1] * Opri[1,-2]
     return tmp
 end
+
+# TODO: Z ≠ nothing
+function _swap(A::AbstractTensorMap,B::AbstractTensorMap,::Nothing,tol::Float64 = 1e-12)
+    @tensor AB′[-1,-2;-3,-4] ≔ A[-1,1,-4] * B[-2,1,-3]
+    A′,Λ,B′ = tsvd(AB′,(2,3),(1,4),trunc = truncbelow(tol))
+    return permute(A′,(1,),(3,2)),permute(Λ*B′,(2,1),(3,))
+end
+_swap(AB::NTuple{2,AbstractTensorMap},::Nothing,tol::Float64 = 1e-12) = _swap(AB...,tol)
 

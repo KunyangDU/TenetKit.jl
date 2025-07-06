@@ -1,28 +1,21 @@
 using TensorKit
 include("../../../src/iMPS.jl")
 include("model.jl")
-dataname = "examples/BCAO/arxiv2025/data"
+include("../geometry.jl")
+dataname = "examples/NNBO/spin12/data"
 
 D = 2^7
 Lx = 4
 Ly = 4
 
-# params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
-# params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092)
-# paramsh = (pinh=0.,)
+params1_1_Kitaev = (J1 = -1, K1 = 0.6, Γ1 = 0, Γ1′ = 0)
+params1_3_JDH = (J3 = 1, D = 3)
+paramsh = (h=0.0, H = 0.)
 
-params1_Kitaev = (J1 = -0.63, K1 = -1.0, Γ1 = 0.0, Γ1′ = 0.0)
-params23 = (J2 = 0., J3xy = 0.3, J3z = 0.0)
-paramsh = (pinh=0.,)
+params1_cry = _Cub2Cry(params1_1_Kitaev)
+params = merge(params1_cry,params1_3_JDH,paramsh)
+params_Kitaev = merge(params1_1_Kitaev,params1_3_JDH,paramsh)
 
-params1 = let 
-    v = collect(params1_Kitaev)
-    v1 = PC2Y*v
-    (J1xy = v1[1], J1z = v1[2], Jpm = v1[3], Jzpm = v1[4])
-end
-
-params = merge(params1,params23,paramsh)
-params_Kitaev = merge(params1_Kitaev,params23,paramsh)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" lsEg
 @load "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" ψ
@@ -49,4 +42,4 @@ end
 gsdata = Obs.values
 
 @save "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" gsdata
-# end
+

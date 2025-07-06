@@ -42,6 +42,7 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
 
         l2rinfo = DMRGsweepinfo(L2R())
         to = DMRG!(Env,Alg,l2rinfo)
+        @timeit to "GC" GC.gc()
         show(to;title=">>> DMRG >>>")
         print("\n")
         show(l2rinfo)
@@ -50,6 +51,7 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
 
         r2linfo = DMRGsweepinfo(R2L())
         to = DMRG!(Env,Alg,r2linfo)
+        @timeit to "GC" GC.gc()
         show(to;title="<<< DMRG <<<")
         print("\n")
         show(r2linfo)
@@ -58,8 +60,6 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
 
         push!(lsinfo,deepcopy(info))
         push!(lsE,info.E)
-
-        GC.gc()
 
         info.err > Alg.tol && return lsE,lsinfo
     end
@@ -79,7 +79,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         end
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site)
-            @timeit localto "lanczos" localinfo.E, Egv, localinfo.solver = groundEig(projH)
+            localinfo.E, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
         end
         @timeit localto "orthogonalize" begin
             tl,tr = leftorth(Egv)
@@ -87,16 +87,16 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             tr = contract(tr,Env.layer[1].ts[site+1])
         end
         @timeit localto "pushright" pushright!(Env,tl, tr)
-        merge!(info,localinfo)
         push!(lsE,localinfo.E)
-
-        GC.gc()
+        @timeit localto "GC" GC.gc()
+        merge!(info,localinfo)
+        merge!(localto,get_timer("action");tree_point = ["Krylov"])
     end
     
 
     info.σE = std(filter(!isnan,lsE))
 
-    GC.gc()
+    # GC.gc()
     return localto
 end
 
@@ -113,7 +113,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         end
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site)
-            @timeit localto "lanczos" localinfo.E, Egv, localinfo.solver = groundEig(projH)
+            localinfo.E, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
         end
         @timeit localto "orthogonalize" begin
             tl,tr = rightorth(Egv)
@@ -121,15 +121,15 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             tl = contract(Env.layer[1].ts[site-1],tl)
         end
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
-        merge!(info,localinfo)
         push!(lsE,localinfo.E)
-
-        GC.gc()
+        @timeit localto "GC" GC.gc()
+        merge!(info,localinfo)
+        merge!(localto,get_timer("action");tree_point = ["Krylov"])
     end
 
     info.σE = std(filter(!isnan,lsE))
 
-    GC.gc()
+    # GC.gc()
     return localto
 end
 
@@ -140,20 +140,21 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         localinfo = DMRGsiteinfo()
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj2(Env,site,site+1)
-            @timeit localto "lanczos" localinfo.E,Egv,K = groundEig(projH)
+            @timeit localto "composite" x₀ = composite(Env.layer[1].ts[site:site+1]...)
+            localinfo.E,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
         end
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "pushright" pushright!(Env,tl, tr)
-        merge!(info,localinfo)
         push!(lsE,localinfo.E)
-
-        GC.gc()
+        @timeit localto "GC" GC.gc()
+        merge!(info,localinfo)
+        merge!(localto,get_timer("action");tree_point = ["Krylov"])
     end
     info.σE = std(filter(!isnan,lsE))
 
-    GC.gc()
+    # GC.gc()
     return localto
 end
 
@@ -162,22 +163,23 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
     lsE = []
     for site in L:-1:2
         localinfo = DMRGsiteinfo()
-            @timeit localto "Krylov" begin
-                @timeit localto "projection" projH = proj2(Env,site-1,site)
-                @timeit localto "lanczos" localinfo.E,Egv,K = groundEig(projH)
-            end 
-            @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-            localinfo.bond = BondInfo(tc)
-            @timeit localto "contract" tl = contract(tl,tc) 
-            @timeit localto "pushleft" pushleft!(Env,tl, tr)
-        merge!(info,localinfo)
+        @timeit localto "Krylov" begin
+            @timeit localto "projection" projH = proj2(Env,site-1,site)
+            @timeit localto "composite" x₀ = composite(Env.layer[1].ts[site-1:site]...)
+            localinfo.E,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
+        end 
+        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
+        localinfo.bond = BondInfo(tc)
+        @timeit localto "contract" tl = contract(tl,tc) 
+        @timeit localto "pushleft" pushleft!(Env,tl, tr)
         push!(lsE,localinfo.E)
-
-        GC.gc()
+        @timeit localto "GC" GC.gc()
+        merge!(info,localinfo)
+        merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
     end
     info.σE = std(filter(!isnan,lsE))
 
-    GC.gc()
+    # GC.gc()
     return localto
 end
 

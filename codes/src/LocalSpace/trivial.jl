@@ -80,7 +80,7 @@ const Sz = let
     TensorMap(MatOp,PhySpace,PhySpace)
 end
 const S₊ = Sx + 1im * Sy
-const S₋ = S₊'
+const S₋ = Sx - 1im * Sy
 const SxSx = Sx,Sx 
 const SySy = Sy,Sy 
 const SzSz = Sz,Sz 
