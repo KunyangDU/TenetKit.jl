@@ -1,22 +1,22 @@
 function addIntr2!(
     Root::AbstractTreeNode,
-    Opris::NTuple{2,AbstractTensorMap},
+    As::NTuple{2,AbstractTensorMap},
     sites::NTuple{2,Int64},
     names::NTuple{2,String},
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap}
     )
-    # OprL,OprR = map(x -> LocalOperator(Opris[x],names[x],sites[x],strength),1:2)
+    # OprL,OprR = map(x -> LocalOperator(As[x],names[x],sites[x],strength),1:2)
     # if sites[1] > sites[2]
-    #     A,B = _swap(Opris)
+    #     A,B = _swap(As)
     #     OprL = LocalOperator(A,names[2],sites[2])
     #     OprR = LocalOperator(B,names[1],sites[1],strength)
     # else
-    #     OprL = LocalOperator(Opris[1],names[1],sites[1])
-    #     OprR = LocalOperator(Opris[2],names[2],sites[2],strength)
+    #     OprL = LocalOperator(As[1],names[1],sites[1])
+    #     OprR = LocalOperator(As[2],names[2],sites[2],strength)
     # end
-    OprL = LocalOperator(Opris[1],names[1],sites[1])
-    OprR = LocalOperator(Opris[2],names[2],sites[2],strength)
+    OprL = LocalOperator(As[1],names[1],sites[1])
+    OprR = LocalOperator(As[2],names[2],sites[2],strength)
 
     addIntr2!(Root,OprL,OprR,Z)
 end
@@ -28,7 +28,7 @@ function addIntr2!(
     )
     # @assert OprL.site < OprR.site
     if OprL.site > OprR.site
-        OprL.Opri,OprR.Opri = _swap(OprL.Opri,OprR.Opri,Z)
+        OprL.A,OprR.A = _swap(OprL.A,OprR.A,Z)
         OprL.site,OprR.site = OprR.site,OprL.site
         OprL.name,OprR.name = OprR.name,OprL.name
     end
@@ -72,17 +72,17 @@ function addIntr2!(
 end
 
 function _addZ!(OprR::LocalOperator, Z::AbstractTensorMap)
-    OprR.Opri = _addZ(OprR.Opri,Z)
+    OprR.A = _addZ(OprR.A,Z)
     OprR.name = string("Z",OprR.name)
 end
 
-function _addZ(Opri::AbstractTensorMap{S₁,2,1}, Z::AbstractTensorMap{S₂,1,1}) where {S₁,S₂}
-    @tensor tmp[-1 -2;-3] ≔ Z[-1,1] * Opri[1,-2,-3]
+function _addZ(A::AbstractTensorMap{S₁,2,1}, Z::AbstractTensorMap{S₂,1,1}) where {S₁,S₂}
+    @tensor tmp[-1 -2;-3] ≔ Z[-1,1] * A[1,-2,-3]
     return tmp
 end
 
-function _addZ(Opri::AbstractTensorMap{S₁,1,1}, Z::AbstractTensorMap{S₂,1,1}) where {S₁,S₂}
-    @tensor tmp[-1;-2] ≔ Z[-1,1] * Opri[1,-2]
+function _addZ(A::AbstractTensorMap{S₁,1,1}, Z::AbstractTensorMap{S₂,1,1}) where {S₁,S₂}
+    @tensor tmp[-1;-2] ≔ Z[-1,1] * A[1,-2]
     return tmp
 end
 

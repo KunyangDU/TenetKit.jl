@@ -5,10 +5,11 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     EnvR::SparseRightEnvironmentTensor
     H::Union{Nothing,SparseMPO}
     validinds::Tuple
+    E₀::Number
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
         EnvR::SparseRightEnvironmentTensor,
-        H::SparseMPO{2}) 
+        H::SparseMPO{2},E₀::Number = 0.0) 
         N,M1 = H.D[1]
         M2,R = H.D[2]
         @assert M1 == M2
@@ -21,12 +22,12 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
             push!(viv,(i,j,k))
         end
 
-        return new{2}(EnvL,EnvR,H,Tuple(viv))
+        return new{2}(EnvL,EnvR,H,Tuple(viv),E₀)
     end
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
         EnvR::SparseRightEnvironmentTensor,
-        H::SparseMPO{1}) 
+        H::SparseMPO{1},E₀::Number = 0.0)  
         N,R = H.D[1]
         @assert EnvL.D == N 
         @assert EnvR.D == R
@@ -37,16 +38,16 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
             push!(viv,(i,j))
         end
 
-        return new{1}(EnvL,EnvR,H,Tuple(viv))
+        return new{1}(EnvL,EnvR,H,Tuple(viv),E₀)
     end
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
-        EnvR::SparseRightEnvironmentTensor) 
+        EnvR::SparseRightEnvironmentTensor,E₀::Number = 0.0)  
         N = EnvL.D
         M = EnvR.D
         @assert M == N 
         
-        return new{0}(EnvL,EnvR,nothing,Tuple(1:N))
+        return new{0}(EnvL,EnvR,nothing,Tuple(1:N),E₀)
     end
 end
 
@@ -66,15 +67,15 @@ function projright0(env::Environment{3})
     return SparseProjectiveHamiltonian(EnvL,env.envs[site+1])
 end
 
-proj1(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site])) : nothing
+proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site]),E₀) : nothing
 
-function proj2(env::Environment{3},site1::Int64,site2::Int64)
+function proj2(env::Environment{3},site1::Int64,site2::Int64;E₀::Number = 0.0)
     !issparse(env.layer[2]) && return nothing
-    return site1 < site2 ? projright2(env,site1) : projleft2(env,site2)
+    return site1 < site2 ? projright2(env,site1,E₀) : projleft2(env,site2,E₀)
 end
-projright2(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1])) : nothing
-projleft2(env::Environment{3},site::Int64) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site])) : nothing
-proj2(EnvL::SparseLeftEnvironmentTensor,hl::SparseMPOTensor,hr::SparseMPOTensor,EnvR::SparseRightEnvironmentTensor) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO([hl,hr]))
+projright2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1]),E₀) : nothing
+projleft2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site]),E₀) : nothing
+proj2(EnvL::SparseLeftEnvironmentTensor,hl::SparseMPOTensor,hr::SparseMPOTensor,EnvR::SparseRightEnvironmentTensor;E₀::Number = 0.) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO([hl,hr]),E₀)
 
 mutable struct DenseProjectiveHamiltonian{N,L} <: AbstractProjectiveHamiltonian
     EnvL::DenseLeftEnvironmentTensor

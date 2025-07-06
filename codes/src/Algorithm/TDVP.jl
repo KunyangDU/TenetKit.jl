@@ -83,7 +83,7 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
     if isreal(Alg.τ)
         @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
         info.lnZ += 2 * log(d)
-        info.E = real(scalar(Env))
+        info.E = real(_scalar(Env))
     end
     @timeit to "GC" GC.gc()
     show(to;title="<<< TDVP <<<")

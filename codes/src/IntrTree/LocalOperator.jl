@@ -1,22 +1,22 @@
 
-mutable struct IdentityOperator <: AbstractLocalOperator
-    Opri::Union{Nothing, AbstractTensorMap}
+mutable struct IdentityOperator{R} <: AbstractLocalOperator
+    A::Union{Nothing, AbstractTensorMap}
     site::Int64
     strength::Number 
     name::Union{Nothing,String,Tuple}
-    function IdentityOperator(Opri::AbstractTensorMap,site::Int64)
-        return new(Opri, site, NaN ,nothing)
+    function IdentityOperator(A::AbstractTensorMap,site::Int64)
+        return new{length(codomain(A))}(A, site, NaN ,nothing)
    end
     function IdentityOperator(site::Int64, strength::Number = NaN)
-         return new(nothing, site, strength,nothing)
+         return new{0}(nothing, site, strength,nothing)
     end
 
     function IdentityOperator(site::Int64, name::Union{String,Tuple})
-        return new(nothing, site, NaN ,name)
+        return new{0}(nothing, site, NaN ,name)
     end
 
     function IdentityOperator(site::Int64)
-        return new(nothing, site, NaN ,nothing)
+        return new{0}(nothing, site, NaN ,nothing)
     end
 
     IdentityOperator() = IdentityOperator(0)
@@ -32,18 +32,18 @@ function Base.show(io::IO,Opr::IdentityOperator)
     end
 end
 
-mutable struct LocalOperator <: AbstractLocalOperator
-    Opri::Union{Nothing,AbstractTensorMap}
+mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator
+    A::Union{Nothing,AbstractTensorMap}
     name::String
     site::Int64
     strength::Union{Nothing,Number}
 
-    function LocalOperator(Opri::AbstractTensorMap, name::String, site::Int64)
-        return new(Opri, name, site, NaN)
+    function LocalOperator(A::AbstractTensorMap, name::String, site::Int64)
+        return new{length(codomain(A)),length(domain(A))}(A, name, site, NaN)
     end
 
-    function LocalOperator(Opri::AbstractTensorMap, name::String, site::Int64, strength::Number)
-        return new(Opri, name, site, strength)
+    function LocalOperator(A::AbstractTensorMap, name::String, site::Int64, strength::Number)
+        return new{length(codomain(A)),length(domain(A))}(A, name, site, strength)
     end
 end
 
@@ -64,11 +64,11 @@ function Base.isequal(A::LocalOperator, B::LocalOperator)
     # else check strength
     # repeat interaction added without merging
     !(isnan(A.strength) && isnan(B.strength)) && !(A.strength ≈ B.strength) && return false
-    return A.Opri ≈ B.Opri
+    return A.A ≈ B.A
 end
 
 function getIdTensor(Opr::AbstractLocalOperator)
-    space = codomain(Opr.Opri)[1]
+    space = codomain(Opr.A)[1]
     return TensorMap(diagm(ones(dim(space))),space,space)
 end
 

@@ -17,7 +17,7 @@ params = (Jz = 1,Jxy = 0.5,h=0)
 lsβ2 = 2 * lsβ[2:end]
 @save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
 
-Obs = MPSObservable()
+Obs = Observable()
 LocalSpace = U₁Spin
 
 for i in 1:size(Latt)
@@ -36,7 +36,7 @@ E2s = zeros(length(lsβ2))
 for (iβ,β) in enumerate(lsβ2)
     @show iβ/length(lsβ2)
     ρ = lsρ[iβ]
-    ρH,_ = mul!(deepcopy(ρ),ρ,H)
+    ρH,_ = mul!(deepcopy(ρ),ρ,H;trunc = truncdim(D))
     E2s[iβ] = tr(ρH,ρH')
     calObs!(Obs,ρ;destroy = false)
     obs[iβ] = Obs.values

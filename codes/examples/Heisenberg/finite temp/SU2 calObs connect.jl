@@ -9,13 +9,13 @@ Lx = 14
 Ly = 1
 params = (J=1,)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
-
-@load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
-@load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
-@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
-@load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
+extβ = (1.0,10.0)
+@load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsβ
+@load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsρ
+@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsE
+@load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsF
 lsβ2 = 2 * lsβ[2:end]
-@save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
+@save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsβ2
 
 Obs = MPSObservable()
 LocalSpace = SU₂Spin
@@ -49,4 +49,4 @@ data = Dict(
     "obs" => obs
 )
 
-@save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params).jld2" data
+@save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" data

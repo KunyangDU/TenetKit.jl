@@ -1,7 +1,7 @@
 function addIntr1!(Root::AbstractTreeNode,
-    Opri::AbstractTensorMap,site::Int64,name::String,strength::Number,
+    A::AbstractTensorMap,site::Int64,name::String,strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
-    tempOpr = LocalOperator(Opri,name,site,strength)
+    tempOpr = LocalOperator(A,name,site,strength)
     addIntr1!(Root,tempOpr,Z)
 end
 

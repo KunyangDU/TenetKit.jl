@@ -32,6 +32,9 @@ function action(O::SparseProjectiveHamiltonian{0}, obj::T) where T <: Union{MPST
             x = axpy!(1,C,x)
         end
     end
+
+    !iszero(O.E₀) && (x = axpy!(-O.E₀, obj, x))
+
     return x
 end
 
@@ -69,6 +72,8 @@ function action(O::SparseProjectiveHamiltonian{1}, obj::Union{MPSTensor{3},Dense
         end
     end
 
+    !iszero(O.E₀) && (x = axpy!(-O.E₀, obj, x))
+
     return x
 end
 
@@ -105,6 +110,8 @@ function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor
             x = axpy!(1,C,x)
         end
     end
+
+    !iszero(O.E₀) && (x = axpy!(-O.E₀, obj, x))
 
     return x
 end

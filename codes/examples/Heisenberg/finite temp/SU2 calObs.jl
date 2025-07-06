@@ -2,22 +2,22 @@ using TensorKit
 include("../../../src/iMPS.jl")
 include("../model.jl")
 
-dataname = "examples/Heisenberg/data/SU2/connect"
+dataname = "examples/Heisenberg/data/SU2"
 
 D = 2^7
-Lx = 14
+Lx = 10
 Ly = 1
 params = (J=1,)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
-extβ = (1.0,10.0)
-@load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsβ
-@load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsρ
-@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsE
-@load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsF
-lsβ2 = 2 * lsβ[2:end]
-@save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" lsβ2
 
-Obs = MPSObservable()
+@load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
+@load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
+@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
+@load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
+lsβ2 = 2 * lsβ[2:end]
+@save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
+
+Obs = Observable()
 LocalSpace = SU₂Spin
 
 for i in 1:size(Latt),j in i+1:size(Latt)
@@ -35,7 +35,7 @@ for (iβ,β) in enumerate(lsβ2)
     @show iβ/length(lsβ2)
     ρ = lsρ[iβ]
 
-    ρH,_ = mul!(deepcopy(ρ),ρ,H)
+    ρH,_ = mul!(deepcopy(ρ),ρ,H;trunc = truncdim(D))
 
     E2s[iβ] = tr(ρH,ρH')
     calObs!(Obs,ρ;destroy = false)
@@ -49,4 +49,4 @@ data = Dict(
     "obs" => obs
 )
 
-@save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params)_connect_$(extβ).jld2" data
+@save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params).jld2" data

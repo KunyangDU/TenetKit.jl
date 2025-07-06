@@ -1,4 +1,126 @@
 
+
+# function SU2M2(Latt::AbstractLattice)
+#     LocalSpace = SU₂Spin
+
+#     Root = InteractionTreeNode()
+
+#     for i in 1:size(Latt),j in i+1:size(Latt)
+#         addIntr!(Root,LocalSpace.SS,(i,j),("S","S"),2,nothing)
+#     end
+
+#     for i in 1:size(Latt)
+#         addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
+#     end
+    
+#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+# end
+
+# function U1M2(Latt::AbstractLattice)
+#     LocalSpace = U₁Spin
+
+#     Root = InteractionTreeNode()
+
+#     for i in 1:size(Latt),j in i+1:size(Latt)
+#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
+#         addIntr!(Root,LocalSpace.S₊S₋,(i,j),("S₊","S₋"),1,nothing)
+#         addIntr!(Root,LocalSpace.S₋S₊,(i,j),("S₋","S₊"),1,nothing)
+#     end
+
+#     for i in 1:size(Latt)
+#         addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
+#     end
+    
+#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+# end
+
+# function U1Mz(Latt::AbstractLattice)
+#     LocalSpace = U₁Spin
+
+#     Root = InteractionTreeNode()
+
+#     # for i in 1:size(Latt),j in i+1:size(Latt)
+#     #     addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
+#     #     addIntr!(Root,LocalSpace.S₊S₋,(i,j),("S₊","S₋"),1,nothing)
+#     #     addIntr!(Root,LocalSpace.S₋S₊,(i,j),("S₋","S₊"),1,nothing)
+#     # end
+
+#     for i in 1:size(Latt)
+#         addIntr!(Root,LocalSpace.Sz,i,"Sz",1,nothing)
+#     end
+    
+#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+# end
+
+# function U1Mz2(Latt::AbstractLattice)
+#     LocalSpace = U₁Spin
+
+#     Root = InteractionTreeNode()
+
+#     for i in 1:size(Latt),j in i+1:size(Latt)
+#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
+#     end
+
+#     for i in 1:size(Latt)
+#         addIntr!(Root,LocalSpace.Sz2,i,"Sz2",1,nothing)
+#     end
+    
+#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+# end
+
+# function TrivialM2(Latt::AbstractLattice)
+#     LocalSpace = TrivialSpinOneHalf
+
+#     Root = InteractionTreeNode()
+
+#     for i in 1:size(Latt),j in i+1:size(Latt)
+#         addIntr!(Root,LocalSpace.SxSx,(i,j),("Sx","Sx"),2,nothing)
+#         addIntr!(Root,LocalSpace.SySy,(i,j),("Sy","Sy"),2,nothing)
+#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
+#     end
+
+#     for i in 1:size(Latt)
+#         addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
+#     end
+    
+#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+# end
+
+# function TrivialMz(Latt::AbstractLattice)
+#     LocalSpace = TrivialSpinOneHalf
+
+#     Root = InteractionTreeNode()
+
+#     # for i in 1:size(Latt),j in i+1:size(Latt)
+#     #     addIntr!(Root,LocalSpace.SxSx,(i,j),("Sx","Sx"),2,nothing)
+#     #     addIntr!(Root,LocalSpace.SySy,(i,j),("Sy","Sy"),2,nothing)
+#     #     addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
+#     # end
+
+#     for i in 1:size(Latt)
+#         addIntr!(Root,LocalSpace.Sz,i,"Sz",1,nothing)
+#     end
+    
+#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+# end
+
+# function TrivialMz2(Latt::AbstractLattice)
+#     LocalSpace = TrivialSpinOneHalf
+
+#     Root = InteractionTreeNode()
+
+#     for i in 1:size(Latt),j in i+1:size(Latt)
+#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
+#     end
+
+#     for i in 1:size(Latt)
+#         addIntr!(Root,LocalSpace.Sz2,i,"Sz2",1,nothing)
+#     end
+    
+#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+# end
+
+
 function PINVEC120(Latt,h)
     Lx,Ly = get_cellsize(Latt) 
     A0 = [0.,1.,0.] * h
@@ -40,138 +162,6 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     
 end
 
-function SU2Hamiltonian(Latt::AbstractLattice;J::Number=1)
-    LocalSpace = SU₂Spin
-
-    Root = InteractionTreeNode()
-
-    for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.SS,pair,("S","S"),J,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-function SU2M2(Latt::AbstractLattice)
-    LocalSpace = SU₂Spin
-
-    Root = InteractionTreeNode()
-
-    for i in 1:size(Latt),j in i+1:size(Latt)
-        addIntr!(Root,LocalSpace.SS,(i,j),("S","S"),2,nothing)
-    end
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-function U1M2(Latt::AbstractLattice)
-    LocalSpace = U₁Spin
-
-    Root = InteractionTreeNode()
-
-    for i in 1:size(Latt),j in i+1:size(Latt)
-        addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
-        addIntr!(Root,LocalSpace.S₊S₋,(i,j),("S₊","S₋"),1,nothing)
-        addIntr!(Root,LocalSpace.S₋S₊,(i,j),("S₋","S₊"),1,nothing)
-    end
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-function U1Mz(Latt::AbstractLattice)
-    LocalSpace = U₁Spin
-
-    Root = InteractionTreeNode()
-
-    # for i in 1:size(Latt),j in i+1:size(Latt)
-    #     addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
-    #     addIntr!(Root,LocalSpace.S₊S₋,(i,j),("S₊","S₋"),1,nothing)
-    #     addIntr!(Root,LocalSpace.S₋S₊,(i,j),("S₋","S₊"),1,nothing)
-    # end
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz,i,"Sz",1,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-function U1Mz2(Latt::AbstractLattice)
-    LocalSpace = U₁Spin
-
-    Root = InteractionTreeNode()
-
-    for i in 1:size(Latt),j in i+1:size(Latt)
-        addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
-    end
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz2,i,"Sz2",1,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-function TrivialM2(Latt::AbstractLattice)
-    LocalSpace = TrivialSpinOneHalf
-
-    Root = InteractionTreeNode()
-
-    for i in 1:size(Latt),j in i+1:size(Latt)
-        addIntr!(Root,LocalSpace.SxSx,(i,j),("Sx","Sx"),2,nothing)
-        addIntr!(Root,LocalSpace.SySy,(i,j),("Sy","Sy"),2,nothing)
-        addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
-    end
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-function TrivialMz(Latt::AbstractLattice)
-    LocalSpace = TrivialSpinOneHalf
-
-    Root = InteractionTreeNode()
-
-    # for i in 1:size(Latt),j in i+1:size(Latt)
-    #     addIntr!(Root,LocalSpace.SxSx,(i,j),("Sx","Sx"),2,nothing)
-    #     addIntr!(Root,LocalSpace.SySy,(i,j),("Sy","Sy"),2,nothing)
-    #     addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
-    # end
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz,i,"Sz",1,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
-function TrivialMz2(Latt::AbstractLattice)
-    LocalSpace = TrivialSpinOneHalf
-
-    Root = InteractionTreeNode()
-
-    for i in 1:size(Latt),j in i+1:size(Latt)
-        addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
-    end
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz2,i,"Sz2",1,nothing)
-    end
-    
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
-
 function U1Hamiltonian(Latt::AbstractLattice;Jz::Number=1, Jxy::Number=1/2, h::Number = 0,H::Number = 0)
     H = let 
         Root = InteractionTreeNode()
@@ -196,3 +186,14 @@ function U1Hamiltonian(Latt::AbstractLattice;Jz::Number=1, Jxy::Number=1/2, h::N
     return H
 end
 
+function SU2Hamiltonian(Latt::AbstractLattice;J::Number=1)
+    LocalSpace = SU₂Spin
+
+    Root = InteractionTreeNode()
+
+    for pair in neighbor(Latt)
+        addIntr!(Root,LocalSpace.SS,pair,("S","S"),J,nothing)
+    end
+    
+    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+end

@@ -82,7 +82,7 @@
 # function fillenv!(parents::Vector,obj::Union{DenseMPS{L},DenseMPO{L}},site::Int64) where L
 #     childrens = Vector{ObservableTreeNode}()
 #     for p in parents
-#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.Opr.Opri),obj.ts[site]',p.parent.Env)
+#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.Opr.A),obj.ts[site]',p.parent.Env)
 #         push!(childrens,p.children...)
 #     end
 #     return childrens
@@ -118,7 +118,7 @@
 #     childrens = Vector{ObservableTreeNode}()
 #     obs = Dict{Tuple,Float64}()
 #     for p in parents
-#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.Opr.Opri),obj.ts[site]',p.parent.Env)
+#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.Opr.A),obj.ts[site]',p.parent.Env)
 #         push!(childrens,p.children...)
 #         isempty(p.children) && (obs[p.name] = real(_scalar(p.Env)))
 #     end
@@ -260,7 +260,7 @@ function _update_node!(node::ObservableTreeNode,obj::Union{DenseMPO,DenseMPS})
             LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
         end
     else
-        node.Env = contract(obj.ts[site],DenseMPOTensor(node.Opr.Opri),obj.ts[site]',node.Env)
+        node.Env = contract(obj.ts[site],node.Opr,obj.ts[site]',node.Env)
     end
 end
 

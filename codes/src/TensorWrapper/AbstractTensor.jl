@@ -200,14 +200,14 @@ Base.adjoint(ts::Vector{CompositeMPOTensor}) = return convert(Vector{AdjointComp
 Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 
 mutable struct SparseMPOTensor{N,M} <: AbstractMPOTensor
-    m::Matrix{Union{Nothing,DenseMPOTensor}}
+    m::Matrix{Union{Nothing, AbstractLocalOperator}}
 
-    function SparseMPOTensor(m::Matrix{Union{Nothing,DenseMPOTensor}})
-        return new{size(m)...}(m::Matrix{Union{Nothing,DenseMPOTensor}})
+    function SparseMPOTensor(m::Matrix{Union{Nothing,AbstractLocalOperator}})
+        return new{size(m)...}(m::Matrix{Union{Nothing,AbstractLocalOperator}})
     end
 
     function SparseMPOTensor(::Nothing,N::Int64,M::Int64)
-        return new{N,M}(Matrix{Union{Nothing,DenseMPOTensor}}(nothing,N,M))
+        return new{N,M}(Matrix{Union{Nothing,AbstractLocalOperator}}(nothing,N,M))
     end
 end
 
