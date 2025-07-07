@@ -129,8 +129,9 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
 
             map([("leaves_inds","leaves"),("roots_inds","roots")]) do (x,y)
                 for inds in nextnode[x]
-                    nextnode[y][inds[2]].Opr.A *= isnan(nextnode[y][inds[2]].Opr.strength) ? 1 : nextnode[y][inds[2]].Opr.strength
-                    localMPO.m[inds[1]...] = axpy!(1, nextnode[y][inds[2]].Opr , localMPO.m[inds[1]...])
+                    Opr = nextnode[y][inds[2]].Opr
+                    !isnan(Opr.strength) && (Opr.A *= Opr.strength)
+                    localMPO.m[inds[1]...] = axpy!(1, Opr , localMPO.m[inds[1]...])
                     # localMPO.m[inds[1]...] += nextnode[y][inds[2]].Opr
                     # DenseMPOTensor(let 
                     #     localOpr = nextnode[y][inds[2]].Opr.A
@@ -145,8 +146,9 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
             end
 
             if isnothing(localMPO.m[1,1])
+                # lastnode["inverse_root"] == 1
                 # localMPO.m[1,1] = DenseMPOTensor(lastnode["inverse_root"]*idtensor)
-                localMPO.m[1,1] = IdentityOperator(lastnode["inverse_root"]*idtensor, iL)
+                localMPO.m[1,1] = IdentityOperator(idtensor, iL)
             end
             
             lastnode["leaves"] = nextnode["leaves"]

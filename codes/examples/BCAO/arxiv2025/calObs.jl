@@ -7,13 +7,13 @@ D = 2^7
 Lx = 4
 Ly = 4
 
-# params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
-# params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092)
-# paramsh = (pinh=0.,)
+params1_Kitaev = (J1 = -0.59, K1 = -1, Γ1 = 0.53, Γ1′ = 0.11)
+params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092)
+paramsh = (pinh=1.,)
 
-params1_Kitaev = (J1 = -0.63, K1 = -1.0, Γ1 = 0.0, Γ1′ = 0.0)
-params23 = (J2 = 0., J3xy = 0.3, J3z = 0.0)
-paramsh = (pinh=0.,)
+# params1_Kitaev = (J1 = -0.63, K1 = -1.0, Γ1 = 0.0, Γ1′ = 0.0)
+# params23 = (J2 = 0., J3xy = 0.3, J3z = 0.0)
+# paramsh = (pinh=0.,)
 
 params1 = let 
     v = collect(params1_Kitaev)

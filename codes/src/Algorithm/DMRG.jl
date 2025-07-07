@@ -81,7 +81,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site;E₀ = E₀)
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
-            localinfo.E = E₀ + Eg
+            localinfo.E = E₀ + Eg |> real
         end
         @timeit localto "orthogonalize" begin
             tl,tr = leftorth(Egv)
@@ -116,7 +116,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site;E₀ = E₀)
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
-            localinfo.E = E₀ + Eg
+            localinfo.E = E₀ + Eg |> real
         end
         @timeit localto "orthogonalize" begin
             tl,tr = rightorth(Egv)
@@ -146,7 +146,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             @timeit localto "projection" projH = proj2(Env,site,site+1;E₀ = E₀)
             @timeit localto "composite" x₀ = composite(Env.layer[1].ts[site:site+1]...)
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
-            localinfo.E = E₀ + Eg
+            localinfo.E = E₀ + Eg |> real
         end
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
@@ -173,7 +173,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             @timeit localto "projection" projH = proj2(Env,site-1,site;E₀ = E₀)
             @timeit localto "composite" x₀ = composite(Env.layer[1].ts[site-1:site]...)
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
-            localinfo.E = E₀ + Eg
+            localinfo.E = E₀ + Eg |> real
         end 
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)

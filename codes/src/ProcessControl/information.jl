@@ -74,9 +74,10 @@ mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir
     bond::BondInfo
     solver::SolverInfo
     err::Number
-    TDVPsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number) = new{typeof(direction)}(direction,bond,solver,ϵ)
+    E::Number
+    TDVPsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number) = new{typeof(direction)}(direction,bond,solver,ϵ,0)
     TDVPsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0)
-    TDVPsweepinfo(direction::SweepDirection,err::Number) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),err)
+    TDVPsweepinfo(direction::SweepDirection,err::Number) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),err,0)
 end
 
 mutable struct TDVPsiteinfo <: AlgorithmInfo
@@ -149,6 +150,7 @@ function TimerOutputs.merge!(A::TDVPinfo,B::TDVPsweepinfo{dir}) where dir
     merge!(A.bond, B.bond)
     merge!(A.solver, B.solver)
     A.err = B.err
+    A.E = B.E
     return A
 end
 

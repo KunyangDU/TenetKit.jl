@@ -7,8 +7,8 @@ Fermion complexity
 =#
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^7
-Lx = 14
+D = 2^6
+Lx = 10
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)

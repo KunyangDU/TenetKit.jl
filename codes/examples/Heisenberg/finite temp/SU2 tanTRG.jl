@@ -7,8 +7,8 @@ Fermion complexity
 =#
 dataname = "examples/Heisenberg/data/SU2"
 # for D in [2^7,2^8]
-D = 2^7
-Lx = 14
+D = 2^8
+Lx = 10
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
@@ -27,7 +27,7 @@ lsβ = vcat(2. .^ (-20:1:-1),1:10)
 
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
-SETTN1!(lsβ[1], H, ρ;trunc = truncdim(2^5) )
+SETTN2!(lsβ[1], H, ρ;trunc = truncdim(2^5) )
 Z = normalize!(ρ)^2
 
 lsρ,lsinfo,lsF,lsE = tanTRG2!(ρ, H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12))
