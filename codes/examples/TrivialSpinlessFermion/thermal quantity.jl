@@ -7,29 +7,31 @@ Lx = 6
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
-#@load "examples/TrivialSpinlessFermion/data/Latt_$(Lx)x$(Ly).jld2" Latt
+#@load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 params = (μ = 0,)
-D = 60
+D = 2^6
 
-tailname = "_tanTRG"
+tailname = ""
+dataname = "examples/TrivialSpinlessFermion/data"
 
 H = Hamiltonian(Latt;params...)
 
-@load "examples/TrivialSpinlessFermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsβ
-@load "examples/TrivialSpinlessFermion/data/lsρ_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsρ
-f = zeros(length(lsβ))
-u = zeros(length(lsβ))
-u2 = zeros(length(lsβ))
-lsβ2 = lsβ * 2
+@load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsβ
+@load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsρ
+@load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsF
+@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsE
+lsβ2 = lsβ[2:end] * 2
 
+f = zeros(length(lsβ2))
+u = zeros(length(lsβ2))
+u2 = zeros(length(lsβ2))
+u = lsE 
+f = lsF
 for (i,ρ) in enumerate(lsρ)
-    Z = tr(ρ)
-    f[i] = -log(Z) / lsβ2[i]
-    u[i] = tr(ρ, H) / Z
-    u2[i] = tr(mul!(deepcopy(ρ),ρ,H,1,0)) / Z
+    ρH,_ = mul!(deepcopy(ρ),ρ,H;trunc = truncdim(D))
+    u2[i] = tr(ρH) 
 end
-
 Ce = @. (u2 - u^2) * lsβ2^2
 
 data = Dict(
@@ -38,8 +40,10 @@ data = Dict(
     "Ce" => Ce
 )
 
-@save "examples/TrivialSpinlessFermion/data/lsβ2_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsβ2
-@save "examples/TrivialSpinlessFermion/data/data_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" data
+@save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" lsβ2
+@save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params)$(tailname).jld2" data
 
-f .- fe.(lsβ2,Lx,Ly) * L
+lsF .- fe.(lsβ2,Lx,Ly) * L
+lsE .- ue.(lsβ2,Lx,Ly) * L
+Ce .- ce.(lsβ2,Lx,Ly) * L
 

@@ -51,20 +51,20 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     end
 end
 
-proj0(EnvL,EnvR) = SparseProjectiveHamiltonian(EnvL,EnvR)
+proj0(EnvL,EnvR;E₀::Number = 0.0) = SparseProjectiveHamiltonian(EnvL,EnvR,E₀)
 
-function projleft0(env::Environment{3})
+function projleft0(env::Environment{3};E₀::Number = 0.0)
     !issparse(env.layer[2]) && return nothing
     site = env.center[1]
     EnvR = pushleft(map(x -> env.layer[x],eachindex(env.layer))...,env.envs[site+1],site)
-    return SparseProjectiveHamiltonian(env.envs[site],EnvR)
+    return SparseProjectiveHamiltonian(env.envs[site],EnvR,E₀)
 end
 
-function projright0(env::Environment{3})
+function projright0(env::Environment{3};E₀::Number = 0.0)
     !issparse(env.layer[2]) && return nothing
     site = env.center[1]
     EnvL = pushright(map(x -> env.layer[x],eachindex(env.layer))...,env.envs[site],site)
-    return SparseProjectiveHamiltonian(EnvL,env.envs[site+1])
+    return SparseProjectiveHamiltonian(EnvL,env.envs[site+1],E₀)
 end
 
 proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site]),E₀) : nothing

@@ -2,18 +2,18 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-
+dataname = "examples/TrivialSpinlessFermion/data"
 Lx = 6
 Ly = 1
+D = 2^6
 
 N = Lx*Ly
 
 Latt = YCSqua(Lx,Ly)
+@save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 params = (μ = 0,)
 H = Hamiltonian(Latt;params...)
-Nop = ParticleNumber(Latt)
-D = 60
 
 ρ = let 
     AuxSpaces = repeat([ℂ^1,], Lx*Ly+1)
@@ -22,11 +22,14 @@ D = 60
     ρ
 end
 
-lsβ = vcat(2. .^ (-10:1:-1),1:10)
-ρ = SETTN!(lsβ[1],H,deepcopy(ρ);D = D)
-lsρ,lsinfo = tanTRG1!(ρ, H, lsβ;trunc = truncdim(D) & truncbelow(1e-6))
+lsβ = vcat(2. .^ (-20:1:-1),1:10)
+@save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
-@save "examples/TrivialSpinlessFermion/data/lsβ_$(Lx)x$(Ly)_$(D)_$(params)_tanTRG.jld2" lsβ
-@save "examples/TrivialSpinlessFermion/data/lsρ_$(Lx)x$(Ly)_$(D)_$(params)_tanTRG.jld2" lsρ
+ρ = SETTN1!(lsβ[1],H,deepcopy(ρ);trunc = truncdim(20))
+Z = normalize!(ρ)^2
 
+lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ, H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12))
 
+@save "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
+@save "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
+@save "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE

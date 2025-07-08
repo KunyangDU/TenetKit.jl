@@ -65,8 +65,10 @@ end
 
 function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) where L
 
+    iszero(info.E) && (info.E = _scalar(Env) |> real)
+
     l2rinfo = TDVPsweepinfo(L2R(),info.err)
-    l2rinfo.E = _scalar(Env) |> real
+    l2rinfo.E = info.E
     to = TDVP!(Env,Alg,l2rinfo)
     if isreal(Alg.τ)
         @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
@@ -80,7 +82,7 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
     flush(stdout)
 
     r2linfo = TDVPsweepinfo(R2L(),info.err)
-    r2linfo.E = _scalar(Env) |> real
+    r2linfo.E = info.E
     to = TDVP!(Env,Alg,r2linfo)
     if isreal(Alg.τ)
         @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
@@ -92,13 +94,15 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
     show(r2linfo)
     merge!(info,r2linfo)
     flush(stdout)
+
+    info.E = _scalar(Env) |> real 
 end
 
 function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepinfo{L2R}) where L
     localto = TimerOutput()
     for site in 1:L-1
         localinfo = TDVPsiteinfo()
-        @timeit localto "evolve" tmp,localinfo.solver = evolve!(composite(Env.layer[1].ts[site:site+1]...), proj2(Env,site,site+1), Alg.τ, Alg.solver)
+        @timeit localto "evolve" tmp,localinfo.solver = evolve!(composite(Env.layer[1].ts[site:site+1]...), proj2(Env,site,site+1;E₀ = info.E), Alg.τ, Alg.solver)
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(tmp; direction=:center,trunc = Alg.trunc)
@@ -112,8 +116,8 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
 
         @timeit localto "GC" GC.gc()
     end    
-    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L), Alg.τ, Alg.solver)
-    rmul!(Env.layer[1].ts[L],exp(Alg.τ * info.E))
+    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L;E₀ = info.E), Alg.τ, Alg.solver)
+    rmul!(Env.layer[1].ts[L],exp(-Alg.τ * info.E))
     merge!(localto,get_timer("action");tree_point = ["evolve"])
     Env.layer[3].ts[L] = Env.layer[1].ts[L]'
     merge!(info.solver, solver)
@@ -126,7 +130,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
     localto = TimerOutput()
     for site in L:-1:2
         localinfo = TDVPsiteinfo()
-        @timeit localto "evolve" tmp, localinfo.solver = evolve!(composite(Env.layer[1].ts[site-1:site]...), proj2(Env,site-1,site), Alg.τ, Alg.solver)
+        @timeit localto "evolve" tmp, localinfo.solver = evolve!(composite(Env.layer[1].ts[site-1:site]...), proj2(Env,site-1,site;E₀ = info.E), Alg.τ, Alg.solver)
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(tmp; direction=:center,trunc = Alg.trunc)
@@ -140,8 +144,8 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
 
         @timeit localto "GC" GC.gc()
     end
-    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1), Alg.τ)
-    rmul!(Env.layer[1].ts[1],exp(Alg.τ * info.E))
+    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1;E₀ = info.E), Alg.τ)
+    rmul!(Env.layer[1].ts[1],exp(-Alg.τ * info.E))
     merge!(localto,get_timer("action");tree_point = ["evolve"])
     Env.layer[3].ts[1] = Env.layer[1].ts[1]'
     merge!(info.solver, solver)
@@ -162,7 +166,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
             end
             merge!(localto,cbeto,tree_point = ["CBE"])
         end
-        @timeit localto "evolve" tmp,localinfo.solver = evolve!(Env.layer[1].ts[site], proj1(Env,site), Alg.τ, Alg.solver)
+        @timeit localto "evolve" tmp,localinfo.solver = evolve!(Env.layer[1].ts[site], proj1(Env,site;E₀ = info.E), Alg.τ, Alg.solver)
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         @timeit localto "orthogonalize" begin
@@ -177,8 +181,8 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
 
         @timeit localto "GC" GC.gc()
     end
-    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L), Alg.τ, Alg.solver)
-    rmul!(Env.layer[1].ts[L],exp(Alg.τ * info.E))
+    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L;E₀ = info.E), Alg.τ, Alg.solver)
+    rmul!(Env.layer[1].ts[L],exp(-Alg.τ * info.E))
     merge!(localto,get_timer("action");tree_point = ["evolve"])
     Env.layer[3].ts[L] = Env.layer[1].ts[L]'
     merge!(info.solver, solver)
@@ -199,7 +203,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
             end
             merge!(localto,cbeto,tree_point = ["CBE"])
         end
-        @timeit localto "evolve" tmp, localinfo.solver = evolve!(Env.layer[1].ts[site], proj1(Env,site), Alg.τ, Alg.solver)
+        @timeit localto "evolve" tmp, localinfo.solver = evolve!(Env.layer[1].ts[site], proj1(Env,site;E₀ = info.E), Alg.τ, Alg.solver)
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         @timeit localto "orthogonalize" begin
@@ -214,8 +218,8 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
 
         @timeit localto "GC" GC.gc()
     end
-    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1), Alg.τ, Alg.solver)
-    rmul!(Env.layer[1].ts[1],exp(Alg.τ * info.E))
+    @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1;E₀ = info.E), Alg.τ, Alg.solver)
+    rmul!(Env.layer[1].ts[1],exp(-Alg.τ * info.E))
     Env.layer[3].ts[1] = Env.layer[1].ts[1]'
     merge!(info.solver, solver)
     merge!(localto,get_timer("action");tree_point = ["evolve"])

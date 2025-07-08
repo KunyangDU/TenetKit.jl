@@ -140,7 +140,7 @@ function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{
     Env.layer[3].ts[site] = tl'
     to = TimerOutput()
     @timeit to "pushright" pushright!(Env)
-    @timeit to "back evolve" ~, K = evolve!(tr, projleft0(Env), -Alg.τ, Alg.solver)
+    @timeit to "back evolve" ~, K = evolve!(tr, projleft0(Env;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tr,exp(Alg.τ * info.E))
     tr = contract(tr,Env.layer[1].ts[site+1])
     Env.layer[1].ts[site+1] = tr
@@ -156,7 +156,7 @@ function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{2}, DenseMPOTensor{2
     Env.layer[3].ts[site] = tr'
     to = TimerOutput()
     @timeit to "pushleft" pushleft!(Env)
-    @timeit to "back evolve" ~, K = evolve!(tl, projright0(Env), -Alg.τ, Alg.solver)
+    @timeit to "back evolve" ~, K = evolve!(tl, projright0(Env;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tl,exp(Alg.τ * info.E))
     tl = contract(Env.layer[1].ts[site-1],tl)
     Env.layer[1].ts[site-1] = tl
@@ -173,7 +173,7 @@ function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{
     Env.layer[1].ts[site] = tl
     Env.layer[3].ts[site] = adjoint(tl)
     @timeit to "pushright!" pushright!(Env)
-    @timeit to "back evolve" tr, K = evolve!(tr, proj1(Env,site+1), -Alg.τ, Alg.solver)
+    @timeit to "back evolve" tr, K = evolve!(tr, proj1(Env,site+1;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tr,exp(Alg.τ * info.E))
     Env.layer[1].ts[site+1] = tr
     Env.layer[3].ts[site+1] = adjoint(tr)
@@ -188,7 +188,7 @@ function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4
     Env.layer[1].ts[site] = tr
     Env.layer[3].ts[site] = adjoint(Env.layer[1].ts[site])
     @timeit to "pushleft!" pushleft!(Env)
-    @timeit to "back evolve" tl, K = evolve!(tl, proj1(Env,site-1), -Alg.τ, Alg.solver)
+    @timeit to "back evolve" tl, K = evolve!(tl, proj1(Env,site-1;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tl,exp(Alg.τ * info.E))
     Env.layer[1].ts[site-1] = tl
     Env.layer[3].ts[site-1] = adjoint(Env.layer[1].ts[site-1])

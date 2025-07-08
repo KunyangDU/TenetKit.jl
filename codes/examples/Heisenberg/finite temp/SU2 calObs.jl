@@ -4,8 +4,8 @@ include("../model.jl")
 
 dataname = "examples/Heisenberg/data/SU2"
 
-D = 2^8
-Lx = 10
+D = 2^7
+Lx = 14
 Ly = 1
 params = (J=1,)
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
