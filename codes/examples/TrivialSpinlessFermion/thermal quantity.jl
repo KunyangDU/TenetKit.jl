@@ -3,14 +3,14 @@ include("../../src/iMPS.jl")
 include("model.jl")
 
 
-Lx = 6
+Lx = 12
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 #@load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 params = (μ = 0,)
-D = 2^6
+D = 2^7
 
 tailname = ""
 dataname = "examples/TrivialSpinlessFermion/data"
@@ -29,6 +29,7 @@ u2 = zeros(length(lsβ2))
 u = lsE 
 f = lsF
 for (i,ρ) in enumerate(lsρ)
+    @show lsβ2[i]
     ρH,_ = mul!(deepcopy(ρ),ρ,H;trunc = truncdim(D))
     u2[i] = tr(ρH) 
 end

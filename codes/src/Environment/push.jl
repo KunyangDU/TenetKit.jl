@@ -171,12 +171,12 @@ function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{
     @assert (site = Env.center[1] ) == Env.center[2]
     to = TimerOutput()
     Env.layer[1].ts[site] = tl
-    Env.layer[3].ts[site] = adjoint(tl)
+    Env.layer[3].ts[site] = tl'
     @timeit to "pushright!" pushright!(Env)
     @timeit to "back evolve" tr, K = evolve!(tr, proj1(Env,site+1;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tr,exp(Alg.τ * info.E))
     Env.layer[1].ts[site+1] = tr
-    Env.layer[3].ts[site+1] = adjoint(tr)
+    Env.layer[3].ts[site+1] = tr'
 
     map(x -> Env.layer[x].center .+= 1,[1,3])
     return to,K
@@ -186,12 +186,12 @@ function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4
     @assert (site = Env.center[1] ) == Env.center[2]
     to = TimerOutput()
     Env.layer[1].ts[site] = tr
-    Env.layer[3].ts[site] = adjoint(Env.layer[1].ts[site])
+    Env.layer[3].ts[site] = tr'
     @timeit to "pushleft!" pushleft!(Env)
     @timeit to "back evolve" tl, K = evolve!(tl, proj1(Env,site-1;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tl,exp(Alg.τ * info.E))
     Env.layer[1].ts[site-1] = tl
-    Env.layer[3].ts[site-1] = adjoint(Env.layer[1].ts[site-1])
+    Env.layer[3].ts[site-1] = tl'
 
     map(x -> Env.layer[x].center .-= 1,[1,3])
     return to,K

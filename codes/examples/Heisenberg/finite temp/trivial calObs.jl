@@ -4,7 +4,7 @@ include("../model.jl")
 
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^8
+D = 2^7
 Lx = 14
 Ly = 1
 params = (J=1,)

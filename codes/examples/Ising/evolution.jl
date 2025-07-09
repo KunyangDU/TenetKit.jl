@@ -19,7 +19,7 @@ end
 params = (J=0,h=0,hz=1)
 
 H = Hamiltonian(Latt;params...)
-lsE = DMRG2!(ψ,H,truncdim(D) & truncbelow(1e-6);Nsweep=3)
+lsE = DMRG2!(ψ, H; trunc = truncdim(D) & truncbelow(1e-6),Nsweep=3)
 
 params = (J=1,h=1,hz=0)
 
@@ -29,7 +29,7 @@ Nt = 20
 lst = range(0,T,Nt)
 
 # lsψ, lst = TDVP2!(deepcopy(ψ), H, T, Nt, truncdim(D) & truncbelow(1e-6))
-lst, lsψ, lsinfo = TDVP2!(ψ,H,T,Nt,D)
+lst, lsψ, lsinfo = TDVP2!(ψ,H,T,Nt;trunc = truncdim(D) & truncbelow(1e-8))
 Szm = zeros(length(lst),size(Latt))
 for ind in eachindex(lsψ)
     begin

@@ -3,9 +3,9 @@ include("../../src/iMPS.jl")
 include("model.jl")
 
 dataname = "examples/TrivialSpinlessFermion/data"
-Lx = 6
+Lx = 12
 Ly = 1
-D = 2^6
+D = 2^7
 
 N = Lx*Ly
 
@@ -25,7 +25,7 @@ end
 lsβ = vcat(2. .^ (-20:1:-1),1:10)
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
-ρ = SETTN1!(lsβ[1],H,deepcopy(ρ);trunc = truncdim(20))
+ρ = SETTN1!(lsβ[1],H,deepcopy(ρ);trunc = truncdim(2^6))
 Z = normalize!(ρ)^2
 
 lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ, H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12))

@@ -3,8 +3,8 @@ include("../../../src/iMPS.jl")
 include("model.jl")
 dataname = "examples/BCAO/arxiv2025/data/Hx"
 
-D = 2^7
-Lx = 4
+D = 2^8
+Lx = 6
 Ly = 4
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
@@ -23,8 +23,9 @@ for i in 1:size(Latt),j in i+1:size(Latt)
     addObs!(Obs,LocalSpace.SzSz,(i,j),("Sz","Sz"),nothing)
 end
 
-for Hx in 0:0.02:0.4, Γ in 0.4
-params1_Kitaev = (J1 = -0.59, K1 = -1.5, Γ1 = Γ, Γ1′ = 0.11)
+
+for Hx in 0:0.02:0.4
+params1_Kitaev = (J1 = -0.59, K1 = -1., Γ1 = 0.53, Γ1′ = 0.11)
 params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092, Hx = Hx)
 paramsh = (pinh=0.,)
 

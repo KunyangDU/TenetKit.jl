@@ -2,7 +2,7 @@ using TensorKit
 include("../../../src/iMPS.jl")
 include("../model.jl")
 
-dataname = "examples/Heisenberg/data/SU2"
+dataname = "examples/Heisenberg/data/SU2/tanTRG2"
 
 D = 2^7
 Lx = 14

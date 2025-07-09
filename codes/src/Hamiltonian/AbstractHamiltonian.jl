@@ -81,16 +81,17 @@ mutable struct DenseProjectiveHamiltonian{N,L} <: AbstractProjectiveHamiltonian
     EnvL::DenseLeftEnvironmentTensor
     EnvR::DenseRightEnvironmentTensor
     H::Union{Nothing,Array}
+    E₀::Number
 
     function DenseProjectiveHamiltonian(EnvL::DenseLeftEnvironmentTensor,
         EnvR::DenseRightEnvironmentTensor,
-        H::Array) 
-        return new{3,length(H.ts)}(EnvL,EnvR,H)
+        H::Array,E₀::Number = 0.0) 
+        return new{3,length(H.ts)}(EnvL,EnvR,H,E₀)
     end
 
     function DenseProjectiveHamiltonian{N,L}(EnvL::DenseLeftEnvironmentTensor,
-        EnvR::DenseRightEnvironmentTensor) where {N,L}
-        return new{N,L}(EnvL,EnvR,nothing)
+        EnvR::DenseRightEnvironmentTensor,E₀::Number = 0.0) where {N,L}
+        return new{N,L}(EnvL,EnvR,nothing,E₀)
     end
 end
 

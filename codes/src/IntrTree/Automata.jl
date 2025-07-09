@@ -145,7 +145,7 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
                 end
             end
 
-            if isnothing(localMPO.m[1,1])
+            if isnothing(localMPO.m[1,1]) && lastnode["inverse_root"] == 1
                 # lastnode["inverse_root"] == 1
                 # localMPO.m[1,1] = DenseMPOTensor(lastnode["inverse_root"]*idtensor)
                 localMPO.m[1,1] = IdentityOperator(idtensor, iL)

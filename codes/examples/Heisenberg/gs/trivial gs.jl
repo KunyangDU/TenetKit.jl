@@ -7,7 +7,7 @@ dataname = "examples/Heisenberg/data/trivial"
 D = 2^7
 # lsLx = 4:2:12
 # for Lx in lsLx
-Lx = 4
+Lx = 8
 Ly = 4
 params = (J=1,)
 

@@ -5,28 +5,26 @@ function action(O::SparseProjectiveHamiltonian{0}, obj::T) where T <: Union{MPST
     timer_acc = TimerOutput()
     Nthr = get_num_threads_julia()
     @timeit to "action" if Nthr > 1
-        xs = Vector{Any}(nothing,Nthr)
-        to_accs = [TimerOutput() for _ in 1:Nthr]
+        Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Threads.nthreads()
+        Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
-                tid = Threads.threadid()
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(O.validinds) && break
                 C,localto = _action0(O,obj,O.validinds[ct])
+                lock(Lock)
                 try
-                    xs[tid] = axpy!(1,C,xs[tid])
-                    merge!(to_accs[tid], localto)
+                    x = axpy!(1,C,x)
+                    merge!(timer_acc, localto)
                 catch
                     rethrow()
+                finally
+                    unlock(Lock)
                 end
             end
         end
-        x = sum(filter(x -> !isnothing(x),xs))
-        map(1:Nthr) do x 
-            merge!(to,to_accs[x];tree_point = ["action"])
-        end
     else
+        @show "Single threading!"
         for ind in O.validinds
             C,localto = _action0(O,obj,ind)
             x = axpy!(1,C,x)
@@ -45,26 +43,23 @@ function action(O::SparseProjectiveHamiltonian{1}, obj::Union{MPSTensor{3},Dense
     timer_acc = TimerOutput()
     Nthr = get_num_threads_julia()
     @timeit to "action" if Nthr > 1
-        xs = Vector{Any}(nothing,Nthr)
-        to_accs = [TimerOutput() for _ in 1:Nthr]
+        Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Threads.nthreads()
+        Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
-                tid = Threads.threadid()
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(O.validinds) && break
                 C,localto = _action1(O,obj,O.validinds[ct])
+                lock(Lock)
                 try
-                    xs[tid] = axpy!(1,C,xs[tid])
-                    merge!(to_accs[tid], localto)
+                    x = axpy!(1,C,x)
+                    merge!(timer_acc, localto)
                 catch
                     rethrow()
+                finally
+                    unlock(Lock)
                 end
             end
-        end
-        x = sum(filter(x -> !isnothing(x),xs))
-        map(1:Nthr) do x 
-            merge!(timer_acc,to_accs[x])
         end
     else
         for ind in O.validinds
@@ -85,26 +80,23 @@ function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor
     timer_acc = TimerOutput()
     Nthr = get_num_threads_julia()
     @timeit to "action" if Nthr > 1
-        xs = Vector{Any}(nothing,Nthr)
-        to_accs = [TimerOutput() for _ in 1:Nthr]
         counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Threads.nthreads()
+        Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
-                tid = Threads.threadid()
+                Lock = Threads.ReentrantLock()
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(O.validinds) && break
                 C,localto = _action2(O,obj,O.validinds[ct])
+                lock(Lock)
                 try
-                    xs[tid] = axpy!(1,C,xs[tid])
-                    merge!(to_accs[tid], localto)
+                    x = axpy!(1,C,x)
+                    merge!(timer_acc, localto)
                 catch
                     rethrow()
+                finally
+                    unlock(Lock)
                 end
             end
-        end
-        x = sum(filter(x -> !isnothing(x),xs))
-        map(1:Nthr) do x 
-            merge!(to,to_accs[x];tree_point = ["action"])
         end
     else
         for ind in O.validinds
@@ -125,26 +117,23 @@ function action(O::SparseProjectiveHamiltonian{2}, tl::T, tr::T) where T <: Unio
     timer_acc = TimerOutput()
     Nthr = get_num_threads_julia()
     @timeit to "action" if Nthr > 1
-        xs = Vector{Any}(nothing,Nthr)
-        to_accs = [TimerOutput() for _ in 1:Nthr]
         counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Threads.nthreads()
+        Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
-                tid = Threads.threadid()
+                Lock = Threads.ReentrantLock()
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(O.validinds) && break
                 C,localto = _action2(O,tl,tr,O.validinds[ct])
+                lock(Lock)
                 try
-                    xs[tid] = axpy!(1,C,xs[tid])
-                    merge!(to_accs[tid], localto)
+                    x = axpy!(1,C,x)
+                    merge!(timer_acc, localto)
                 catch
                     rethrow()
+                finally
+                    unlock(Lock)
                 end
             end
-        end
-        x = sum(filter(x -> !isnothing(x),xs))
-        map(1:Nthr) do x 
-            merge!(to,to_accs[x];tree_point = ["action"])
         end
     else
         for ind in O.validinds

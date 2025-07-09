@@ -18,19 +18,18 @@ end
 params = (J=1,h=0.2,hz=0)
 
 H = Hamiltonian(Latt;params...)
-lsE = DMRG2!(ψ,H,truncdim(D) & truncbelow(1e-6);Nsweep=3)
+lsE = DMRG2!(ψ, H; trunc = truncdim(D) & truncbelow(1e-6),Nsweep=3)
 
 params = (J=1,h=1,hz=0)
 
 H = Hamiltonian(Latt;params...)
 T = 6/params.J
 Nt = 10
-
-lsψ, lst = TDVP1!(deepcopy(ψ), H, T, Nt, truncdim(D) & truncbelow(1e-6))
+lst, lsψ, lsinfo = TDVP1!(deepcopy(ψ), H, T, Nt;trunc = truncdim(D) & truncbelow(1e-6))
 Szm = zeros(length(lst),size(Latt),2)
 for ind in eachindex(lsψ)
     begin
-        Obs = MPSObservable()
+        Obs = Observable()
         LocalSpace = TrivialSpinOneHalf
         for i in 1:size(Latt)
             addObs!(Obs,LocalSpace.Sz,i,"Sz",nothing)
@@ -41,10 +40,10 @@ for ind in eachindex(lsψ)
     Szm[ind,:,1] = Szs
 end
 
-lsψ, lst = TDVP2!(deepcopy(ψ), H, T, Nt, truncdim(D) & truncbelow(1e-6))
+lst, lsψ, lsinfo = TDVP2!(deepcopy(ψ), H, T, Nt; trunc = truncdim(D) & truncbelow(1e-6))
 for ind in eachindex(lsψ)
     begin
-        Obs = MPSObservable()
+        Obs = Observable()
         LocalSpace = TrivialSpinOneHalf
         for i in 1:size(Latt)
             addObs!(Obs,LocalSpace.Sz,i,"Sz",nothing)
