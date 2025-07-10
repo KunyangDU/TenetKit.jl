@@ -58,9 +58,12 @@ function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, k
     end
 end
 
-function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, kwargs...)
-    @assert direction in [:left,:right]
-    if direction == :left 
+function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, index_tuple = ((1,2,4),(3,)), kwargs...)
+    @assert direction in [:center,:left,:right]
+    if direction == :center 
+        U,S,V,ϵ = tsvd(A.A,index_tuple...;kwargs...)
+        return map(DenseMPOTensor, (U,S,V))...,ϵ
+    elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(2,),(1,3,4);kwargs...)
         return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ
     elseif direction == :right 

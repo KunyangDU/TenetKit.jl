@@ -68,11 +68,11 @@ function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, 
     end
 end
 
-function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, kwargs...)
+function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, index_tuple = ((1,2),(3,)), kwargs...)
     @assert direction in [:center,:left,:right]
     if direction == :center
-        U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
-        return U,S,V,ϵ
+        U,S,V,ϵ = tsvd(A.A,index_tuple...;kwargs...)
+        return map(MPSTensor,(U,S,V))...,ϵ
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(1,),(2,3);kwargs...)
         return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ

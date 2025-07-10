@@ -24,13 +24,13 @@ H = TrivialHamiltonian(Latt; params...)
     ρ
 end
 
-lsβ = vcat(2. .^ (-20:1:-1), 1:10)
+lsβ = vcat(2. .^ (-15:1:-1), 1:10)
 
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
 SETTN1!(lsβ[1], H, ρ;trunc = truncdim(2^5))
 Z = normalize!(ρ) ^ 2 
-lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ,H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12))
+lsρ,lsinfo,lsF,lsE = tanTRG2!(ρ,H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-8))
 
 
 @save "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ

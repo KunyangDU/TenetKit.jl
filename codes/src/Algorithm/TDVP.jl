@@ -170,8 +170,9 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         @timeit localto "orthogonalize" begin
-            tl,tr = leftorth(tmp)
-            localinfo.bond = BondInfo(tr)
+            tl,tc,tr,localinfo.err,svdto = _tdvp_tsvd(tmp,Alg.trunc,L2R())
+            merge!(localto,svdto;tree_point = ["orthogonalize"])
+            localinfo.bond = BondInfo(tc)
         end 
         to,solver = pushright!(Env,tl,tr,Alg,info)
         merge!(localto,to)
@@ -207,8 +208,9 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         @timeit localto "orthogonalize" begin
-            tl,tr = rightorth(tmp)
-            localinfo.bond = BondInfo(tl)
+            tl,tc,tr,localinfo.err,svdto = _tdvp_tsvd(tmp,Alg.trunc,R2L())
+            merge!(localto,svdto;tree_point = ["orthogonalize"])
+            localinfo.bond = BondInfo(tc)
         end
         to,solver = pushleft!(Env,tl,tr,Alg,info)
         merge!(localto,to)

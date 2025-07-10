@@ -80,10 +80,10 @@ function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor
     timer_acc = TimerOutput()
     Nthr = get_num_threads_julia()
     @timeit to "action" if Nthr > 1
+        Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
-                Lock = Threads.ReentrantLock()
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(O.validinds) && break
                 C,localto = _action2(O,obj,O.validinds[ct])
@@ -117,10 +117,10 @@ function action(O::SparseProjectiveHamiltonian{2}, tl::T, tr::T) where T <: Unio
     timer_acc = TimerOutput()
     Nthr = get_num_threads_julia()
     @timeit to "action" if Nthr > 1
+        Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
-                Lock = Threads.ReentrantLock()
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(O.validinds) && break
                 C,localto = _action2(O,tl,tr,O.validinds[ct])

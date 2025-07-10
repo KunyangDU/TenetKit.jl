@@ -84,9 +84,9 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             localinfo.E = E₀ + Eg |> real
         end
         @timeit localto "orthogonalize" begin
-            tl,tr = leftorth(Egv)
-            localinfo.bond = BondInfo(tr)
-            tr = contract(tr,Env.layer[1].ts[site+1])
+            @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
+            localinfo.bond = BondInfo(tc)
+            @timeit localto "contract" tr = contract(contract(tc,tr),Env.layer[1].ts[site+1])
         end
         @timeit localto "pushright" pushright!(Env,tl, tr)
         push!(lsE,localinfo.E)
@@ -119,9 +119,10 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             localinfo.E = E₀ + Eg |> real
         end
         @timeit localto "orthogonalize" begin
-            tl,tr = rightorth(Egv)
-            localinfo.bond = BondInfo(tl)
-            tl = contract(Env.layer[1].ts[site-1],tl)
+            @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
+            tr = MPSTensor(permute(tr.A,(1,2),(3,)))
+            localinfo.bond = BondInfo(tc)
+            @timeit localto "contract" tl = contract(Env.layer[1].ts[site-1],contract(tl,tc))
         end
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
         push!(lsE,localinfo.E)

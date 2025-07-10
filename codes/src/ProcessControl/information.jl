@@ -177,7 +177,7 @@ function TimerOutputs.merge!(A::T₁,B::T₂) where {T₁<:Union{DMRGsweepinfo,T
         A.E = min(A.E,B.E)
         A.σE = max(A.σE,B.σE)
     else
-        A.err = A.err + B.err
+        A.err = max(A.err,B.err)
     end
 
     return A

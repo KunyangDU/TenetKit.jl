@@ -18,7 +18,7 @@ end
 params = (J=1,h=0.2,hz=0)
 
 H = Hamiltonian(Latt;params...)
-lsE = DMRG2!(ψ, H; trunc = truncdim(D) & truncbelow(1e-6),Nsweep=3)
+lsE = DMRG2!(ψ, H; trunc = truncdim(D) & truncbelow(1e-6),Nsweep=2)
 
 params = (J=1,h=1,hz=0)
 

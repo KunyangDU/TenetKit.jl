@@ -29,7 +29,7 @@ end
 
 function vonNeumann(S::AbstractTensorMap{<:ElementarySpace,1,1})
     _tmptrace(x) = @tensor x[1,1]
-    d = _tmptrace(S*S')
+    d = sqrt(_tmptrace(S*S'))
     @assert d != 0
     A = S/d |> x -> x*x'
     return real(_tmptrace(-A*log(A)))
