@@ -94,14 +94,16 @@ showdomain(A::AbstractTensorWrapper) = showdomain(A.A)
 
 Base.isapprox(A::AbstractTensorWrapper,B::AbstractTensorWrapper) = isapprox(A.A , B.A)
 TensorKit.space(A::AbstractTensorWrapper) = space(A.A)
+TensorKit.space(A::AbstractLocalOperator) = space(A.A)
 
 TensorKit.dims(A::AbstractTensorWrapper) = dims(A.A)
 
 issparse(::T) where T <: Union{DenseMPS,AdjointMPS,DenseMPO,AdjointMPO} = false
-issparse(::SparseMPO) = return true
+issparse(::SparseMPO) = true
 Base.size(t::DenseMPOTensor{4}) = map(dim,t.A |> x -> (codomain(x)[2],domain(x)[1]))
-Base.length(::DenseMPO{L}) where L = return L
-Base.length(::SparseMPO{L}) where L = return L
+Base.length(::DenseMPO{L}) where L = L
+Base.length(::AdjointMPO{L}) where L = L
+Base.length(::SparseMPO{L}) where L = L
 Base.size(::SparseMPOTensor{N,M}) where {N,M} = N,M
 
 function normalize!(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where {L}

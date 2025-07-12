@@ -1,7 +1,7 @@
 
-function initialize!(env::Environment)
+function initialize!(env::Environment;kwargs...)
     env.envs = Vector{AbstractEnvironmentTensor}(undef, env.L + 1)
-    setdefault!(env)
+    setdefault!(env;kwargs...)
     canonicalize!(env,1)
 end
 
@@ -24,10 +24,12 @@ function canonicalize!(env::Environment,si::Int64)
 end
 
 
-function setdefault!(env::Environment{3})
+function setdefault!(env::Environment{3};kwargs...)
     if issparse(env.layer[2])
-        env.envs[1] = SparseLeftEnvironmentTensor(isometry(reverse(map(x -> getAuxSpace(env.layer[x].ts[1])[1],[1,3]))...))
-        env.envs[end] = SparseRightEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[end])[2],[1,3])...))
+        lds = get(kwargs,:left_default_space, reverse(map(x -> getAuxSpace(env.layer[x].ts[1])[1],[1,3])))
+        rds = get(kwargs,:right_default_space, map(x -> getAuxSpace(env.layer[x].ts[end])[2],[1,3]))
+        env.envs[1] = SparseLeftEnvironmentTensor(isometry(lds...))
+        env.envs[end] = SparseRightEnvironmentTensor(isometry(rds...))
     else
         AuxSpaces = reverse(map(x -> getAuxSpace(env.layer[x].ts[1])[1],1:3))
         env.envs[1] = DenseLeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2] ⊗ AuxSpaces[3]))
@@ -36,13 +38,15 @@ function setdefault!(env::Environment{3})
     end
 end
 
-function setdefault!(env::Environment{2})
+function setdefault!(env::Environment{2};kwargs...)
     if !issparse(env.layer[1]) && !issparse(env.layer[2])
         env.envs[1] = DenseLeftEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[1])[1],1:2)...))
         env.envs[end] = DenseRightEnvironmentTensor(isometry(map(x -> getAuxSpace(env.layer[x].ts[end])[2],1:2)...))
     elseif issparse(env.layer[1]) && !issparse(env.layer[2])
-        env.envs[1] = SparseLeftEnvironmentTensor(isometry((getAuxSpace(env.layer[2].ts[1])[1] |> y -> (trivial(y),y))...))
-        env.envs[end] = SparseLeftEnvironmentTensor(isometry((getAuxSpace(env.layer[2].ts[end])[2] |> y -> (y,trivial(y)))...))
+        lds = get(kwargs,:left_default_space, getAuxSpace(env.layer[2].ts[1])[1] |> y -> (trivial(y),y))
+        rds = get(kwargs,:right_default_space, getAuxSpace(env.layer[2].ts[end])[2] |> y -> (y,trivial(y)))
+        env.envs[1] = SparseLeftEnvironmentTensor(isometry(lds...))
+        env.envs[end] = SparseRightEnvironmentTensor(isometry(rds...))
     end
 end
 

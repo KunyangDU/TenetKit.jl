@@ -153,6 +153,19 @@ function action(O::DenseProjectiveHamiltonian{2,1}, obj::DenseMPOTensor{4})
     return DenseMPOTensor(x)
 end
 
+function action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2})
+    x = nothing
+    to = get_timer("action")
+    timer_acc = TimerOutput()
+    Nthr = get_num_threads_julia()
+    for ind in O.validinds
+        C,localto = _action2(O,obj,ind)
+        x = axpy!(1,C,x)
+        merge!(timer_acc, localto)
+    end
+    return x
+end
+
 # dirty detail, threads free
 
 function _action0(O::SparseProjectiveHamiltonian{0}, obj::T,i::Int64) where T <: Union{MPSTensor{2},DenseMPOTensor{2}}
@@ -185,5 +198,14 @@ function _action2(O::SparseProjectiveHamiltonian{2}, tl::T, tr::T, ind::Tuple) w
     @timeit localto "_action2_EL=El_tl_H1" EL = contract(O.EnvL.A[i], tl, O.H.ts[1].m[i,j])
     @timeit localto "_action2_ER=tr_H2_Er" ER = contract(tr, O.H.ts[2].m[j,k],O.EnvR.A[k])
     @timeit localto "_action2_C=EL_ER" C = contract(EL, ER)
+    return C, localto
+end
+
+function _action2(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2}, ind::Tuple)
+    i,j,k = ind
+    localto = TimerOutput()
+    @timeit localto "_action2_EL1=El_H1" EL1 = contract(O.EnvL.A[i], obj.ts[1].m[i,j])
+    @timeit localto "_action2_EL2=EL1_H2" EL2 = contract(EL1, obj.ts[2].m[j,k])
+    @timeit localto "_action2_C=EL2_Er" C = contract(EL2, O.EnvR.A[k])
     return C, localto
 end

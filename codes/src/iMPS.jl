@@ -56,6 +56,7 @@ include("Algebra/mul1.jl")
 include("Algebra/mul2.jl")
 include("Algebra/axpby.jl")
 include("Algebra/operations.jl")
+include("Algebra/densify.jl")
 
 include("utils/benchmarktools.jl")
 include("utils/KrylovKit.jl")

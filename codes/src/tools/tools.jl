@@ -70,3 +70,8 @@ trivial(::GradedSpace{I, D}) where {I, D} = GradedSpace{I,D}(TensorKit.SortedVec
 trivial(::ComplexSpace) = ℂ^1
 Base.length(::DenseMPS{L,T}) where {L,T} = L
 
+function _isometry(sps::GradedSpace...;T::Type = ComplexF64)
+    sp = reduce(⊗, sps)
+    tmp = TensorMap(zeros,T,sp,sp)
+    return rightorth(tmp)[2]
+end

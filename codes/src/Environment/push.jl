@@ -12,11 +12,12 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
     tmpEnvR = Vector{Any}(nothing,mpo.D[site][1])
     for i in eachindex(tmpEnvR), j in 1:EnvR.D
         isnothing(mpo.ts[site].m[i,j]) && continue
-        if isnothing(tmpEnvR[i])
-            tmpEnvR[i] = contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j])
-        else 
-            tmpEnvR[i] += contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j])
-        end
+        tmpEnvR[i] = axpy!(1,contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j]),tmpEnvR[i])
+        # if isnothing(tmpEnvR[i])
+        #     tmpEnvR[i] = contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j])
+        # else 
+        #     tmpEnvR[i] += contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j])
+        # end
     end
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
 end
@@ -36,11 +37,12 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
     tmpEnvL = Vector{Any}(nothing,mpo.D[site][2])
     for i in eachindex(tmpEnvL), j in 1:EnvL.D
         isnothing(mpo.ts[site].m[j,i]) && continue
-        if isnothing(tmpEnvL[i])
-            tmpEnvL[i] = contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j])
-        else 
-            tmpEnvL[i] += contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j])
-        end
+        tmpEnvL[i] = axpy!(1,contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j]),tmpEnvL[i])
+        # if isnothing(tmpEnvL[i])
+        #     tmpEnvL[i] = contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j])
+        # else 
+        #     tmpEnvL[i] += contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j])
+        # end
     end
 
     return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
@@ -215,5 +217,25 @@ function pushleft!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     map(x -> Env.layer[x].center .-= 1,[1,3])
 end
 
+#= densify! =#
 
+function pushleft(A::SparseMPO, B::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64)
+    @assert A.D[site][2] == EnvR.D
+    tmpEnvR = Vector{Any}(nothing,A.D[site][1])
+    for i in eachindex(tmpEnvR), j in 1:EnvR.D
+        isnothing(A.ts[site].m[i,j]) && continue
+        tmpEnvR[i] = axpy!(1, contract(A.ts[site].m[i,j], B.ts[site], EnvR.A[j]), tmpEnvR[i])
+    end
+    return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
+end
+
+function pushright(A::SparseMPO, B::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64)
+    @assert A.D[site][1] == EnvL.D
+    tmpEnvL = Vector{Any}(nothing,A.D[site][2])
+    for i in eachindex(tmpEnvL), j in 1:EnvL.D
+        isnothing(A.ts[site].m[j,i]) && continue
+        tmpEnvL[i] = axpy!(1, contract(A.ts[site].m[j,i], B.ts[site],EnvL.A[j]),tmpEnvL[i])
+    end
+    return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
+end
 
