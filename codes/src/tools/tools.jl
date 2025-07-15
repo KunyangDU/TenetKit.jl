@@ -75,3 +75,11 @@ function _isometry(sps::GradedSpace...;T::Type = ComplexF64)
     tmp = TensorMap(zeros,T,sp,sp)
     return rightorth(tmp)[2]
 end
+
+function countmap(obj::Vector)
+    counts = Dict{eltype(obj), Int}()
+    for element in obj
+        counts[element] = get(counts, element, 0) + 1
+    end
+    return counts
+end
