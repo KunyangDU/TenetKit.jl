@@ -283,7 +283,7 @@ function buildtree!(n::RepresentationTreeNode,i::Int64)
     n.issplit && isnothing(n.projector) && (n.projector = isometry(n.A,n.A))
     i == 0 && return n
     for s in sectors(n.A)
-        fspace = fuse(space(s,dim(n.A,s)),n.d)
+        fspace = fuse(space(s,dim(n.A,s)),n.d')
         for ss in sectors(fspace)
             if n.issplit
                 for i in 1:dim(fspace,ss)
@@ -316,9 +316,13 @@ end
 
 function _global_identity_check(
         ds::Vector = [
+        Rep[U₁](1//2 => 1, -1//2 => 1),
         Rep[SU₂](1//2 => 1), 
         Rep[U₁×SU₂]((0,1//2) => 1,(-1,0) => 1,(1,0) => 1), 
-        Rep[ℤ₂×SU₂]((0,0) => 2,(1,1//2)=>1)
+        Rep[U₁×U₁]((-1, 0) => 1, (1,0) => 1, (0, -1 // 2) => 1, (0, 1 // 2) => 1),
+        Rep[ℤ₂×SU₂]((0,0) => 2,(1,1//2)=>1),
+        Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1),
+        Rep[U₁×U₁]((-1, 0) => 1, (0, -1 // 2) => 1, (0, 1 // 2) => 1)
     ],
     L::Int64 = 3;
     issplit::Bool = false
@@ -361,9 +365,13 @@ end
 
 function _local_identity_check(
     ds::Vector = [
+        Rep[U₁](1//2 => 1, -1//2 => 1),
         Rep[SU₂](1//2 => 1), 
         Rep[U₁×SU₂]((0,1//2) => 1,(-1,0) => 1,(1,0) => 1), 
-        Rep[ℤ₂×SU₂]((0,0) => 2,(1,1//2)=>1)
+        Rep[U₁×U₁]((-1, 0) => 1, (1,0) => 1, (0, -1 // 2) => 1, (0, 1 // 2) => 1),
+        Rep[ℤ₂×SU₂]((0,0) => 2,(1,1//2)=>1),
+        Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1),
+        Rep[U₁×U₁]((-1, 0) => 1, (0, -1 // 2) => 1, (0, 1 // 2) => 1)
     ],
     L::Int64 = 3;
     issplit::Bool = false
@@ -403,7 +411,7 @@ function _build_mps_tensor(spl::GradedSpace, d::GradedSpace, spr::GradedSpace, :
     tail::Bool = true, perm::Bool = false)
     if tail 
         if perm
-            return permute(isometry(spr ⊗ d' , trivial(d) ⊗ fuse(spl',trivial(d))')',(1,4),(2,3))
+            return permute(isometry(spr ⊗ d' , trivial(d) ⊗ fuse(spl',trivial(d))')',(1,4),(2,3))*1
         else
             return permute(isometry(d ⊗ spr', trivial(d) ⊗ spl'),(4,1),(3,2))
         end
@@ -446,27 +454,21 @@ function build_mps(d::GradedSpace, config::Vector; tail::Bool = true, perm::Bool
     return totalmps
 end
 
-# _local_identity_check([Rep[ℤ₂×SU₂]((0,0) => 4,(1,1//2)=>3),])
-# _local_identity_check([Rep[ℤ₂×SU₂]((0,0) => 4,(1,1//2)=>3),];issplit = true)
-
-# _global_identity_check([Rep[ℤ₂×SU₂]((0,0) => 4,(1,1//2)=>3),])
-# _global_identity_check([Rep[ℤ₂×SU₂]((0,0) => 4,(1,1//2)=>3),];issplit = true)
-
 _local_identity_check()
 _local_identity_check(issplit = true)
 _global_identity_check()
 _global_identity_check(issplit = true)
 
-d = Rep[ℤ₂×SU₂]((0,0) => 2, (1,1//2) => 1)
+L = 3
+
+# d = Rep[ℤ₂×SU₂]((0,0) => 2, (1,1//2) => 1)
 # d = Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1, (1,0) => 1)
 # d = Rep[SU₂](1//2 => 1)
 # d = Rep[U₁](-1//2 => 1, 1//2 => 1)
 # d = Rep[U₁×U₁]((-1,0) => 1, (1,0) => 1, (0,1//2) => 1, (0,-1//2) => 1)
 
-# d = Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1)
+d = Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1)
 # d = Rep[U₁×U₁]((-1,0) => 1, (0,1//2) => 1, (0,-1//2) => 1)
-
-L = 3
 
 samples = build_mps(d, L)
 # samples = build_mps(d, L; tail = false)
@@ -476,7 +478,7 @@ samples = build_mps(d, L)
 # samples = build_mps(d, L; perm = false,issplit = true)
 
 @assert sum(map(x -> x[1],samples)) ≈ 1
-map(x -> space(x[2][1]),samples)
+# map(x -> (x[2][1]),samples)
 
-
+samples[3]
 
