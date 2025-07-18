@@ -4,16 +4,18 @@ function TensorKit.scalartype(A::AbstractTensorWrapper)
 end
 
 Base.similar(A::AbstractTensorWrapper, ::Type{S}) where {S<:Number} = zerovector(A, S)
-function zerovector(A::T, ::Type{S}) where {S<:Number, T<:AbstractTensorWrapper}
+function TensorKit.zerovector(A::T, ::Type{S}) where {S<:Number, T<:AbstractTensorWrapper}
     return convert(T, TensorKit.zerovector(A.A, S))
 end  
-
-Base.convert(::Type{T}, A::AbstractTensorMap) where {T<:AbstractTensorWrapper} = T(A)
-
-function zerovector!(A::AbstractTensorWrapper) 
+function TensorKit.zerovector!(A::AbstractTensorWrapper) 
     TensorKit.zerovector!(A.A)
     return A
 end
+
+TensorKit.inner(A::T,B::T) where T <: AbstractTensorWrapper = inner(A.A,B.A)
+
+Base.convert(::Type{T}, A::AbstractTensorMap) where {T<:AbstractTensorWrapper} = T(A)
+
 function TensorKit.LinearAlgebra.rmul!(A::AbstractTensorWrapper, α::Number)
     TensorKit.LinearAlgebra.rmul!(A.A, α)
     return A
@@ -74,8 +76,8 @@ add!(A::AbstractTensorWrapper, B::AbstractTensorWrapper) = axpy!(true, B, A)
 add!(A::AbstractTensorWrapper, ::Nothing) = A
 add!(::Nothing, A::AbstractTensorWrapper) = A
 
-scale!(A::AbstractTensorWrapper, α::Number) = rmul!(A, α)
-scale(A::AbstractTensorWrapper, α::Number) = α * A
+TensorKit.scale!(A::AbstractTensorWrapper, α::Number) = rmul!(A, α)
+TensorKit.scale(A::AbstractTensorWrapper, α::Number) = α * A
 
 function scale!!(A::AbstractTensorWrapper, α::S) where {S<:Number}
     T = promote_type(scalartype(A.A), S)
@@ -133,6 +135,14 @@ function Base.:*(A::Number,B::AbstractLocalOperator)
     B.strength *= A
     return B 
 end
+
+
+scale(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale((t[1].A,t[2]))
+scale!!(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale!!((t[1].A,t[2]))
+scale!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = scale!!((t[1].A,t[2].A,t[3]))
+zerovector(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = zerovector((t[1].A,t[2]))
+add!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = add!!((t[1].A,t[2].A,t[3],t[4]))
+
 
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B

@@ -52,19 +52,19 @@ function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, 
     vns = nothing
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
     if direction == :center
-        return map(MPSTensor,[U,S,permute(V,(1,2),(3,))])...,ϵ
+        return map(MPSTensor,[U,S,permute(V,(1,2),(3,))])...,ϵ^2
     elseif direction == :left 
         d = sqrt(@tensor S[1,2] * S'[2,1])
         if d != 0
             vns = vonNeumann(S)
         end
-        return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
+        return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ^2,vns
     elseif direction == :right 
         d = sqrt(@tensor S[1,2] * S'[2,1])
         if d != 0
             vns = vonNeumann(S)
         end
-        return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ,vns
+        return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ^2,vns
     end
 end
 
@@ -72,13 +72,13 @@ function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, index_tuple 
     @assert direction in [:center,:left,:right]
     if direction == :center
         U,S,V,ϵ = tsvd(A.A,index_tuple...;kwargs...)
-        return map(MPSTensor,(U,S,V))...,ϵ
+        return map(MPSTensor,(U,S,V))...,ϵ^2
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(1,),(2,3);kwargs...)
-        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ
+        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ^2
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
-        return map(MPSTensor,(U,S*V))...,ϵ
+        return map(MPSTensor,(U,S*V))...,ϵ^2
     end
 end
 

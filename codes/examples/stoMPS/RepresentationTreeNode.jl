@@ -349,6 +349,7 @@ function _global_identity_check(
                     x = x′
                 end
             end
+            @show norm(x),norm(_build_mps_tensor(aux[1],d,aux[2],projector[1:2]...))
             @tensor I′[-1;-2] ≔ x[1,-1,2] * x'[2,1,-2]
             A = axpy!(p,I′,A)
         end
@@ -454,12 +455,12 @@ function build_mps(d::GradedSpace, config::Vector; tail::Bool = true, perm::Bool
     return totalmps
 end
 
-_local_identity_check()
-_local_identity_check(issplit = true)
-_global_identity_check()
-_global_identity_check(issplit = true)
+# _local_identity_check()
+# _local_identity_check(issplit = true)
+# _global_identity_check()
+# _global_identity_check(issplit = true)
 
-L = 3
+# L = 3
 
 # d = Rep[ℤ₂×SU₂]((0,0) => 2, (1,1//2) => 1)
 # d = Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1, (1,0) => 1)
@@ -467,18 +468,26 @@ L = 3
 # d = Rep[U₁](-1//2 => 1, 1//2 => 1)
 # d = Rep[U₁×U₁]((-1,0) => 1, (1,0) => 1, (0,1//2) => 1, (0,-1//2) => 1)
 
-d = Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1)
+# d = Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1)
 # d = Rep[U₁×U₁]((-1,0) => 1, (0,1//2) => 1, (0,-1//2) => 1)
 
-samples = build_mps(d, L)
+# samples = build_mps(d, L)
 # samples = build_mps(d, L; tail = false)
 # samples = build_mps(d, L; perm = false)
 # samples = build_mps(d, L; issplit = true)
 # samples = build_mps(d, L; tail = false,issplit = true)
 # samples = build_mps(d, L; perm = false,issplit = true)
 
-@assert sum(map(x -> x[1],samples)) ≈ 1
+# @assert sum(map(x -> x[1],samples)) ≈ 1
 # map(x -> (x[2][1]),samples)
 
-samples[3]
+# samples[3]
+
+# A = samples[end][2]
+
+# r = A[end-1]
+# l = A[1]
+# @tensor tmp[-1;-2] ≔ r[-1,1,2] * r'[2,-2,1]
+# @tensor tmp[-1;-2] ≔ l[1,2,-2] * l'[-1,1,2]
+_global_identity_check([Rep[U₁×SU₂]((0,1//2) => 1, (-1,0) => 1, (1,0) => 1),],3)
 

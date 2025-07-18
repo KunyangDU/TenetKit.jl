@@ -45,8 +45,6 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Alg
         show(info)
         merge!(to,localto)
 
-        @show info.err
-
         info.err < Alg.tol && break
     end
 

@@ -24,7 +24,6 @@ function action(O::SparseProjectiveHamiltonian{0}, obj::T) where T <: Union{MPST
             end
         end
     else
-        @show "Single threading!"
         for ind in O.validinds
             C,localto = _action0(O,obj,ind)
             x = axpy!(1,C,x)
@@ -191,6 +190,32 @@ function _action2(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTens
     @timeit localto "_action2_C=EL2_Er" C = contract(EL2, O.EnvR.A[k])
     return C, localto
 end
+
+# function _action2(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple) where T <: Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
+#     i,j,k = ind
+#     tmp,localto = _action2(obj,O.EnvL.A[i],O.H.ts[1].m[i,j],O.H.ts[2].m[j,k],O.EnvR.A[k])
+#     return T(tmp), localto
+# end
+
+# function _action2(obj::Union{CompositeMPOTensor{2,6},CompositeMPSTensor{2,4}},El::LeftEnvironmentTensor{el},hl::AbstractLocalOperator{hl1,hl2},hr::AbstractLocalOperator{hr1,hr2},Er::RightEnvironmentTensor{er}) where {el,hl1,hl2,hr1,hr2,er}
+#     localto = TimerOutput()
+#     @timeit localto "_action2_2_$(el)_$(hl1)$(hl2)_$(hr1)$(hr2)_$(er)" tmp = _action2_contract(obj,El,hl,hr,Er)
+#     return tmp, localto
+# end
+
+# function _action2_contract(obj::CompositeMPSTensor{2,4},El::LeftEnvironmentTensor{2},hl::LocalOperator{1,1},hr::LocalOperator{1,1},Er::RightEnvironmentTensor{2})
+#     return @tensor tmp[-1,-2,-3;-4] ≔ El.A[-1,1] * obj.A[1,2,3,4] * hl.A[-2,2] * hr.A[-3,3] * Er.A[4,-4]
+# end
+# function _action2_contract(obj::CompositeMPSTensor{2,4},El::LeftEnvironmentTensor{2},hl::IdentityOperator{1},hr::LocalOperator{1,1},Er::RightEnvironmentTensor{2})
+#     return @tensor tmp[-1,-2,-3;-4] ≔ El.A[-1,1] * obj.A[1,-2,3,4] * hr.A[-3,3] * Er.A[4,-4]
+# end
+# function _action2_contract(obj::CompositeMPSTensor{2,4},El::LeftEnvironmentTensor{2},hl::LocalOperator{1,1},hr::IdentityOperator{1},Er::RightEnvironmentTensor{2})
+#     return @tensor tmp[-1,-2,-3;-4] ≔ El.A[-1,1] * obj.A[1,2,-3,4] * hl.A[-2,2] * Er.A[4,-4]
+# end
+# function _action2_contract(obj::CompositeMPSTensor{2,4},El::LeftEnvironmentTensor{2},hl::IdentityOperator{1},hr::IdentityOperator{1},Er::RightEnvironmentTensor{2})
+#     return @tensor tmp[-1,-2,-3;-4] ≔ El.A[-1,1] * obj.A[1,-2,-3,4] * Er.A[4,-4]
+# end
+
 
 function _action2(O::SparseProjectiveHamiltonian{2}, tl::T, tr::T, ind::Tuple) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
     i,j,k = ind

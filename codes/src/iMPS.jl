@@ -1,4 +1,5 @@
 using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees
+import LinearAlgebra: BLAS 
 
 include("Globals.jl")
 include("init.jl")

@@ -12,7 +12,9 @@ function DMRG1!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     λ = get(kwargs,:λ,1.2)
     Nfull = get(kwargs,:Nfull,4)
     subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
-    alg = DMRGalgo(SingleSite(),subalgo,trunc,N,tol,solver)
+    GCsweep = get(kwargs, :GCsweep, true)
+    GCsite = get(kwargs, :GCsite, false)
+    alg = DMRGalgo(SingleSite(),subalgo,trunc,N,tol,solver,GCsweep,GCsite)
     lsE,lsinfo = DMRG!(Env,alg)
     return lsE,lsinfo
 end
@@ -28,7 +30,9 @@ function DMRG2!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     N = get(kwargs,:N,5)
     tol = get(kwargs,:tol,Inf)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
-    alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,tol,solver)
+    GCsweep = get(kwargs, :GCsweep, true)
+    GCsite = get(kwargs, :GCsite, false)
+    alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,tol,solver,GCsweep,GCsite)
     lsE,lsinfo = DMRG!(Env,alg)
     return lsE,lsinfo
 end
@@ -42,7 +46,6 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
 
         l2rinfo = DMRGsweepinfo(L2R())
         to = DMRG!(Env,Alg,l2rinfo)
-        @timeit to "GC" GC.gc()
         show(to;title=">>> DMRG >>>")
         print("\n")
         show(l2rinfo)
@@ -51,7 +54,6 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
 
         r2linfo = DMRGsweepinfo(R2L())
         to = DMRG!(Env,Alg,r2linfo)
-        @timeit to "GC" GC.gc()
         show(to;title="<<< DMRG <<<")
         print("\n")
         show(r2linfo)
@@ -83,6 +85,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
             localinfo.E = E₀ + Eg |> real
         end
+        merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
             localinfo.bond = BondInfo(tc)
@@ -90,14 +93,13 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         end
         @timeit localto "pushright" pushright!(Env,tl, tr)
         push!(lsE,localinfo.E)
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
-        merge!(localto,get_timer("action");tree_point = ["Krylov"])
     end
 
     info.σE = std(filter(!isnan,lsE))
 
-    # GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
@@ -118,6 +120,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
             localinfo.E = E₀ + Eg |> real
         end
+        merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
             tr = MPSTensor(permute(tr.A,(1,2),(3,)))
@@ -126,14 +129,13 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         end
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
         push!(lsE,localinfo.E)
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
-        merge!(localto,get_timer("action");tree_point = ["Krylov"])
     end
 
     info.σE = std(filter(!isnan,lsE))
 
-    # GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
@@ -149,18 +151,18 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
             localinfo.E = E₀ + Eg |> real
         end
+        merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "pushright" pushright!(Env,tl, tr)
         push!(lsE,localinfo.E)
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
-        merge!(localto,get_timer("action");tree_point = ["Krylov"])
     end
     info.σE = std(filter(!isnan,lsE))
 
-    # GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
@@ -176,18 +178,18 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
             localinfo.E = E₀ + Eg |> real
         end 
+        merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
         push!(lsE,localinfo.E)
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
-        merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
     end
     info.σE = std(filter(!isnan,lsE))
 
-    # GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 

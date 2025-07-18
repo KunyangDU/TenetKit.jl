@@ -1,5 +1,5 @@
 
-mutable struct IdentityOperator{R} <: AbstractLocalOperator
+mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
     A::Union{Nothing, AbstractTensorMap}
     site::Int64
     strength::Number 
@@ -32,7 +32,7 @@ function Base.show(io::IO,Opr::IdentityOperator)
     end
 end
 
-mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator
+mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
     A::Union{Nothing,AbstractTensorMap}
     name::String
     site::Int64

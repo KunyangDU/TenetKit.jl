@@ -133,6 +133,7 @@ function evolve!(
     O::SparseProjectiveHamiltonian{N}, τ::Number,
     alg::Krylovalgo = TDVPDefaultLanczos) where N
     nm = normalize!(obj)
+    reset_timer!(get_timer("action"))
     tmp,info = exponentiate(x -> action(O,x), -τ, obj, alg.Alg)
     rmul!(tmp,nm)
     obj.A = tmp.A

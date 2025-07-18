@@ -40,21 +40,21 @@ function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, k
 
     if direction == :center
         d != 0 && (ϵ /= d)
-        return map(DenseMPOTensor,[permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4))])...,ϵ
+        return map(DenseMPOTensor,[permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4))])...,ϵ^2
     elseif direction == :left 
         d = sqrt(@tensor S[1,2] * S'[2,1])
         if d != 0
             ϵ /= d
             vns = vonNeumann(S)
         end
-        return map(DenseMPOTensor,(permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4))))...,ϵ,vns
+        return map(DenseMPOTensor,(permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4))))...,ϵ^2,vns
     elseif direction == :right 
         d = sqrt(@tensor S[1,2] * S'[2,1])
         if d != 0
             ϵ /= d
             vns = vonNeumann(S)
         end
-        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4))))...,ϵ,vns
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4))))...,ϵ^2,vns
     end
 end
 
@@ -62,13 +62,13 @@ function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, index_t
     @assert direction in [:center,:left,:right]
     if direction == :center 
         U,S,V,ϵ = tsvd(A.A,index_tuple...;kwargs...)
-        return map(DenseMPOTensor, (U,S,V))...,ϵ
+        return map(DenseMPOTensor, (U,S,V))...,ϵ^2
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(2,),(1,3,4);kwargs...)
-        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ
+        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ^2
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2,4),(3,);kwargs...)
-        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ^2
     end
 end
 

@@ -44,7 +44,7 @@ lsβ = vcat(2. .^ (-20:1:-1), 1:10)
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params_Kitaev).jld2" lsβ
 SETTN1!(lsβ[1], H, ρ;
 trunc = truncdim(Ds) & truncbelow(1e-8),tol = 1e-8,
-algo = CBEalgo(dynamicSVD(1.2,4),NoStruc(),0,Ds,1e-8),max_order = 10)
+algo = CBEalgo(dynamicSVD(1.2,4),NoStruc(),0,Ds),max_order = 10)
 Z = normalize!(ρ)^2
 
 lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ, H, lsβ;lnZ = log(Z), trunc = truncdim(D) & truncbelow(1e-12))

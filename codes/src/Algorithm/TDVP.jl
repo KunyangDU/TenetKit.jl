@@ -11,7 +11,9 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector;kwargs...)
     λ = get(kwargs,:λ,1.2)
     Nfull = get(kwargs,:Nfull,-1)
     subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
-    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver)
+    GCsweep = get(kwargs, :GCsweep, true)
+    GCsite = get(kwargs, :GCsite, false)
+    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
     
     for i in 2:length(lst)
         τ = (lst[i]-lst[i-1])/2
@@ -24,11 +26,8 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector;kwargs...)
         info.err > alg.tol && break
         push!(lsobj,deepcopy(Env.layer[1]))
         push!(lsinfo,deepcopy(info))
-
-        # GC.gc()
     end
 
-    # GC.gc()
     return lsobj,lsinfo
 end
 
@@ -42,7 +41,9 @@ function TDVP2!(Env::Environment{3}, lst::AbstractVector;kwargs...)
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
     tol = get(kwargs,:tol,1e-4)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
-    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver)
+    GCsweep = get(kwargs, :GCsweep, true)
+    GCsite = get(kwargs, :GCsite, false)
+    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
     
     for i in 2:length(lst)
         τ = (lst[i]-lst[i-1])/2
@@ -55,11 +56,8 @@ function TDVP2!(Env::Environment{3}, lst::AbstractVector;kwargs...)
         info.err > alg.tol && break
         push!(lsobj,deepcopy(Env.layer[1]))
         push!(lsinfo,deepcopy(info))
-
-        # GC.gc()
     end
 
-    # GC.gc()
     return lsobj,lsinfo
 end
 
@@ -74,7 +72,6 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
         @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
         info.lnZ += 2 * log(d)
     end
-    @timeit to "GC" GC.gc()
     show(to;title=">>> TDVP >>>")
     print("\n")
     show(l2rinfo)
@@ -88,7 +85,6 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
         @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
         info.lnZ += 2 * log(d)
     end
-    @timeit to "GC" GC.gc()
     show(to;title="<<< TDVP <<<")
     print("\n")
     show(r2linfo)
@@ -114,7 +110,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
 
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
     end    
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L;E₀ = info.E), Alg.τ, Alg.solver)
     rmul!(Env.layer[1].ts[L],exp(-Alg.τ * info.E))
@@ -122,7 +118,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
     Env.layer[3].ts[L] = Env.layer[1].ts[L]'
     merge!(info.solver, solver)
 
-    @timeit localto "GC" GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
@@ -142,7 +138,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
 
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
     end
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1;E₀ = info.E), Alg.τ)
     rmul!(Env.layer[1].ts[1],exp(-Alg.τ * info.E))
@@ -150,7 +146,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
     Env.layer[3].ts[1] = Env.layer[1].ts[1]'
     merge!(info.solver, solver)
 
-    @timeit localto "GC" GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
@@ -180,7 +176,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
 
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
     end
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[L], proj1(Env,L;E₀ = info.E), Alg.τ, Alg.solver)
     rmul!(Env.layer[1].ts[L],exp(-Alg.τ * info.E))
@@ -188,7 +184,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
     Env.layer[3].ts[L] = Env.layer[1].ts[L]'
     merge!(info.solver, solver)
 
-    @timeit localto "GC" GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
@@ -218,7 +214,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
 
-        @timeit localto "GC" GC.gc()
+        Alg.GCsite && @timeit localto "GC" GC.gc()
     end
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1].ts[1], proj1(Env,1;E₀ = info.E), Alg.τ, Alg.solver)
     rmul!(Env.layer[1].ts[1],exp(-Alg.τ * info.E))
@@ -226,7 +222,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
     merge!(info.solver, solver)
     merge!(localto,get_timer("action");tree_point = ["evolve"])
 
-    @timeit localto "GC" GC.gc()
+    Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
@@ -280,7 +276,9 @@ function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
     tol = get(kwargs,:tol,Inf)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
-    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver)
+    GCsweep = get(kwargs, :GCsweep, true)
+    GCsite = get(kwargs, :GCsite, false)
+    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
 
     lsobj = []
     lsF = Float64[]
@@ -315,7 +313,9 @@ function tanTRG1!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     tol = get(kwargs,:tol,Inf)
     λ = get(kwargs,:λ,1.2)
     subalgo = get(kwargs,:subalgo,CBEalgo(randSVD(λ),DSA(),1,_getdim(trunc)))
-    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver)
+    GCsweep = get(kwargs, :GCsweep, true)
+    GCsite = get(kwargs, :GCsite, false)
+    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
 
     lsobj = []
     lsF = Float64[]
