@@ -5,19 +5,21 @@ include("../model.jl")
 dataname = "../codes/examples/BCAO/arxiv2025/data/Hx"
 figurename = "BCAO/arxiv2025/figures"
 
-D = 2^7
-Lx = 4
+D = 2^9
+Lx =12
 Ly = 4
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 select_point = div(size(Latt),Ly) |> x -> x+1:size(Latt)-x
 # select_point = 1:size(Latt)
-lsHx = 0:0.02:0.34
+lsHx = 0:0.02:0.4
 lsSx = zeros(length(lsHx))
-params1_Kitaev = (J1 = -0.59, K1 = -2.5, Γ1 = 0.35, Γ1′ = 0.11)
+params1_Kitaev = (J1 = -0.59, K1 = -1.0, Γ1 = 0.52, Γ1′ = 0.11)
+# params1_Kitaev = (J1 = -0.59, K1 = 0.0, Γ1 = 0., Γ1′ = 0.)
 paramsh = (pinh=0.,)
 for (i,Hx) in enumerate(lsHx)
     params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0092, Hx = Hx)
+    # params23 = (J2 = -0.038, J3xy = 0.31, J3z = 0.0, Hx = Hx)
 
     params1 = let 
         v = collect(params1_Kitaev)
@@ -31,7 +33,7 @@ for (i,Hx) in enumerate(lsHx)
     lsSx[i] = [gsdata["Sx"][(i,)] for i in select_point] |> x -> sum(x) / length(x)
 end
 
-lsHx *= 6.54
+# lsHx *= 6.54
 
 # @save "$(dataname)/lsSx_$(Lx)x$(Ly)_$(D).jld2" lsSx
 # @save "$(dataname)/lsHx_$(Lx)x$(Ly)_$(D).jld2" lsHx
@@ -43,9 +45,9 @@ fig = Figure()
 
 ax = Axis(fig[1,1];figsize...,
 xlabel = L"\mu_0H\ /\ \mathrm{T}",ylabel = L"\mathbf{S}\cdot\mathbf{\hat{H}}",
-title = "Magnetization, $(Ly)x$(Lx)x2 ZZ-HC-CY, D=$(D)",
+title = "Magnetization, $(Ly)x$(2Lx)x2 ZZ-HC-CY, D=$(D)",
 # xticks = 0:0.1:1,
-xticks = 0:0.5:10,
+xticks = 0:0.04:10,
 yticks = 0:0.05:0.5,
 xgridvisible=false,    # 关闭网格
 ygridvisible=false,

@@ -1,7 +1,7 @@
 using JLD2,CairoMakie,LaTeXStrings,FiniteLattices
 Lx = 11
 Ly = 1
-D = 30
+D = 50
 Latt = YCSqua(Lx,Ly)
 
 @load "../codes/examples/Ising/data/data_D=$(D)_$(Lx)x$(Ly).jld2" data

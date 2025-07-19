@@ -87,10 +87,15 @@ end
 
 
 function getCorrMat(Latt::AbstractLattice,data::Dict,dataonsite = nothing;selected_point = 1:size(Latt))
-    L = length(selected_point)
-    A = zeros(L,L)
-    for i in 1:L,j in i+1:L
-        A[i,j] = data[(selected_point[i],selected_point[j])]
+    # L = length(selected_point)
+    # A = zeros(L,L)
+    # for i in 1:L,j in i+1:L
+    #     A[i,j] = data[(selected_point[i],selected_point[j])]
+    # end
+    A = zeros(size(Latt),size(Latt))
+    for i in selected_point, j in selected_point
+        i >= j && continue
+        A[i,j] = data[(i,j)]
     end
     A = A + A'
     if !isnothing(dataonsite)
@@ -101,7 +106,10 @@ function getCorrMat(Latt::AbstractLattice,data::Dict,dataonsite = nothing;select
         elseif typeof(dataonsite) <: Vector
             A .+= diagm(dataonsite)
         elseif typeof(dataonsite) <: Number 
-            A .+= diagm(dataonsite*ones(L))
+            # A .+= diagm(dataonsite*ones(L))
+            tmp = zeros(size(Latt))
+            tmp[selected_point] .= 1
+            A .+= diagm(dataonsite*tmp)
         end
     end
     return A

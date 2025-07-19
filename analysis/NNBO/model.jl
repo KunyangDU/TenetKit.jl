@@ -90,3 +90,19 @@ function getCorrMat(Latt::AbstractLattice,data::Dict,dataonsite = nothing;select
     return A
 end
 
+function _Cub2Cry(params_cubic::NamedTuple;P::Matrix = PC2Y)
+    v = collect(params_cubic)
+    v1 = P*v
+    return (J1xy = v1[1], J1z = v1[2], Jpm = v1[3], Jzpm = v1[4])
+end
+
+# _Cub2Cry(A::Matrix;P::AbstractMatrix = Pc2y) = P'*A*P
+# _Cub2Cry(A::Vector;P::AbstractMatrix = Pc2y) = [_Cub2Cry(x;P=P) for x in A]
+
+function _One2OneHalf1(A::AbstractMatrix,D::Number)
+    Jxx = -((A[1,2] + A[2,2])^2-(A[1,2] - A[2,1])^2)/16/D
+    Jzz = A[3,3] + ((A[1,2] + A[2,2])^2+(A[1,2] - A[2,1])^2)/16/D
+    Jxy = ((A[1,2] + A[2,2])*(A[1,2] - A[2,1]))/4/D
+    Jyx = -((A[1,2] + A[2,2])*(A[1,2] - A[2,1]))/4/D
+    return (Jxx = Jxx, Jyy = Jxx, Jxy = Jxy, Jyx = Jyx, Jzz = Jzz)
+end

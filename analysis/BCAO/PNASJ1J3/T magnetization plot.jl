@@ -7,16 +7,13 @@ trivialname = "../codes/examples/BCAO/PNASJ1J3/data/yeesuan"
 figurename = "tanTRG/structure factor"
 typename = "tanTRG"
 
-
-
 D = 2^8
-Dgs = 2^7
 Lx = 4
 Ly = 4
 # Latt = YCSqua(Lx,Ly)
 @load "$(trivialname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-lsH = vcat(0.01:0.002:0.024)
+lsH = vcat(0.01:0.002:0.024,0.028:0.004:0.04)
 
 lsβ2 = let H = lsH[1]
     params = (Hx = H, J1xy = -1.0, J1z = -0.158, D = 0.0132, E = -0.0132, J3xy = 0.329, J3z = -0.112)
@@ -45,7 +42,6 @@ ylims!(ax,0,3)
 selectedβ = reverse(length(lsβ2):-4:17)
 colors = [:blue,:green,:red]
 
-# lines!(ax,lsHx * 7.6, lsSx * 6, linewidth = 2,label = "DMRG\nD=$(Dgs)")
 
 lines!(ax,[0,1],ones(2);color = :grey,linestyle = :dash)
 for i in selectedβ

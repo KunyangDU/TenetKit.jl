@@ -14,7 +14,9 @@ Ly = 4
 @load "$(trivialname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 # lsH = vcat(0.1:0.02:0.2)
-lsH = 0.01:0.002:0.024
+# lsH = 0.01:0.002:0.024
+lsH = vcat(0.01:0.002:0.024,0.028:0.004:0.04)
+
 lsβ2 = let H = lsH[1]
     params = (Hx = H, J1xy = -1.0, J1z = -0.158, D = 0.0132, E = -0.0132, J3xy = 0.329, J3z = -0.112)
 
