@@ -23,12 +23,13 @@ struct DMRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     alg::AbstractAlgorithm
     trunc::TruncationScheme
     N::Int64
-    tol::Number
+    Etol::Number
+    Stol::Number
     solver::SolverAlgo
     GCsweep::Bool 
     GCsite::Bool
-    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, tol::Number, solver::SolverAlgo,GCsweep::Bool,GCsite::Bool)
-        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol,solver,GCsweep,GCsite)
+    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, Etol::Number, Stol::Number, solver::SolverAlgo,GCsweep::Bool,GCsite::Bool)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,Etol,Stol,solver,GCsweep,GCsite)
     end
 end
 

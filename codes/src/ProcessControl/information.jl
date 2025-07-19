@@ -21,11 +21,11 @@ mutable struct DMRGinfo <: AlgorithmInfo
     solver::SolverInfo
     n::Int64
     err::Number
-    E::Number
-    σE::Number
-    DMRGinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number, E::Number, σE::Number) = new(bond,solver,n,ϵ,E,σE)
-    DMRGinfo(info::DMRGinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.E,info.σE)
-    DMRGinfo() = new(BondInfo(), Lanczosinfo(),0,0,Inf,0)
+    E::Vector{Float64}
+    S::Vector{Float64}
+    DMRGinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number, E::Vector{Float64}, S::Vector{Float64}) = new(bond,solver,n,ϵ,E,S)
+    DMRGinfo(info::DMRGinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.E,info.S)
+    DMRGinfo() = new(BondInfo(), Lanczosinfo(),0,0,Float64[],Float64[])
 end
 
 mutable struct DMRGsweepinfo{Dir} <: AlgorithmInfo where Dir
@@ -33,19 +33,19 @@ mutable struct DMRGsweepinfo{Dir} <: AlgorithmInfo where Dir
     bond::BondInfo
     solver::SolverInfo
     err::Number
-    E::Number
-    σE::Number
-    DMRGsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number,E::Number, σE::Number) = new{typeof(direction)}(direction,bond,solver,ϵ,E,σE)
-    DMRGsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0,Inf,0)
+    E::Vector{Float64}
+    S::Vector{Float64}
+    DMRGsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number,E::Vector{Float64}, S::Vector{Float64}) = new{typeof(direction)}(direction,bond,solver,ϵ,E,S)
+    DMRGsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0,Float64[],Float64[])
 end
 
 mutable struct DMRGsiteinfo <: AlgorithmInfo
     bond::BondInfo
     solver::SolverInfo
     err::Number
-    E::Number
-    σE::Number
-    DMRGsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Number,E::Number, σE::Number) = new(bond,solver,ϵ,E,σE)
+    E::Float64
+    S::Float64
+    DMRGsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Number,E::Vector{Float64}, S::Vector{Float64}) = new(bond,solver,ϵ,E,S)
     DMRGsiteinfo() = new(BondInfo(), Lanczosinfo(),0,Inf,0)
 end
 
@@ -63,10 +63,11 @@ mutable struct TDVPinfo <: AlgorithmInfo
     err::Number
     lnZ::Number
     E::Number
-    TDVPinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number,lnZ::Number,E::Number) = new(bond,solver,n,ϵ,lnZ,E)
-    TDVPinfo(info::TDVPinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.lnZ,info.E)
-    TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0,0,0)
-    TDVPinfo(lnZ::Number) = new(BondInfo(), Lanczosinfo(),0,0,lnZ,0)
+    S::Vector{Float64}
+    TDVPinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number,lnZ::Number,E::Number,S::Vector{Float64}) = new(bond,solver,n,ϵ,lnZ,E,S)
+    TDVPinfo(info::TDVPinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.lnZ,info.E,info.S)
+    TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0,0,0,Float64[])
+    TDVPinfo(lnZ::Number) = new(BondInfo(), Lanczosinfo(),0,0,lnZ,0,Float64[])
 end
 
 mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir
@@ -75,17 +76,20 @@ mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir
     solver::SolverInfo
     err::Number
     E::Number
-    TDVPsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number) = new{typeof(direction)}(direction,bond,solver,ϵ,0)
-    TDVPsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0)
-    TDVPsweepinfo(direction::SweepDirection,err::Number) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),err,0)
+    S::Vector{Float64}
+    TDVPsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number, E::Number, S::Vector{Float64}) = new{typeof(direction)}(direction,bond,solver,ϵ,E,S)
+    TDVPsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0,0,Float64[])
+    TDVPsweepinfo(direction::SweepDirection,err::Number) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),err,0,Float64[])
 end
 
 mutable struct TDVPsiteinfo <: AlgorithmInfo
     bond::BondInfo
     solver::SolverInfo
     err::Number
-    TDVPsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Number) = new(bond,solver,ϵ)
-    TDVPsiteinfo() = new(BondInfo(), Lanczosinfo(),0)
+    E::Number
+    S::Number
+    TDVPsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Number, E::Number, S::Number) = new(bond,solver,ϵ,E,S)
+    TDVPsiteinfo() = new(BondInfo(), Lanczosinfo(),0,0,0)
 end
 
 mutable struct SETTNinfo <: AlgorithmInfo
@@ -140,8 +144,9 @@ function TimerOutputs.merge!(A::DMRGinfo,B::DMRGsweepinfo{dir}) where dir
     merge!(A.bond, B.bond)
     merge!(A.solver, B.solver)
     A.err = max(A.err,B.err)
-    A.E = min(A.E,B.E)
-    A.σE = max(A.σE,B.σE)
+    # A.E = B.E
+    A.E = vcat(A.E,B.E)
+    A.S = vcat(A.S,B.S)
     dir <: R2L && (A.n += 1)
     return A
 end
@@ -150,7 +155,8 @@ function TimerOutputs.merge!(A::TDVPinfo,B::TDVPsweepinfo{dir}) where dir
     merge!(A.bond, B.bond)
     merge!(A.solver, B.solver)
     A.err = B.err
-    A.E = B.E
+    # A.E = B.E
+    A.S = vcat(A.S,B.S)
     return A
 end
 
@@ -171,13 +177,11 @@ end
 function TimerOutputs.merge!(A::T₁,B::T₂) where {T₁<:Union{DMRGsweepinfo,TDVPsweepinfo},T₂<:Union{DMRGsiteinfo,TDVPsiteinfo}}
     merge!(A.bond, B.bond)
     merge!(A.solver, B.solver)
-    
-    if T₁ <: DMRGsweepinfo && T₂ <: DMRGsiteinfo
-        A.err = max(A.err,B.err)
-        A.E = min(A.E,B.E)
-        A.σE = max(A.σE,B.σE)
-    else
-        A.err = max(A.err,B.err)
+    A.err = max(A.err,B.err)
+    push!(A.S,B.S)
+    if T₁ <: DMRGsweepinfo && T₂ <: DMRGsiteinfo   
+        push!(A.E,B.E)
+        # push!(A.S,B.S)
     end
 
     return A
@@ -195,6 +199,11 @@ end
 
 function TimerOutputs.merge!(info1::TDVPsiteinfo, info2::CBEinfo)
     info1.err = info1.err + info2.err
+end
+
+function TimerOutputs.merge!(info1::T,info2::BondInfo) where T<:Union{DMRGsiteinfo,TDVPsiteinfo}
+    info1.bond = info2
+    info1.S = info2.S
 end
 
 TimerOutputs.merge!(::Algebrasiteinfo, ::CBEinfo) = nothing
@@ -249,11 +258,21 @@ function Base.show(io::IO,info::SETTNinfo)
 end
 
 function Base.show(io::IO,info::DMRGsweepinfo)
-    println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err), E = $(info.E), σE = $(info.σE)")
+    x = filter(!isnan,info.E)
+    y = filter(!isnan,info.S)
+    # println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err), E = $(info.E[end]), σE = $(std(x)), ⟨E⟩ = $(sum(x)/length(x))")
+    # println(io,info.bond,", σS = $(std(y)),  ⟨E⟩ = $(sum(y)/length(y)), K = $(info.solver.numiter), TruncError = $(info.err), E = $(info.E[end]), σE = $(std(x)), ⟨E⟩ = $(sum(x)/length(x))")
+    println(io,info.bond,", σS = $(std(y)), ⟨S⟩ = $(sum(y)/length(y)), max |ΔS| = $(maximum(abs.(diff(y))))")
+    println("E = $(info.E[end]), σE = $(std(x)), ⟨E⟩ = $(sum(x)/length(x))")
+    println("K = $(info.solver.numiter), TruncError = $(info.err)")
 end
 
 function Base.show(io::IO,info::TDVPsweepinfo)
-    println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err)")
+    # println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err)")
+    y = filter(!isnan,info.S)
+    println(io,info.bond,", σS = $(std(y)), ⟨S⟩ = $(sum(y)/length(y)), max |ΔS| = $(maximum(abs.(diff(y))))")
+    println("K = $(info.solver.numiter), TruncError = $(info.err)")
+    println("E = $(info.E)")
 end
 
 function Base.show(io::IO,info::SETTNsweepinfo)
@@ -265,7 +284,7 @@ function Base.show(io::IO,info::Algebrasweepinfo)
 end
 
 function Base.show(io::IO,info::BondInfo)
-    print(io,"D( $(info.Deff) => $(info.D) ), vnS = $(info.S)")
+    print(io,"D( $(info.Deff) => $(info.D) ), S = $(info.S)")
 end
 
 

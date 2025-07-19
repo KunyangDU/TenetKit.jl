@@ -7,14 +7,15 @@ function DMRG1!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     flush(stdout)
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,DMRGDefaultLanczos)
-    N = get(kwargs,:N,5)
-    tol = get(kwargs,:tol,Inf)
+    N = get(kwargs,:N,20)
+    Etol = get(kwargs,:Etol,1e-7)
+    Stol = get(kwargs,:Etol,1e-6)
     λ = get(kwargs,:λ,1.2)
     Nfull = get(kwargs,:Nfull,4)
     subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = DMRGalgo(SingleSite(),subalgo,trunc,N,tol,solver,GCsweep,GCsite)
+    alg = DMRGalgo(SingleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite)
     lsE,lsinfo = DMRG!(Env,alg)
     return lsE,lsinfo
 end
@@ -27,26 +28,26 @@ function DMRG2!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     flush(stdout)
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,DMRGDefaultLanczos)
-    N = get(kwargs,:N,5)
-    tol = get(kwargs,:tol,Inf)
+    N = get(kwargs,:N,20)
+    Etol = get(kwargs,:Etol,1e-7)
+    Stol = get(kwargs,:Etol,1e-6)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,tol,solver,GCsweep,GCsite)
+    alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite)
     lsE,lsinfo = DMRG!(Env,alg)
     return lsE,lsinfo
 end
 
 
 function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
-    info =  DMRGinfo()
     lsinfo = []
     lsE = []
-    for _ in 1:Alg.N
-
+    for i in 1:Alg.N
+        info =  DMRGinfo()
         l2rinfo = DMRGsweepinfo(L2R())
         to = DMRG!(Env,Alg,l2rinfo)
-        show(to;title=">>> DMRG >>>")
+        show(to;title=">>> DMRG ($(i)/$(Alg.N)) >>>")
         print("\n")
         show(l2rinfo)
         merge!(info,l2rinfo)
@@ -54,23 +55,26 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
 
         r2linfo = DMRGsweepinfo(R2L())
         to = DMRG!(Env,Alg,r2linfo)
-        show(to;title="<<< DMRG <<<")
+        show(to;title="<<< DMRG ($(i)/$(Alg.N)) <<<")
         print("\n")
         show(r2linfo)
         merge!(info,r2linfo)
+        ΔE = (r2linfo.E[end] - l2rinfo.E[end]) / (r2linfo.E[end] + l2rinfo.E[end])
+        ΔS = (r2linfo.S[end] - l2rinfo.S[end]) / (r2linfo.S[end] + l2rinfo.S[end])
+        println("ΔE = El - Er = $(ΔE), ΔS = Sl - Sr = $(ΔS)")
         flush(stdout)
 
         push!(lsinfo,deepcopy(info))
-        push!(lsE,info.E)
+        push!(lsE,info.E[end])
 
-        info.err > Alg.tol && return lsE,lsinfo
+        (ΔE < Alg.Etol && ΔS < Alg.Stol) && return lsE,lsinfo
     end
     return lsE,lsinfo
 end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGsweepinfo{L2R}) where {L,alg}
     localto = TimerOutput()
-    lsE = []
+    # lsE = []
     for site in 1:L-1
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
@@ -88,24 +92,24 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-            localinfo.bond = BondInfo(tc)
+            # localinfo.bond = BondInfo(tc)
+            merge!(localinfo, BondInfo(tc))
             @timeit localto "contract" tr = contract(contract(tc,tr),Env.layer[1].ts[site+1])
         end
         @timeit localto "pushright" pushright!(Env,tl, tr)
-        push!(lsE,localinfo.E)
+        # push!(info.E,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
     end
-
-    info.σE = std(filter(!isnan,lsE))
-
+    # info.σE = std(filter(!isnan,lsE))
+    # info.E = lsE[end]
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGsweepinfo{R2L}) where {L,alg}
     localto = TimerOutput()
-    lsE = []
+    # lsE = []
     for site in L:-1:2
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
@@ -124,24 +128,24 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
             tr = MPSTensor(permute(tr.A,(1,2),(3,)))
-            localinfo.bond = BondInfo(tc)
+            # localinfo.bond = BondInfo(tc)
+            merge!(localinfo, BondInfo(tc))
             @timeit localto "contract" tl = contract(Env.layer[1].ts[site-1],contract(tl,tc))
         end
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
-        push!(lsE,localinfo.E)
+        # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
     end
-
-    info.σE = std(filter(!isnan,lsE))
-
+    # info.σE = std(filter(!isnan,lsE))
+    # info.E = lsE[end]
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepinfo{L2R}) where L
     localto = TimerOutput()
-    lsE = []
+    # lsE = []
     for site in 1:L-1
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
@@ -153,22 +157,23 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-        localinfo.bond = BondInfo(tc)
+        # localinfo.bond = BondInfo(tc)
+        merge!(localinfo, BondInfo(tc))
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "pushright" pushright!(Env,tl, tr)
-        push!(lsE,localinfo.E)
+        # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
     end
-    info.σE = std(filter(!isnan,lsE))
-
+    # info.σE = std(filter(!isnan,lsE))
+    # info.E = lsE[end]
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepinfo{R2L}) where L
     localto = TimerOutput()
-    lsE = []
+    # lsE = []
     for site in L:-1:2
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
@@ -180,15 +185,16 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         end 
         merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-        localinfo.bond = BondInfo(tc)
+        # localinfo.bond = BondInfo(tc)
+        merge!(localinfo, BondInfo(tc))
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
-        push!(lsE,localinfo.E)
+        # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
     end
-    info.σE = std(filter(!isnan,lsE))
-
+    # info.σE = std(filter(!isnan,lsE))
+    # info.E = lsE[end]
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
