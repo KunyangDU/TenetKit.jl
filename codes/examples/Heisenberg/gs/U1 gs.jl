@@ -1,9 +1,9 @@
 using TensorKit
-include("../../../src/iMPS.jl")
+include("../../../src/TNKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/U1"
 
-D = 2^7
+D = 2^8
 params = (Jz = 1,Jxy = 0.5)
 
 Lx = 8
@@ -17,11 +17,14 @@ Latt = YCSqua(Lx,Ly)
 end
 
 H = U1Hamiltonian(Latt;params...)
-lsEg,lsinfo = DMRG2!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
-showQuantSweep(lsEg / size(Latt) .- 1/4)
+lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
 @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
+
+
+lsEg
+
 
 
 

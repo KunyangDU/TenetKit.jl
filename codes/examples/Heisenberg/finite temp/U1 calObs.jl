@@ -1,5 +1,5 @@
 using TensorKit
-include("../../../src/iMPS.jl")
+include("../../../src/TNKit.jl")
 include("../model.jl")
 
 dataname = "examples/Heisenberg/data/U1"

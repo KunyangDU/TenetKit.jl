@@ -1,7 +1,4 @@
 
-TensorKit.usebraidcache_abelian[] = false
-TensorKit.usebraidcache_nonabelian[] = false
-
 global DMRGDefaultLanczos = Krylovalgo(KrylovKit.Lanczos(;
      krylovdim = 8,
      maxiter = 1,

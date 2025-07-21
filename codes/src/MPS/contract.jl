@@ -513,3 +513,23 @@ end
 function contract(tl::MPSTensor{2},tr::MPSTensor{2})
     return MPSTensor(@tensor tmp[-1,;-2] ≔ tl.A[-1,1] * tr.A[1,-2])
 end
+
+function contract(A::MPSTensor{3}, mpot::LocalOperator{1, 1}, B::AdjointMPSTensor{3}, EnvR::RightEnvironmentTensor{3})
+    @tensor tmp[-1,-2;-3] ≔ A.A[-1,2,1] * mpot.A[4,2] * B.A[3,-3,4] * EnvR.A[1,-2,3]
+    return RightEnvironmentTensor(tmp)
+end
+
+function contract(A::MPSTensor{3},mpot::LocalOperator{1,1},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
+    @tensor tmp[-1;-2 -3] ≔ A.A[3,4,-3] * mpot.A[2,4] * B.A[-1,1,2] * EnvL.A[1,-2,3]
+    return LeftEnvironmentTensor(tmp)
+end
+
+function contract(El::LeftEnvironmentTensor{3}, A::MPSTensor{3}, mpo::LocalOperator{1,1})
+    @tensor tmp[-1 -2;-3 -4] ≔ El.A[-1,-3,1] * A.A[1,2,-4] * mpo.A[-2,2]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(A::MPSTensor{3}, B::LocalOperator{1,1},Er::RightEnvironmentTensor{3})
+    @tensor tmp[-1 -2 -3;-4] ≔ A.A[-1,2,1] * B.A[-3,2] * Er.A[1,-2,-4]
+    return RightCompositeEnvironmentTensor(tmp)
+end

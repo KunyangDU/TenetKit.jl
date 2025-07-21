@@ -1,6 +1,4 @@
 
-import LinearAlgebra: BLAS
-
 function __init__()
     println("Julia Version $(VERSION)")
     __multithreading_init__()
