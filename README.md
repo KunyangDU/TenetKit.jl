@@ -1,6 +1,6 @@
-# iMPS.jl
+# TenetKit.jl
 
-Personal code for finite MPS simulations.
+Kit for tensor network algorithm. Mainly containing MPS-based simulations now, but will also support PEPS and GPU acceleration in the future.
 
 ## Features
 
