@@ -1,5 +1,5 @@
 using TensorKit
-include("../../../src/iMPS.jl")
+include("../../../src/TenetKit.jl")
 include("../model.jl")
 # dataname = "examples/Heisenberg/data/U1"
 
@@ -254,10 +254,10 @@ Lx = 8
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 
-LocalSpace = SU₂Spin
+LocalSpace = U₁Spin
 k = [0,0]
 SpS = let 
-    S₊ = LocalSpace.SS[1]
+    S₊ = LocalSpace.S₊S₋[1]
     @show space(S₊)
     Root = InteractionTreeNode()
     for i in 1:size(Latt)
@@ -267,7 +267,8 @@ SpS = let
 end
 
 DeS₀ = let 
-    AuxSpaces = vcat(Rep[SU₂](1 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:size(Latt) ),], size(Latt)-1), Rep[SU₂](0 => 1))
+    # AuxSpaces = vcat(Rep[SU₂](1 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:size(Latt) ),], size(Latt)-1), Rep[SU₂](0 => 1))
+    AuxSpaces = vcat(Rep[U₁](-1 => 1),repeat([Rep[U₁](i => 1 for i in -size(Latt):1//2:size(Latt) ),], size(Latt)-1), Rep[U₁](0 => 1))
     _funcDenseMPO(randn, repeat([LocalSpace.PhySpace,],size(Latt)), AuxSpaces)
 end
 

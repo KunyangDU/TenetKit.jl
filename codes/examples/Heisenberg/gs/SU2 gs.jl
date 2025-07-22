@@ -1,15 +1,15 @@
 
 using TensorKit
-include("../../../src/TNKit.jl")
+include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/SU2"
 
     # @tensor x[-1,-2;-3] ≔ El.A[] * obj.A[] * h.A[] * Er.A[]
-D = 2^9
+D = 2^6
 # lsLx = 6:2:12
 # for Lx in lsLx
-Lx = 8
-Ly = 6
+Lx = 4
+Ly = 4
 params = (J=1,)
 Latt = YCSqua(Lx,Ly)
 
@@ -22,7 +22,7 @@ end
 
 H = SU2Hamiltonian(Latt;params...)
 
-lsEg,lsinfo = DMRG!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
+lsEg,lsinfo = DMRG2!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12))
 @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ

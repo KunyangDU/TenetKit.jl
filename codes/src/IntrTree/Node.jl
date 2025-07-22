@@ -26,7 +26,7 @@ mutable struct InteractionTreeNode <: AbstractTreeNode
     InteractionTreeNode() = InteractionTreeNode(IdentityOperator(0))
 end
 
-AbstractTrees.nodevalue(node::AbstractTreeNode) = node.Opr
+AbstractTrees.nodevalue(node::InteractionTreeNode) = node.Opr
 AbstractTrees.parent(node::AbstractTreeNode) = node.parent
 AbstractTrees.children(node::AbstractTreeNode) = node.children
 AbstractTrees.ParentLinks(::Type{AbstractTreeNode}) = StoredParents()

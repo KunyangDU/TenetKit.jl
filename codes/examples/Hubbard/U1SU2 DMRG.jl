@@ -1,14 +1,14 @@
 using TensorKit
-include("../../src/TNKit.jl")
+include("../../src/TenetKit.jl")
 include("model.jl")
 dataname = "examples/Hubbard/data"
 
 
-Lx = 8
+Lx = 4
 Ly = 4
 Ndop = 0
 params = (U = 0,μ = 0)
-D = 2^9
+D = 2^7
 
 Latt = YCSqua(Lx,Ly)
 println("$(Lx)x$(Ly), D = $(D), params = $(params)")

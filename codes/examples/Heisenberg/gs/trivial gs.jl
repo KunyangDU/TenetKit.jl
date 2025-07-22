@@ -1,10 +1,10 @@
 using TensorKit
 
-include("../../../src/iMPS.jl")
+include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^8
+D = 2^7
 # lsLx = 4:2:12
 # for Lx in lsLx
 Lx = 8

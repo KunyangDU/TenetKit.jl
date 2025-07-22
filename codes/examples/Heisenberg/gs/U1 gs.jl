@@ -1,12 +1,12 @@
 using TensorKit
-include("../../../src/TNKit.jl")
+include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/U1"
 
-D = 2^8
+D = 2^6
 params = (Jz = 1,Jxy = 0.5)
 
-Lx = 8
+Lx = 4
 Ly = 4
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt

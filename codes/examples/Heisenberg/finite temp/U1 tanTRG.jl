@@ -1,5 +1,5 @@
 using TensorKit
-include("../../../src/TNKit.jl")
+include("../../../src/TenetKit.jl")
 include("../model.jl")
 
 #= 
@@ -28,6 +28,7 @@ lsβ = vcat(2. .^ (-20:1:-1), 1:10)
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
 SETTN1!(lsβ[1], H, ρ; trunc = truncdim(2^5))
+
 Z = normalize!(ρ)^2
 
 lsρ,lsinfo,lsF,lsE = tanTRG2!(ρ,H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12))
