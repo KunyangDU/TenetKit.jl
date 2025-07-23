@@ -47,6 +47,7 @@ end
 
 function cutparent!(node::AbstractTreeNode)
     node.parent = nothing
+    return node
 end
 
 

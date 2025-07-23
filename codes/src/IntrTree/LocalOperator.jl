@@ -1,37 +1,4 @@
 
-mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
-    A::Union{Nothing, AbstractTensorMap}
-    site::Int64
-    strength::Number 
-    name::Union{Nothing,String,Tuple}
-    function IdentityOperator(A::AbstractTensorMap,site::Int64)
-        return new{length(codomain(A))}(A, site, NaN ,nothing)
-   end
-    function IdentityOperator(site::Int64, strength::Number = NaN)
-         return new{0}(nothing, site, strength,nothing)
-    end
-
-    function IdentityOperator(site::Int64, name::Union{String,Tuple})
-        return new{0}(nothing, site, NaN ,name)
-    end
-
-    function IdentityOperator(site::Int64)
-        return new{0}(nothing, site, NaN ,nothing)
-    end
-
-    IdentityOperator() = IdentityOperator(0)
-end
-
-function Base.show(io::IO,Opr::IdentityOperator)
-    print(io,"I$(String(collect("$(Opr.site)") .+ 8272))")
-    if !isnan(Opr.strength)
-        print(io, "($(Opr.strength))")
-    end
-    if !isnothing(Opr.name)
-        print(io, "{$(Opr.name)}")
-    end
-end
-
 mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
     A::Union{Nothing,AbstractTensorMap}
     name::String
@@ -55,6 +22,50 @@ function Base.show(io::IO,Opr::LocalOperator)
 end
 
 
+mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
+    A::Union{Nothing, AbstractTensorMap}
+    site::Int64
+    strength::Number 
+    name::Union{Nothing,String,Tuple}
+    function IdentityOperator(A::AbstractTensorMap,site::Int64)
+        return new{length(codomain(A))}(A, site, NaN ,nothing)
+   end
+    function IdentityOperator(site::Int64, strength::Number = NaN)
+         return new{0}(nothing, site, strength,nothing)
+    end
+
+    function IdentityOperator(site::Int64, name::Union{String,Tuple})
+        return new{0}(nothing, site, NaN ,name)
+    end
+
+    function IdentityOperator(site::Int64)
+        return new{0}(nothing, site, NaN ,nothing)
+    end
+
+    function IdentityOperator(A::LocalOperator)
+        A′ = getIdTensor(A)
+        return new{length(codomain(A′))}(A′, A.site, NaN ,nothing)
+    end
+
+    function IdentityOperator(A::IdentityOperator)
+        return A
+    end
+
+    IdentityOperator() = IdentityOperator(0)
+end
+
+function Base.show(io::IO,Opr::IdentityOperator)
+    print(io,"I$(String(collect("$(Opr.site)") .+ 8272))")
+    if !isnan(Opr.strength)
+        print(io, "($(Opr.strength))")
+    end
+    if !isnothing(Opr.name)
+        print(io, "{$(Opr.name)}")
+    end
+end
+
+
+
 # Base.isequal(::AbstractLocalOperator, ::AbstractLocalOperator) = false
 Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.name == B.name)
 function Base.isequal(A::LocalOperator, B::LocalOperator)
@@ -71,4 +82,6 @@ function getIdTensor(Opr::AbstractLocalOperator)
     space = codomain(Opr.A)[1]
     return TensorMap(diagm(ones(dim(space))),space,space)
 end
+
+trivial(A::AbstractLocalOperator) = IdentityOperator(A)
 

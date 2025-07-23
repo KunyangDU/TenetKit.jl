@@ -158,8 +158,8 @@ function TrivialHamiltonian(Latt::AbstractLattice;
         end
     end
 
-    # return AutomataSparseMPO(InteractionTree(Root),size(Latt))  
-    return InteractionTree(Root)
+    return AutomataSparseMPO(InteractionTree(Root),size(Latt))  
+    # return InteractionTree(Root)
 end
 
 function U1Hamiltonian(Latt::AbstractLattice;Jz::Number=1, Jxy::Number=1/2, h::Number = 0,H::Number = 0)
