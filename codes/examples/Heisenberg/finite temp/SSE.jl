@@ -184,46 +184,46 @@ H
 
 
 
-# root = CompositeTreeNode((nothing,nothing))
-# root.name = ((),())
-# for i in 1:size(Latt)
-#     S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
-#     # @show H.Root.children[1]
-#     rootc = commutate(H.Root.children[1],S₋)
-#     rootcomm = InteractionTree(rootc)
-#     rootup = let Root = InteractionTreeNode()
-#         addIntr!(Root,TrivialSpinOneHalf.S₊,i,"S₊",1,nothing)
-#         InteractionTree(Root)
-#     end
-#     x = CompositeTreeNode((rootup.Root,rootcomm.Root))
-#     x.name =  [[],[]]
-#     buildtree!(x)
-#     merge!(root,x.children[1])
-# end
-# root = cutparent!(root.children[1])
+root = CompositeTreeNode((nothing,nothing))
+root.name = ((),())
+for i in 1:size(Latt)
+    S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
+    # @show H.Root.children[1]
+    rootc = commutate(H.Root.children[1],S₋)
+    rootcomm = InteractionTree(rootc)
+    rootup = let Root = InteractionTreeNode()
+        addIntr!(Root,TrivialSpinOneHalf.S₊,i,"S₊",1,nothing)
+        InteractionTree(Root)
+    end
+    x = CompositeTreeNode((rootup.Root,rootcomm.Root))
+    x.name =  [[],[]]
+    buildtree!(x)
+    merge!(root,x.children[1])
+end
+root = cutparent!(root.children[1])
 
 # to
 
-@time root = let
-    rootup = InteractionTreeNode()
-    rootdown = InteractionTreeNode()
-    node_replace!(x,obj) = let 
-        x.A = x.A*obj.A - obj.A*x.A 
-        x.name = "[$(x.name),$(obj.name)]"
-    end
+# @time root = let
+#     rootup = InteractionTreeNode()
+#     rootdown = InteractionTreeNode()
+#     node_replace!(x,obj) = let 
+#         x.A = x.A*obj.A - obj.A*x.A 
+#         x.name = "[$(x.name),$(obj.name)]"
+#     end
 
-    for i in 1:size(Latt)
-        S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
-        addIntr!(rootup,TrivialSpinOneHalf.S₊,i,"S₊",1,nothing)
-        rootc = commutate(H.Root.children[1],S₋)
-        merge!(rootdown,rootc)
-    end
+#     for i in 1:size(Latt)
+#         S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
+#         addIntr!(rootup,TrivialSpinOneHalf.S₊,i,"S₊",1,nothing)
+#         rootc = commutate(H.Root.children[1],S₋)
+#         merge!(rootdown,rootc)
+#     end
         
-    root = CompositeTreeNode((rootup,cutparent!(rootdown.children[1])))
-    root.name =  [[],[]]
-    buildtree!(root)
-end
-Base.summarysize(root)/1024/1024
+#     root = CompositeTreeNode((rootup,cutparent!(rootdown.children[1])))
+#     root.name =  [[],[]]
+#     buildtree!(root)
+# end
+# Base.summarysize(root)/1024/1024
 
 
 @load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ

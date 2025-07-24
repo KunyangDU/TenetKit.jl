@@ -3,6 +3,7 @@ function addIntr2!(
     As::NTuple{2,AbstractTensorMap},
     sites::NTuple{2,Int64},
     names::NTuple{2,String},
+    fermionic::NTuple{2,Bool},
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap}
     )
@@ -15,10 +16,61 @@ function addIntr2!(
     #     OprL = LocalOperator(As[1],names[1],sites[1])
     #     OprR = LocalOperator(As[2],names[2],sites[2],strength)
     # end
-    OprL = LocalOperator(As[1],names[1],sites[1])
-    OprR = LocalOperator(As[2],names[2],sites[2],strength)
+    # OprL = LocalOperator(As[1],names[1],sites[1])
+    # OprR = LocalOperator(As[2],names[2],sites[2],strength)
+    # addIntr2!(Root,OprL,OprR,Z)
+    Leave = InteractionTreeLeave(As,sites,names,fermionic,strength,Z)
+    addIntr2!(Root,Leave)
+end
 
-    addIntr2!(Root,OprL,OprR,Z)
+function addIntr2!(Root::InteractionTreeNode,Leave::InteractionTreeLeave{2})
+    OprL = LocalOperator(Leave.A[1],Leave.name[1],Leave.site[1])
+    OprR = LocalOperator(Leave.A[2],Leave.name[2],Leave.site[2],Leave.strength)
+    Z = Leave.Z
+
+    if OprL.site > OprR.site
+        OprL.A,OprR.A = _swap(OprL.A,OprR.A,Z)
+        OprL.site,OprR.site = OprR.site,OprL.site
+        OprL.name,OprR.name = OprR.name,OprL.name
+    end
+
+    current_node = Root
+    current_site = 1
+
+    # add the identity
+    while current_site < OprR.site
+
+        tempOpr = let 
+            if current_site < OprL.site
+                IdentityOperator(getIdTensor(OprL),current_site)
+            elseif current_site == OprL.site
+                OprL
+            elseif isnothing(Z)
+                IdentityOperator(getIdTensor(OprL),current_site)
+            else
+                LocalOperator(Z,"Z",current_site)
+            end
+        end
+
+        indId = findfirst(x -> isequal(x.Opr,tempOpr),current_node.children)
+        if isnothing(indId)
+            addchild!(current_node,tempOpr)
+            current_node = current_node.children[end]
+        else
+            current_node = current_node.children[indId]
+        end
+
+        current_site += 1
+    end
+
+    # add the right Opr
+    if !isnothing(Z)
+        _addZ!(OprR,Z)
+    end
+
+    addchild!(current_node, OprR)
+    current_node.children[end].Leave = Leave
+    typeof(Root) <: ObservableTreeNode && (current_node.children[end].name = tuple(OprL.site,OprR.site))
 end
 
 function addIntr2!(

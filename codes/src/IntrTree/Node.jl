@@ -5,6 +5,7 @@ abstract type AbstractTreeNode end
 mutable struct InteractionTreeNode <: AbstractTreeNode
 
     Opr::Union{Nothing,AbstractLocalOperator}
+    Leave::Union{Nothing,InteractionTreeLeave}
     parent::Union{Nothing,InteractionTreeNode}
     children::Vector{InteractionTreeNode}
 
@@ -13,14 +14,14 @@ mutable struct InteractionTreeNode <: AbstractTreeNode
         parent::InteractionTreeNode,
         children::Vector{InteractionTreeNode}=InteractionTreeNode[],
     )
-    return new(Opr,parent,children)
+    return new(Opr,nothing,parent,children)
     end
 
     function InteractionTreeNode(
         Opr::Union{Nothing,AbstractLocalOperator},
         children::Vector{InteractionTreeNode}=InteractionTreeNode[],
     )
-    return new(Opr,nothing,children)
+    return new(Opr,nothing,nothing,children)
     end
 
     InteractionTreeNode() = InteractionTreeNode(IdentityOperator(0))

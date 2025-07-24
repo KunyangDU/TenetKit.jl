@@ -45,6 +45,7 @@ include("IntrTree/addIntr.jl")
 include("IntrTree/addIntr1.jl")
 include("IntrTree/addIntr2.jl")
 include("IntrTree/Automata.jl")
+include("IntrTree/algebra.jl")
 
 include("Observables/addObs.jl")
 include("Observables/calObs.jl")
