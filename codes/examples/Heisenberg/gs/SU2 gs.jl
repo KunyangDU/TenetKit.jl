@@ -5,7 +5,7 @@ include("../model.jl")
 dataname = "examples/Heisenberg/data/SU2"
 
     # @tensor x[-1,-2;-3] ≔ El.A[] * obj.A[] * h.A[] * Er.A[]
-D = 2^6
+D = 2^8
 # lsLx = 6:2:12
 # for Lx in lsLx
 Lx = 4

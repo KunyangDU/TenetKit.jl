@@ -7,22 +7,24 @@ function addIntr1!(Root::AbstractTreeNode,
     addIntr1!(Root,Leave)
 end
 
-function addIntr1!(Root::InteractionTreeNode,Leave::InteractionTreeLeave)
-    Opr = LocalOperator(Leave)
+function addIntr1!(Root::AbstractTreeNode,Leave::InteractionTreeLeave)
+    A = LocalOperator(Leave)
     Z = Leave.Z
     current_node = Root
     current_site = 1
 
     # add the identity
-    while current_site < Opr.site
+    while current_site < A.site
 
         if isnothing(Z)
-            tempIdOpr = IdentityOperator(getIdTensor(Opr),current_site)
+            @assert Leave.fermionic[1] == false
+            tempIdOpr = IdentityOperator(getIdTensor(A),current_site)
         else
-            tempIdOpr = LocalOperator(Z,"Z",current_site,1)
+            @assert Leave.fermionic[1] == true
+            tempIdOpr = LocalOperator(Z,"Z",current_site)
         end
 
-        indId = findfirst(x -> isequal(x.Opr,tempIdOpr),current_node.children)
+        indId = findfirst(x -> isequal(x.A,tempIdOpr),current_node.children)
         if isnothing(indId)
             addchild!(current_node,tempIdOpr)
             current_node = current_node.children[end]
@@ -33,27 +35,33 @@ function addIntr1!(Root::InteractionTreeNode,Leave::InteractionTreeLeave)
         current_site += 1
     end
 
-    addchild!(current_node, Opr)
-    current_node.children[end].Leave = Leave
-    typeof(Root) <: ObservableTreeNode && (current_node.children[end].name = Tuple(Opr.site))
+    addchild!(current_node, A)
+    
+    if typeof(Root) <: ObservableTreeNode
+        # current_node.children[end].name = Tuple(A.site)
+        current_node.children[end].Leave = ObservableTreeLeave(Leave)
+    else
+        current_node.children[end].Leave = Leave
+    end
+        # typeof(Root) <: ObservableTreeNode
 end
 
 # function addIntr1!(Root::AbstractTreeNode,
-#     Opr::LocalOperator,
+#     A::LocalOperator,
 #     Z::Union{Nothing,AbstractTensorMap})
 #     current_node = Root
 #     current_site = 1
 
 #     # add the identity
-#     while current_site < Opr.site
+#     while current_site < A.site
 
 #         if isnothing(Z)
-#             tempIdOpr = IdentityOperator(getIdTensor(Opr),current_site)
+#             tempIdOpr = IdentityOperator(getIdTensor(A),current_site)
 #         else
 #             tempIdOpr = LocalOperator(Z,"Z",current_site,1)
 #         end
 
-#         indId = findfirst(x -> isequal(x.Opr,tempIdOpr),current_node.children)
+#         indId = findfirst(x -> isequal(x.A,tempIdOpr),current_node.children)
 #         if isnothing(indId)
 #             addchild!(current_node,tempIdOpr)
 #             current_node = current_node.children[end]
@@ -64,8 +72,8 @@ end
 #         current_site += 1
 #     end
 
-#     # add the onsite Opr 
-#     addchild!(current_node, Opr)
-#     # current_node.children[end].Opr.strength = strength
-#     typeof(Root) <: ObservableTreeNode && (current_node.children[end].name = Tuple(Opr.site))
+#     # add the onsite A 
+#     addchild!(current_node, A)
+#     # current_node.children[end].A.strength = strength
+#     typeof(Root) <: ObservableTreeNode && (current_node.children[end].name = Tuple(A.site))
 # end

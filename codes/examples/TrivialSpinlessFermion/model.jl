@@ -44,10 +44,10 @@ function ParticleNumber(Latt::AbstractLattice)
         LocalSpace = TrivialSpinlessFermion
     
         for i in 1:size(Latt)
-            addIntr!(Root,LocalSpace.n,i,"n",1,nothing)
+            addIntr!(Root,LocalSpace.n,i,"n",false,1,nothing)
         end
     
-        AutomataSparseMPO(InteractionTree(Root),size(Latt))
+        AutomataSparseMPO(Root,size(Latt))
     end
 
     return N
@@ -59,15 +59,15 @@ function Hamiltonian(Latt::AbstractLattice;t::Number=1,μ::Number=0)
         LocalSpace = TrivialSpinlessFermion
     
         for i in 1:size(Latt)
-            addIntr!(Root,LocalSpace.n,i,"n",μ,nothing)
+            addIntr!(Root,LocalSpace.n,i,"n",false,μ,nothing)
         end
         
         for pair in neighbor(Latt)
-            addIntr!(Root,LocalSpace.F⁺F,pair,("F⁺","F"),-t,LocalSpace.Z)
-            addIntr!(Root,LocalSpace.FF⁺,pair,("F","F⁺"),t,LocalSpace.Z)
+            addIntr!(Root,LocalSpace.F⁺F,pair,("F⁺","F"),(true,true),-t,LocalSpace.Z)
+            addIntr!(Root,LocalSpace.FF⁺,pair,("F","F⁺"),(true,true),t,LocalSpace.Z)
         end
-    
-        AutomataSparseMPO(InteractionTree(Root),size(Latt))
+        
+        AutomataSparseMPO(Root,size(Latt))
     end
 
     return H

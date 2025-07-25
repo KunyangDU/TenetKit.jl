@@ -4,18 +4,18 @@ function Hamiltonian(Latt::AbstractLattice;t::Number = 1,U::Number = 0,μ::Numbe
         LocalSpace = TrivialSpinfulFermion
     
         for i in 1:size(Latt)
-            addIntr!(Root,LocalSpace.n,i,"n",-μ,nothing)
-            addIntr!(Root,LocalSpace.nd,i,"nd",U,nothing)
+            addIntr!(Root,LocalSpace.n,i,"n",false,-μ,nothing)
+            addIntr!(Root,LocalSpace.nd,i,"nd",false,U,nothing)
         end
         
         for pair in neighbor(Latt)
-            addIntr!(Root,LocalSpace.F₊⁺F₊,pair,("F₊⁺","F₊"),-t,LocalSpace.Z)
-            addIntr!(Root,LocalSpace.F₊F₊⁺,pair,("F₊","F₊⁺"),t,LocalSpace.Z)
-            addIntr!(Root,LocalSpace.F₋⁺F₋,pair,("F₋⁺","F₋"),-t,LocalSpace.Z)
-            addIntr!(Root,LocalSpace.F₋F₋⁺,pair,("F₋","F₋⁺"),t,LocalSpace.Z)
+            addIntr!(Root,LocalSpace.F₊⁺F₊,pair,("F₊⁺","F₊"),(false,false),-t,LocalSpace.Z)
+            addIntr!(Root,LocalSpace.F₊F₊⁺,pair,("F₊","F₊⁺"),(false,false),t,LocalSpace.Z)
+            addIntr!(Root,LocalSpace.F₋⁺F₋,pair,("F₋⁺","F₋"),(false,false),-t,LocalSpace.Z)
+            addIntr!(Root,LocalSpace.F₋F₋⁺,pair,("F₋","F₋⁺"),(false,false),t,LocalSpace.Z)
         end
     
-        AutomataSparseMPO(InteractionTree(Root),size(Latt))
+        AutomataSparseMPO(Root,size(Latt))
     end
 end
 

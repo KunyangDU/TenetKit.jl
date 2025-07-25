@@ -23,10 +23,11 @@ function addIntr2!(
     addIntr2!(Root,Leave)
 end
 
-function addIntr2!(Root::InteractionTreeNode,Leave::InteractionTreeLeave{2})
+function addIntr2!(Root::AbstractTreeNode,Leave::InteractionTreeLeave{2})
     OprL = LocalOperator(Leave.A[1],Leave.name[1],Leave.site[1])
     OprR = LocalOperator(Leave.A[2],Leave.name[2],Leave.site[2],Leave.strength)
     Z = Leave.Z
+    isZ = isfermionic(Leave.fermionic)
 
     if OprL.site > OprR.site
         OprL.A,OprR.A = _swap(OprL.A,OprR.A,Z)
@@ -40,19 +41,27 @@ function addIntr2!(Root::InteractionTreeNode,Leave::InteractionTreeLeave{2})
     # add the identity
     while current_site < OprR.site
 
-        tempOpr = let 
-            if current_site < OprL.site
-                IdentityOperator(getIdTensor(OprL),current_site)
-            elseif current_site == OprL.site
-                OprL
-            elseif isnothing(Z)
-                IdentityOperator(getIdTensor(OprL),current_site)
-            else
-                LocalOperator(Z,"Z",current_site)
-            end
+        tempOpr = isZ ? LocalOperator(Z,"Z",current_site) : IdentityOperator(getIdTensor(OprL),current_site)
+        if current_site == OprL.site
+            tempOpr = OprL
+            isZ = isZ ⊻ Leave.fermionic[1]
         end
+        # let 
+        #     if isZ == 1
+        #         current_site < OprL.site
+        #         IdentityOperator(getIdTensor(OprL),current_site)
+        #     # else
+        #     elseif current_site == OprL.site
+        #         OprL
+        #     elseif isnothing(Z) | beginZ == 1
+        #         @assert Leave.fermionic[1] == false
+        #         IdentityOperator(getIdTensor(OprL),current_site)
+        #     else
+        #         LocalOperator(Z,"Z",current_site)
+        #     end
+        # end
 
-        indId = findfirst(x -> isequal(x.Opr,tempOpr),current_node.children)
+        indId = findfirst(x -> isequal(x.A,tempOpr),current_node.children)
         if isnothing(indId)
             addchild!(current_node,tempOpr)
             current_node = current_node.children[end]
@@ -63,14 +72,19 @@ function addIntr2!(Root::InteractionTreeNode,Leave::InteractionTreeLeave{2})
         current_site += 1
     end
 
-    # add the right Opr
+    # add the right A
     if !isnothing(Z)
         _addZ!(OprR,Z)
     end
 
     addchild!(current_node, OprR)
-    current_node.children[end].Leave = Leave
-    typeof(Root) <: ObservableTreeNode && (current_node.children[end].name = tuple(OprL.site,OprR.site))
+    
+    if typeof(Root) <: ObservableTreeNode
+        # current_node.children[end].name = tuple(OprL.site,OprR.site)
+        current_node.children[end].Leave = ObservableTreeLeave(Leave)
+    else
+        current_node.children[end].Leave = Leave
+    end
 end
 
 function addIntr2!(
@@ -103,7 +117,7 @@ function addIntr2!(
             end
         end
 
-        indId = findfirst(x -> isequal(x.Opr,tempOpr),current_node.children)
+        indId = findfirst(x -> isequal(x.A,tempOpr),current_node.children)
         if isnothing(indId)
             addchild!(current_node,tempOpr)
             current_node = current_node.children[end]
@@ -114,7 +128,7 @@ function addIntr2!(
         current_site += 1
     end
 
-    # add the right Opr
+    # add the right A
     if !isnothing(Z)
         _addZ!(OprR,Z)
     end

@@ -16,8 +16,8 @@ function tr(ρ1::DenseMPO,ρ2::AdjointMPO)
     return _scalar(Env)
 end
 
-function tr(ρ::DenseMPO, Opr::SparseMPO)
-    Env = Environment([deepcopy(ρ), Opr, ρ'])
+function tr(ρ::DenseMPO, A::SparseMPO)
+    Env = Environment([deepcopy(ρ), A, ρ'])
     initialize!(Env)
     return _scalar(Env)
 end

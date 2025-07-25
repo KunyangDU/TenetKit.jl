@@ -18,23 +18,27 @@ begin
 
     for i in 1:size(Latt), j in i+1:size(Latt)
         pair = (i,j)
-        addObs!(Obs,LocalSpace.SxSx,pair,("Sx","Sx"),nothing)
-        addObs!(Obs,LocalSpace.SySy,pair,("Sy","Sy"),nothing)
-        addObs!(Obs,LocalSpace.SzSz,pair,("Sz","Sz"),nothing)
+        addObs!(Obs,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),nothing)
+        addObs!(Obs,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),nothing)
+        addObs!(Obs,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),nothing)
     end
 
     for i in 1:size(Latt)
-        addObs!(Obs,LocalSpace.Sx,i,"Sx",nothing)
-        addObs!(Obs,LocalSpace.Sy,i,"Sy",nothing)
-        addObs!(Obs,LocalSpace.Sz,i,"Sz",nothing)
+        addObs!(Obs,LocalSpace.Sx,i,"Sx",false,nothing)
+        addObs!(Obs,LocalSpace.Sy,i,"Sy",false,nothing)
+        addObs!(Obs,LocalSpace.Sz,i,"Sz",false,nothing)
     end
+    # @show Obs.node
     calObs!(Obs, ψ)
 end
-
-
 
 gsdata = Obs.values
 
 @save "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
+
+
+
+
+# gsdata[ (("Sz", "Sz"),)][((6,9),)]
 
 gsdata

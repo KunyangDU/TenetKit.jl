@@ -49,6 +49,7 @@ include("IntrTree/algebra.jl")
 
 include("Observables/addObs.jl")
 include("Observables/calObs.jl")
+include("Observables/SSE.jl")
 
 include("tools/algebra.jl")
 include("tools/geometry.jl")

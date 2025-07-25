@@ -1,11 +1,11 @@
 # function calObs!(Obs::Observable, ψ::Union{DenseMPO,DenseMPS}; destroy::Bool = true)
-#     Obs.values = calObs(ψ,Obs.forest)
-#     destroy && (Obs.forest = nothing)
+#     Obs.values = calObs(ψ,Obs.node)
+#     destroy && (Obs.node = nothing)
 # end
 
 # function calObs!(Obs::Observable, Env::Environment; destroy::Bool = true)
-#     Obs.values = calObs(Env.layer[1],Obs.forest)
-#     destroy && (Obs.forest = nothing)
+#     Obs.values = calObs(Env.layer[1],Obs.node)
+#     destroy && (Obs.node = nothing)
 # end
 
 # function calObs(ψ::Union{DenseMPO{L},DenseMPS{L}},
@@ -20,14 +20,14 @@
 #         tempDict = Dict{Tuple,Float64}()
 #         for subRoot in Root.children
 #             cutparent!(subRoot)
-#             tempDict[subRoot.Opr.name] = let 
+#             tempDict[subRoot.A.name] = let 
 #                 @timeit localto "construct MPO" mpo = AutomataSparseMPO(InteractionTree(subRoot),L)
 #                 @timeit localto "make environment" Env = Environment([ψ, mpo, adjoint(ψ)])
 #                 @timeit localto "initialize" initialize!(Env)
 #                 @timeit localto "scalarize" isapproxreal(scalar(Env))
 #             end
 #         end
-#         ObsDict[Root.Opr.name] = tempDict
+#         ObsDict[Root.A.name] = tempDict
 
 #         Ndone += length(Root.children)
 #         show(localto;title = "$(Ndone) / $(Ntot)")
@@ -70,7 +70,7 @@
 #     return ObsDict
 # end
 
-# function fillenv!(root::ObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}}) where L
+# function fillenv!(root::AbstractObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}}) where L
 #     initialize!(root,obj)
 #     children = root.children
 #     for site in 1:L
@@ -80,15 +80,15 @@
 # end
 
 # function fillenv!(parents::Vector,obj::Union{DenseMPS{L},DenseMPO{L}},site::Int64) where L
-#     childrens = Vector{ObservableTreeNode}()
+#     childrens = Vector{AbstractObservableTreeNode}()
 #     for p in parents
-#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.Opr.A),obj.ts[site]',p.parent.Env)
+#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.A.A),obj.ts[site]',p.parent.Env)
 #         push!(childrens,p.children...)
 #     end
 #     return childrens
 # end
 
-# function initialize!(root::ObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}}) where L
+# function initialize!(root::AbstractObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}}) where L
 #     @assert treeheight(root) == L
 
 #     root.Env = let 
@@ -99,7 +99,7 @@
 #     return nothing
 # end
 
-# function tree2dict(root::ObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}}) where L
+# function tree2dict(root::AbstractObservableTreeNode,obj::Union{DenseMPS{L},DenseMPO{L}}) where L
 #     obs = Dict{Tuple,Float64}()
 #     initialize!(root,obj)
 #     parents = [root,]
@@ -115,10 +115,10 @@
 # end
 
 # function node2dict(parents::Vector,obj::Union{DenseMPS{L},DenseMPO{L}},site::Int64) where L
-#     childrens = Vector{ObservableTreeNode}()
+#     childrens = Vector{AbstractObservableTreeNode}()
 #     obs = Dict{Tuple,Float64}()
 #     for p in parents
-#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.Opr.A),obj.ts[site]',p.parent.Env)
+#         p.Env = contract(obj.ts[site],DenseMPOTensor(p.A.A),obj.ts[site]',p.parent.Env)
 #         push!(childrens,p.children...)
 #         isempty(p.children) && (obs[p.name] = real(_scalar(p.Env)))
 #     end
@@ -138,12 +138,12 @@ function calObs!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
     print("\n")
     flush(stdout)
 
-    get(kwargs,:destroy,true) && (Obs.forest = nothing)
+    get(kwargs,:destroy,true) && (Obs.node = nothing)
 
     return Obs.values
 end
 
-calObs!(Obs::Observable, Env::Environment; kwargs...) = calObs!(Obs.forest,Env.layer[1];kwargs...)
+calObs!(Obs::Observable, Env::Environment; kwargs...) = calObs!(Obs.node,Env.layer[1];kwargs...)
 
 
 function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
@@ -153,8 +153,8 @@ function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwarg
 
     to = TimerOutput()
 
-    ch = Channel{ObservableTreeNode}(cachesize)
-    ch_swap = Channel{ObservableTreeNode}(Inf)
+    ch = Channel{AbstractObservableTreeNode}(cachesize)
+    ch_swap = Channel{AbstractObservableTreeNode}(Inf)
     ch_info = Channel{Tuple{Int64,TimerOutput}}(Inf)
 
     Threads.@spawn while isopen(ch)
@@ -172,11 +172,10 @@ function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwarg
         end
     end
 
-    map(x -> (@timeit to "put!" put!(ch,x)),values(Obs.forest.Roots))
-    
+    @timeit to "put!" put!(ch,Obs.node)
 
     let remain = 0
-        map(r -> map(x -> (remain += 1),Leaves(r)),values(Obs.forest.Roots))
+        map(x -> (remain += 1),Leaves(Obs.node))
         total = remain
         showspacing::Int64 = cld(total, showtimes)
         while remain > 0
@@ -205,13 +204,14 @@ end
 
 function _calObs_serial!(Obs::Observable,obj::Union{DenseMPO,DenseMPS};kwargs...)
     to = TimerOutput()
-    ch = Channel{ObservableTreeNode}(Inf)
-    map(x -> put!(ch,x), values(Obs.forest.Roots))
+    ch = Channel{AbstractObservableTreeNode}(Inf)
+    put!(ch,Obs.node)
     while isready(ch)
         @timeit to "take!" task = take!(ch)
         @timeit to "update!" _update_node!(task,obj)
         if isempty(task.children)
-            task.value = real(_scalar(task.Env))
+            task.Leave.value = real(_scalar(task.Env))
+            Tuple!(task.Leave)
         else
             for node in task.children 
                 node.Env = task.Env
@@ -227,14 +227,16 @@ end
 function _calObs_work!(obj::Union{DenseMPO,DenseMPS},ch::Channel,ch_swap::Channel)
     count = 0
     to = TimerOutput()
-    task = ObservableTreeNode[]
+    task = AbstractObservableTreeNode[]
     @timeit to "take!" push!(task,take!(ch))
     while !isempty(task)
         let p = pop!(task)
             @timeit to "update!" _update_node!(p,obj)
 
             if isempty(p.children)
-                p.value = real(_scalar(p.Env))
+                p.Leave.value = real(_scalar(p.Env))
+                Tuple!(p.Leave)
+                # p.value = real(_scalar(p.Env))
                 count += 1
             else
                 for node in p.children 
@@ -252,31 +254,48 @@ function _calObs_work!(obj::Union{DenseMPO,DenseMPS},ch::Channel,ch_swap::Channe
     return count,to
 end
 
-function _update_node!(node::ObservableTreeNode,obj::Union{DenseMPO,DenseMPS})
-    site = node.Opr.site
+function _update_node!(node::AbstractObservableTreeNode,obj::Union{DenseMPO,DenseMPS})
+    site = node.A.site
     if isnothing(node.Env)
         node.Env = let 
             AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj.ts[1],obj.ts[1]']))
             LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
         end
     else
-        node.Env = contract(obj.ts[site],node.Opr,obj.ts[site]',node.Env)
+        node.Env = contract(obj.ts[site],node.A,obj.ts[site]',node.Env)
+    end
+end
+
+function _update_node!(node::CompositeObservableTreeNode{2},obj::Union{DenseMPO,DenseMPS})
+    @assert node.A[1].site == node.A[2].site
+    site = node.A[1].site
+    if isnothing(node.Env)
+        node.Env = let 
+            AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj.ts[1],obj.ts[1]']))
+            LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
+        end
+    else
+        # remove strength dependence
+        node.Env = (isnan(node.A[1].strength) ? 1 : node.A[1].strength) * (isnan(node.A[2].strength) ? 1 : node.A[2].strength) * pushright(node.A[1], obj.ts[site],node.A[2], obj.ts[site]',node.Env)
     end
 end
 
 function Base.Dict(Obs::Observable)
-    data = Dict{String,Dict}()
-    roots = Obs.forest.Roots
-    for key in keys(roots)
-        data[key] = Dict(roots[key])
+    data = Dict{Tuple,Dict}()
+    nodedata = Dict(Obs.node)
+    for k in keys(nodedata)
+        if isnothing(get(data, k[1], nothing))
+            data[k[1]] = Dict()
+        end
+        data[k[1]][k[2]] = nodedata[k]
     end
     return data
 end
 
-function Base.Dict(Obs::ObservableTreeNode)
+function Base.Dict(Obs::AbstractObservableTreeNode)
     data = Dict{Tuple,Float64}()
     for l in Leaves(Obs)
-        data[l.name] = l.value
+        data[(l.Leave.name,l.Leave.site)] = l.Leave.value
     end
     return data
 end

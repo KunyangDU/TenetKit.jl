@@ -64,10 +64,10 @@ mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
     end
 end
 
-function Base.show(io::IO,Opr::LocalOperator)
-    print(io,"$(Opr.name)$(String(collect("$(Opr.site)") .+ 8272))")
-    if !isnan(Opr.strength)
-        print(io, "($(Opr.strength))")
+function Base.show(io::IO,A::LocalOperator)
+    print(io,"$(A.name)$(String(collect("$(A.site)") .+ 8272))")
+    if !isnan(A.strength)
+        print(io, "($(A.strength))")
    end
 end
 
@@ -94,7 +94,7 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
 
     function IdentityOperator(A::LocalOperator)
         A′ = getIdTensor(A)
-        return new{length(codomain(A′))}(nothing, A.site, NaN ,nothing)
+        return new{length(codomain(A′))}(nothing, deepcopy(A.site), NaN ,nothing)
     end
 
     function IdentityOperator(A::IdentityOperator)
@@ -104,13 +104,13 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
     IdentityOperator() = IdentityOperator(0)
 end
 
-function Base.show(io::IO,Opr::IdentityOperator)
-    print(io,"I$(String(collect("$(Opr.site)") .+ 8272))")
-    if !isnan(Opr.strength)
-        print(io, "($(Opr.strength))")
+function Base.show(io::IO,A::IdentityOperator)
+    print(io,"I$(String(collect("$(A.site)") .+ 8272))")
+    if !isnan(A.strength)
+        print(io, "($(A.strength))")
     end
-    if !isnothing(Opr.name)
-        print(io, "{$(Opr.name)}")
+    if !isnothing(A.name)
+        print(io, "{$(A.name)}")
     end
 end
 
@@ -128,8 +128,8 @@ function Base.isequal(A::LocalOperator, B::LocalOperator)
     return A.A ≈ B.A
 end
 
-function getIdTensor(Opr::AbstractLocalOperator)
-    space = codomain(Opr.A)[1]
+function getIdTensor(A::AbstractLocalOperator)
+    space = codomain(A.A)[1]
     return TensorMap(diagm(ones(dim(space))),space,space)
 end
 

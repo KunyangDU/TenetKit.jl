@@ -83,3 +83,7 @@ function countmap(obj::Vector)
     end
     return counts
 end
+
+isfermionic(A::NTuple{N, Bool}) where N = ((-1)^sum(A) == -1)
+# isfermionic(A::Vector{Bool})= ((-1)^sum(A) == -1)
+

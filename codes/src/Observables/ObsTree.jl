@@ -28,37 +28,37 @@
 #     ObserableForest() = ObserableForest{0}()
 # end
 
-mutable struct ObserableForest <: AbstractObservableForest
-     Roots::Dict{String,ObservableTreeNode}
-     width::Int64
-     function ObserableForest(A::Vector{Tuple{String,ObservableTreeNode}})
-          roots = Dict{String,ObservableTreeNode}()
-          for a in A 
-               roots[a] = A
-          end
-          return new(roots,length(A))
-     end
+# mutable struct ObserableForest <: AbstractObservableForest
+#      Roots::Dict{String,ObservableTreeNode}
+#      width::Int64
+#      function ObserableForest(A::Vector{Tuple{String,ObservableTreeNode}})
+#           roots = Dict{String,ObservableTreeNode}()
+#           for a in A 
+#                roots[a] = A
+#           end
+#           return new(roots,length(A))
+#      end
  
-     ObserableForest() = new(Dict{String,ObservableTreeNode}(),0)
- end
+#      ObserableForest() = new(Dict{String,ObservableTreeNode}(),0)
+# end
 
 mutable struct Observable <: AbstractObservable
-     forest::Union{Nothing, AbstractObservableForest}
+     node::Union{Nothing, AbstractObservableTreeNode}
      values::Union{Nothing, AbstractDict}
      L::Union{Nothing, Int64}
  
-     function Observable(forest::AbstractObservableForest,
+     function Observable(node::AbstractObservableTreeNode,
          L::Int64)
-         return new(forest, L) 
+         return new(node, nothing, L) 
      end
  
-     function Observable(forest::AbstractObservableForest)
-         return new(forest, treeheight(obj.forest.Roots) - 2) 
+     function Observable(node::AbstractObservableTreeNode)
+         return new(node, nothing, treeheight(node) - 1) 
      end
  
-     Observable() = new(ObserableForest(), nothing)
+     Observable() = new(ObservableTreeNode(), nothing, 0)
 end
 
 
-update!(obj::Observable) = obj.L = treeheight(obj.forest.Roots) - 2
+update!(obj::Observable) = obj.L = treeheight(obj.node) - 1
 

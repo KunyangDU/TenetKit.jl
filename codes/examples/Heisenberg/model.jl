@@ -139,26 +139,26 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     Root = InteractionTreeNode()
     
     for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),J,nothing)
-        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),J,nothing)
-        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),J,nothing)
+        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),J,nothing)
     end
 
     for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz,i,"Sz",-H,nothing)
+        addIntr!(Root,LocalSpace.Sz,i,"Sz",false,-H,nothing)
     end
 
     if sum(abs.(vcat(pinh...))) != 0
         @assert length(pinh) == length(pinsites) "pin field not compatible"
         for (i,site) in enumerate(pinsites)
             @show pinh
-            addIntr!(Root,LocalSpace.Sx,site,"Sx",pinh[i][1],nothing)
-            addIntr!(Root,LocalSpace.Sy,site,"Sy",pinh[i][2],nothing)
-            addIntr!(Root,LocalSpace.Sz,site,"Sz",pinh[i][3],nothing)
+            addIntr!(Root,LocalSpace.Sx,site,"Sx",false,pinh[i][1],nothing)
+            addIntr!(Root,LocalSpace.Sy,site,"Sy",false,pinh[i][2],nothing)
+            addIntr!(Root,LocalSpace.Sz,site,"Sz",false,pinh[i][3],nothing)
         end
     end
 
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))  
+    return AutomataSparseMPO(Root,size(Latt))  
     # return InteractionTree(Root)
 end
 
@@ -168,20 +168,20 @@ function U1Hamiltonian(Latt::AbstractLattice;Jz::Number=1, Jxy::Number=1/2, h::N
         LocalSpace = U₁Spin
     
         for pair in neighbor(Latt)
-            addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),Jz,nothing)
-            addIntr!(Root,LocalSpace.S₊S₋,pair,("S₊","S₋"),Jxy,nothing)
-            addIntr!(Root,LocalSpace.S₋S₊,pair,("S₋","S₊"),Jxy,nothing)
+            addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),Jz,nothing)
+            addIntr!(Root,LocalSpace.S₊S₋,pair,("S₊","S₋"),(false,false),Jxy,nothing)
+            addIntr!(Root,LocalSpace.S₋S₊,pair,("S₋","S₊"),(false,false),Jxy,nothing)
         end
 
         # if H != 0
         for i in 1:size(Latt)
-            addIntr!(Root,LocalSpace.Sz,i,"Sz",-H,nothing)
+            addIntr!(Root,LocalSpace.Sz,i,"Sz",false,-H,nothing)
         end
         # end
 
         # addIntr!(Root,LocalSpace.Sz,div(size(Latt),2),"Sz",h,nothing)
 
-        AutomataSparseMPO(InteractionTree(Root),size(Latt))
+        AutomataSparseMPO(Root,size(Latt))
     end
     return H
 end
@@ -192,8 +192,8 @@ function SU2Hamiltonian(Latt::AbstractLattice;J::Number=1)
     Root = InteractionTreeNode()
 
     for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.SS,pair,("S","S"),J,nothing)
+        addIntr!(Root,LocalSpace.SS,pair,("S","S"),(false,false,),J,nothing)
     end
     
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))
+    return AutomataSparseMPO(Root,size(Latt))
 end
