@@ -151,3 +151,10 @@ function contract(A::DenseMPOTensor{4}, B::LocalOperator{1,1}, C::AdjointMPOTens
     return RightEnvironmentTensor(tmp)
 end
 
+
+
+contract(A::DenseMPOTensor{4}, B::LocalOperator{1,2}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{2}) = contract(EnvL,A,B,C)
+contract(A::DenseMPOTensor{4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{3}) = contract(EnvL,A,B,C)
+contract(A::DenseMPOTensor{4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{3}) = contract(EnvL,A,B,C)
+contract(A::DenseMPOTensor{4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{2}) = contract(EnvL,A,B,C)
+

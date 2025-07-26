@@ -5,16 +5,16 @@ include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
 ObservableTreeNode
-D = 2^5
+D = 2^7
 # for Ly in 4:2:20,Lx in Ly:2:20 
-Lx = 4
+Lx = 14
 Ly = 1
 
 Latt = YCSqua(Lx,Ly)
 J = 1
 # for H in [1,2]
 H = 1
-params = (J=J, H = H)
+params = (J=J, )
 
 H =  let Root = InteractionTreeNode(), LocalSpace=TrivialSpinOneHalf
     

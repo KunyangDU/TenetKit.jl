@@ -1,22 +1,3 @@
-function Hamiltonian(Latt::AbstractLattice; t::Number = 1, U::Number = 8, μ::Number = 0)
-    H = let 
-        Root = InteractionTreeNode()
-        LocalSpace = U₁SU₂Fermion
-    
-        for i in 1:size(Latt)
-            addIntr!(Root,LocalSpace.nd,i,"nd",false,U,nothing)
-            addIntr!(Root,LocalSpace.n,i,"n",false,-μ,nothing)
-        end
-        
-        for pair in neighbor(Latt)
-            addIntr!(Root,LocalSpace.F⁺F,pair,("F⁺","F"),(true,true),-t,LocalSpace.Z)
-            addIntr!(Root,LocalSpace.FF⁺,pair,("F","F⁺"),(true,true),t,LocalSpace.Z)
-        end
-    
-        AutomataSparseMPO(Root,size(Latt))
-    end
-    return H
-end
 
 function ϵ(k)
     return -2*sum(cos.(k))
@@ -56,4 +37,3 @@ function ce(β::Number,Lx::Int,Ly::Int)
     lsk = getk(Lx,Ly)
     return 2β^2/2 * sum(@. ϵ(lsk)^2/(1 + cosh(β * ϵ(lsk)))) / Lx / Ly
 end
-

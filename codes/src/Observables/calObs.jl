@@ -212,6 +212,7 @@ function _calObs_serial!(Obs::Observable,obj::Union{DenseMPO,DenseMPS};kwargs...
         if isempty(task.children)
             task.Leave.value = real(_scalar(task.Env))
             Tuple!(task.Leave)
+            task.Env = nothing
         else
             for node in task.children 
                 node.Env = task.Env
@@ -236,6 +237,7 @@ function _calObs_work!(obj::Union{DenseMPO,DenseMPS},ch::Channel,ch_swap::Channe
             if isempty(p.children)
                 p.Leave.value = real(_scalar(p.Env))
                 Tuple!(p.Leave)
+                p.Env = nothing
                 # p.value = real(_scalar(p.Env))
                 count += 1
             else

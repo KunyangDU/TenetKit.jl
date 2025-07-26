@@ -1,9 +1,9 @@
 using TensorKit
-include("../../src/iMPS.jl")
+include("../../src/TenetKit.jl")
 include("model.jl")
 
 dataname = "examples/TrivialSpinlessFermion/data"
-Lx = 12
+Lx = 6
 Ly = 1
 D = 2^7
 

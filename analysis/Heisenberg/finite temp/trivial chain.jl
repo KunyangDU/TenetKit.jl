@@ -25,19 +25,19 @@ lsβed = vcat(2. .^ (-5:1:-1), 1:10) .* 2
 # χtr = [(calcFDT(Latt,datatr["obs"][i]["SzSz"],datatr["obs"][i]["Sz2"]) - sum([datatr["obs"][i]["Sz"][(j,)] for j in 1:size(Latt)])^2) for i in eachindex(lsβ2)] .* lsβ2
 # lsEtr = datatr["E"]
 # lsFtr = datatr["F"]
-Ctr = zeros(length(lsβ2))
-χtr = zeros(length(lsβ2))
-lsEtr = zeros(length(lsβ2))
-lsFtr = zeros(length(lsβ2))
+# Ctr = zeros(length(lsβ2))
+# χtr = zeros(length(lsβ2))
+# lsEtr = zeros(length(lsβ2))
+# lsFtr = zeros(length(lsβ2))
 
-for (i,β) in enumerate(lsβ2)
-    i == 1 && continue
-    @load "$(trivialname)/data_$(Lx)x$(Ly)_$(D)_$(trparams)_$(i+1).jld2" data
-    lsEtr[i] = data["E"]
-    lsFtr[i] = data["F"]
-    # χtr[i-1] = data[]
-    # Ctr[i-1] = real((data["E2"] - data["E"]^2) * β ^ 2)
-end
+# for (i,β) in enumerate(lsβ2)
+#     i == 1 && continue
+#     @load "$(trivialname)/data_$(Lx)x$(Ly)_$(D)_$(trparams)_$(i+1).jld2" data
+#     lsEtr[i] = data["E"]
+#     lsFtr[i] = data["F"]
+#     # χtr[i-1] = data[]
+#     # Ctr[i-1] = real((data["E2"] - data["E"]^2) * β ^ 2)
+# end
 
 
 @load "$(trivialname)/lsE_$(Lx)x$(Ly)_$(D)_$(trparams).jld2" lsE
@@ -71,9 +71,9 @@ Eed = dataed["E"]
 # Csu2[end-length(Eed)+1:end] .- Ced
 # χsu2[end-length(Eed)+1:end] .- χed
 # (lsE[end-length(Eed)+1:end] .- Eed) ./ Eed
-# (lsEtr[end-length(Eed)+1:end] .- Eed) ./ Eed
+(lsEtr[end-length(Eed)+1:end] .- Eed) ./ Eed
 # (lsEsu2[end-length(Eed)+1:end] .- Eed) ./ Eed
-(lsEu1[end-length(Eed)+1:end] .- Eed) ./ Eed
+# (lsEu1[end-length(Eed)+1:end] .- Eed) ./ Eed
 
 # Ctr[end-length(Eed)+1:end] .- Ced
 # lsEtr .- lsEsu2

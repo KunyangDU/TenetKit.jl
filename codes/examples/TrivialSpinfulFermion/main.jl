@@ -3,7 +3,7 @@ include("../../src/TenetKit.jl")
 include("model.jl")
 # some problems left (up and down's anticommutation)
 
-Lx = 6
+Lx = 10
 Ly = 1
 
 ψ = let 

@@ -1,15 +1,15 @@
 using TensorKit
-include("../../src/iMPS.jl")
+include("../../src/TenetKit.jl")
 include("model.jl")
 foldername = "examples/U1SU2Hubbard/data"
 
-Lx = 2
-Ly = 6
+Lx = 4
+Ly = 4
 Ndop = 0
 params = (U = 0,μ = 0)
-D = 2^9
+D = 500
 
-Latt = iYCSqua(Lx,Ly)
+Latt = YCSqua(Lx,Ly)
 println("$(Lx)x$(Ly), D = $(D), params = $(params)")
 @save "$(foldername)/Latt_$(Lx)x$(Ly).jld2" Latt
 
@@ -21,6 +21,6 @@ end
 H = Hamiltonian(Latt;params...)
 
 
-lsE,lsinfo = DMRG1!(ψ,H;trunc = truncdim(D) & truncbelow(1e-12))
+lsE,lsinfo = DMRG1!(ψ,H;trunc = truncdim(D) & truncbelow(1e-12), N = 4)
 showQuantSweep(lsE .- ue(100,Lx,Ly)*size(Latt))
 @save "$(foldername)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE

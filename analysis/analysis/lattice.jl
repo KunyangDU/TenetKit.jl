@@ -37,3 +37,24 @@ function ZZHoneyComb(L::Int64,W::Int64)
     shift = ((-1/2sqrt(3),1/2),(0.0,0.0),(1/sqrt(3),0.0),(sqrt(3)/2,1/2))
     return CompositeLattice([YCRect(L,W,(sqrt(3),1.0)) for _ in 1:4]..., shift) |> Snake!    
 end
+
+function ACHoneyComb(L::Int64,W::Int64)
+    shift = ((1/2,-1/2sqrt(3)),(0.0,0.0),(0.0,1/sqrt(3)),(1/2,sqrt(3)/2))
+    return CompositeLattice([YCRect(L,W,(1.0,sqrt(3))) for _ in 1:4]..., shift) |> Snake!    
+end
+
+function getxyzbonds(Latt::AbstractLattice;
+    shift = [0,1],
+    direction = [[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]],tol=1e-8)
+    nb = neighbor(Latt)
+    _,Ly = get_cellsize(Latt)
+    return map(direction) do v
+        filter(x -> abs(dot(let 
+            u = coordinate(Latt,x[1]) .- coordinate(Latt,x[2])
+            if abs(u[2]) > 1
+                u = u .- sign(u[2])*shift*Ly
+            end
+            u
+        end,v)) < tol ,nb)
+    end
+end
