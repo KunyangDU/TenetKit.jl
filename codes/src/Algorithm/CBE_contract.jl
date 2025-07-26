@@ -47,9 +47,29 @@ end
 function contract(EnvL::SparseLeftEnvironmentTensor,EnvR::SparseRightEnvironmentTensor)
     @assert (w = EnvL.D) == EnvR.D
     mps = nothing 
-    for i in 1:w 
-        tmp = contract(EnvL.A[i],EnvR.A[i])
-        mps = axpy!(1,tmp,mps)
+    Nthr = get_num_threads_julia()
+    if Nthr > 1
+        Lock = Threads.ReentrantLock()
+        counter = Threads.Atomic{Int64}(1)
+        Threads.@sync for _ in 1:Nthr
+            Threads.@spawn while true
+                ct = Threads.atomic_add!(counter, 1)
+                ct > w && break
+                C = contract(EnvL.A[ct],EnvR.A[ct])
+                lock(Lock)
+                try
+                    mps = axpy!(1, C, mps)
+                catch
+                    rethrow()
+                finally
+                    unlock(Lock)
+                end
+            end
+        end
+    else
+        for i in 1:w 
+            mps = axpy!(1,contract(EnvL.A[i],EnvR.A[i]),mps)
+        end
     end
     return mps
 end

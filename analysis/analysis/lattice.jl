@@ -43,6 +43,16 @@ function ACHoneyComb(L::Int64,W::Int64)
     return CompositeLattice([YCRect(L,W,(1.0,sqrt(3))) for _ in 1:4]..., shift) |> Snake!    
 end
 
+function YCHoneycomb(Lx::Int64, Ly::Int64)
+    shift = ((0.0,0.0),(sqrt(3)/6,1/2))
+    return CompositeLattice([YCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake! 
+end
+
+function XCHoneyComb(Lx::Int64, Ly::Int64)
+    shift = ((0.0,0.0),(1/2, sqrt(3)/6))
+    return CompositeLattice([XCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake!   
+end
+
 function getxyzbonds(Latt::AbstractLattice;
     shift = [0,1],
     direction = [[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]],tol=1e-8)

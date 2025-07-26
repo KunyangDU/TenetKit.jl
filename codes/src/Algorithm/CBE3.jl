@@ -19,15 +19,15 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,DSA,1}, info::CBEinfo{L2
 
     CBEenv = CBEenvironment(tL₀,tR₀,tL,nothing,D_i,D_f,Λ,Lorth,Rorth)
 
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[1].ts[site] = CBEenv.tL
     env.layer[3].ts[site] = CBEenv.tL'
     env.layer[1].ts[site+1] = CBEenv.tR
     env.layer[3].ts[site+1] = CBEenv.tR'
 
-    env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
+    @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
 end
 
@@ -51,16 +51,16 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,DSA,1}, info::CBEinfo{R2
 
     CBEenv = CBEenvironment(tL₀,tR₀,nothing,tR,D_i,D_f,Λ,Lorth,Rorth)
 
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[1].ts[site-1] = CBEenv.tL
     env.layer[3].ts[site-1] = CBEenv.tL'
     env.layer[1].ts[site] = CBEenv.tR
     env.layer[3].ts[site] = CBEenv.tR'
 
-    env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
-    return localto
+    @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
+    return to
 end
 
 function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,DSA,3}, info::CBEinfo{L2R};kwargs...)
@@ -84,13 +84,13 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,DSA,3}, info::CBEinfo{L2
 
     CBEenv = CBEenvironment(tL′,tR′,tL,nothing,D_i,D_f,Λ,Lorth,Rorth)
     
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
     
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[3].ts[site] = CBEenv.tL'
     env.layer[3].ts[site+1] = CBEenv.tR'
 
-    env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
+    @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
 end
 
@@ -116,14 +116,14 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,DSA,3}, info::CBEinfo{R2
 
     CBEenv = CBEenvironment(tL′,tR′,nothing,tR,D_i,D_f,Λ,Lorth,Rorth)
 
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[3].ts[site-1] = CBEenv.tL'
     env.layer[3].ts[site] = CBEenv.tR'
 
-    env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
-    return localto
+    @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
+    return to
 end
 
 function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,DSA,1}, info::CBEinfo{L2R};kwargs...)
@@ -143,15 +143,15 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,DSA,1}, info::CBEinfo{L2
 
     CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR)
 
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[1].ts[site] = CBEenv.tL
     env.layer[3].ts[site] = CBEenv.tL'
     env.layer[1].ts[site+1] = CBEenv.tR
     env.layer[3].ts[site+1] = CBEenv.tR'
 
-    env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
+    @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
 end
 
@@ -173,15 +173,15 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,DSA,1}, info::CBEinfo{R2
 
     CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR)
 
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[1].ts[site-1] = CBEenv.tL
     env.layer[3].ts[site-1] = CBEenv.tL'
     env.layer[1].ts[site] = CBEenv.tR
     env.layer[3].ts[site] = CBEenv.tR'
 
-    env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
+    @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
     return to
 end
 
@@ -202,13 +202,13 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,DSA,3}, info::CBEinfo{L2
 
     CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR)
 
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
     
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[3].ts[site] = CBEenv.tL'
     env.layer[3].ts[site+1] = CBEenv.tR'
 
-    env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
+    @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
 end
 
@@ -229,13 +229,13 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,DSA,3}, info::CBEinfo{R2
 
     CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR)
 
-    localto = CBE!(CBEenv,alg,info)
+    @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
-    merge!(to,localto)
+    merge!(to,localto;tree_point = ["CBE!"])
     env.layer[3].ts[site-1] = CBEenv.tL'
     env.layer[3].ts[site] = CBEenv.tR'
 
-    env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
-    return localto
+    @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
+    return to
 end
 
