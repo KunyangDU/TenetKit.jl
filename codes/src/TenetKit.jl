@@ -44,6 +44,8 @@ include("Hamiltonian/contract.jl")
 include("IntrTree/addIntr.jl")
 include("IntrTree/addIntr1.jl")
 include("IntrTree/addIntr2.jl")
+include("IntrTree/addIntr3.jl")
+include("IntrTree/addIntr4.jl")
 include("IntrTree/Automata.jl")
 include("IntrTree/algebra.jl")
 

@@ -31,8 +31,20 @@ function addIntr!(Root::AbstractTreeNode,
     addIntr2!(Root,A,site,name,fermionic,strength,Z)
 end
 
+function addIntr!(Root::AbstractTreeNode,
+    A::NTuple{3,AbstractTensorMap},
+    site::NTuple{3,Int64},
+    name::NTuple{3,String},
+    fermionic::NTuple{3,Bool},
+    strength::Number,
+    Z::Union{Nothing,AbstractTensorMap})
+    strength ≈ 0 && return nothing
+    addIntr3!(Root,A,site,name,fermionic,strength,Z)
+end
+
 addIntr!(Root::InteractionTreeNode,Leave::InteractionTreeLeave{1}) = addIntr1!(Root,Leave)
 addIntr!(Root::InteractionTreeNode,Leave::InteractionTreeLeave{2}) = addIntr2!(Root,Leave)
+addIntr!(Root::InteractionTreeNode,Leave::InteractionTreeLeave{3}) = addIntr3!(Root,Leave)
 
 # function addIntr!(Tree::InteractionTree,
 #     A::AbstractTensorMap,

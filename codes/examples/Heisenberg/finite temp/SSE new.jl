@@ -68,7 +68,7 @@ H
         x.name = "[$(x.name),$(obj.name)]"
     end
 
-    for i in 1:size(Latt)
+    for i in 1:4
         addIntr!(rootup,TrivialSpinOneHalf.S₊,i,"S₊",false,1,nothing)
         S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
         rootc = commutate(H,S₋)
@@ -88,25 +88,31 @@ treesize(root)
 
 ρ = lsρ[end]
 Obs = Observable(root)
-calObs!(Obs,ρ)
+calObs!(Obs,ρ;cachesize =  get_num_threads_julia() - 1, nworker = 1)
+
 # EnvL = LeftEnvironmentTensor(isometry(ℂ^1,ℂ^1))
 # root.Env = EnvL
-# for p in PreOrderDFS(root)
+# to = TimerOutput()
+
+# @timeit to "calObs" for p in PreOrderDFS(root)
 #     site = maximum(x -> x.site, p.A)
 #     if site != 0
-#         p.Env = (isnan(p.A[1].strength) ? 1 : p.A[1].strength) * (isnan(p.A[2].strength) ? 1 : p.A[2].strength) * pushright(p.A[1],ρ.ts[site],p.A[2],ρ.ts[site]',p.Env)
+#         @timeit to "push" p.Env = (isnan(p.A[1].strength) ? 1 : p.A[1].strength) * (isnan(p.A[2].strength) ? 1 : p.A[2].strength) * pushright(p.A[1],ρ.ts[site],p.A[2],ρ.ts[site]',p.Env)
+#         @show Base.summarysize(p.Env)/1024/1024
 #     end
 
 #     if isempty(p.children)
-#         p.Leave.value = real(_scalar(p.Env))
+#         @timeit to "_scalar" p.Leave.value = real(_scalar(p.Env))
 #         p.Env = nothing
+#         # GC.gc()
 #     else
-#         for r in p.children
+#         @timeit to "distributed" for r in p.children
 #             r.Env = p.Env
 #         end
 #     end
 
 #     p.Env = nothing
+#     # GC.gc()
 # end
 
 # data = Dict()
@@ -114,6 +120,10 @@ calObs!(Obs,ρ)
 #     data[(l.Leave.name,l.Leave.site)] = l.Leave.value
 # end
 # data
+
+# show(to)
+# println("")
+# treesize(root)
 
 # for k in keys(data)
 #     k[2][1][1] ≠ 2 && continue 

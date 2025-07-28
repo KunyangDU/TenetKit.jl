@@ -165,7 +165,7 @@ function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwarg
         end
     end
 
-    task_work = map(1:cachesize) do _
+    task_work = map(1:nworker) do _
         Threads.@spawn while isopen(ch)
             info = _calObs_work!(obj,ch,ch_swap)
             put!(ch_info,info)

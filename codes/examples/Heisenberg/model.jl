@@ -129,7 +129,7 @@ function PINVEC120(Latt,h)
 end
 
 function TrivialHamiltonian(Latt::AbstractLattice;
-    J::Number=1,H::Number = 0,
+    J::Number=1, H::Number = 0, Δ::Number = 1,
     pinh::Vector = repeat([zeros(3),],2*get_cellsize(Latt)[2]),
     pinsites::Vector = vcat(1:get_cellsize(Latt)[2], size(Latt)-get_cellsize(Latt)[2]+1:size(Latt))
     )
@@ -139,8 +139,8 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     Root = InteractionTreeNode()
     
     for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),J,nothing)
-        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),J*Δ,nothing)
+        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),J*Δ,nothing)
         addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),J,nothing)
     end
 

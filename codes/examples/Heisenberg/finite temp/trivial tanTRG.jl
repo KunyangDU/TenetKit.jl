@@ -7,14 +7,14 @@ Fermion complexity
 =#
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^5
+D = 20
 Lx = 4
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
-for H in [1,]
-params = (J=1,H = H)
+# for H in [1,]
+params = (J = 1, Δ = 0.5)
 Latt = YCSqua(Lx,Ly)
 
 H = TrivialHamiltonian(Latt; params...)
@@ -36,6 +36,6 @@ lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ,H, lsβ;lnZ = log(Z),trunc = truncdim(D) & tru
 @save "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
 @save "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
 
-end
+# end
 
 
