@@ -7,14 +7,14 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     validinds::Tuple
     E₀::Number
 
-    function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
-        EnvR::SparseRightEnvironmentTensor,
+    function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
+        EnvR::SparseRightEnvironmentTensor{1},
         H::SparseMPO{2},E₀::Number = 0.0) 
         N,M1 = H.D[1]
         M2,R = H.D[2]
         @assert M1 == M2
-        @assert EnvL.D == N 
-        @assert EnvR.D == R
+        @assert EnvL.D[1] == N 
+        @assert EnvR.D[1] == R
 
         viv = []
         for i in 1:N,j in 1:M1, k in 1:R
@@ -25,12 +25,12 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
         return new{2}(EnvL,EnvR,H,Tuple(viv),E₀)
     end
 
-    function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
-        EnvR::SparseRightEnvironmentTensor,
+    function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
+        EnvR::SparseRightEnvironmentTensor{1},
         H::SparseMPO{1},E₀::Number = 0.0)  
         N,R = H.D[1]
-        @assert EnvL.D == N 
-        @assert EnvR.D == R
+        @assert EnvL.D[1] == N 
+        @assert EnvR.D[1] == R
 
         viv = []
         for i in 1:N, j in 1:R
@@ -41,10 +41,10 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
         return new{1}(EnvL,EnvR,H,Tuple(viv),E₀)
     end
 
-    function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor,
-        EnvR::SparseRightEnvironmentTensor,E₀::Number = 0.0)  
-        N = EnvL.D
-        M = EnvR.D
+    function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
+        EnvR::SparseRightEnvironmentTensor{1},E₀::Number = 0.0)  
+        N = EnvL.D[1]
+        M = EnvR.D[1]
         @assert M == N 
         
         return new{0}(EnvL,EnvR,nothing,Tuple(1:N),E₀)

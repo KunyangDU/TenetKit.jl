@@ -71,7 +71,7 @@ MPO + sparse MPO + ENVR
 push left
 """
 function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{N, M}, C::AdjointMPOTensor{4}, EnvR::SparseRightEnvironmentTensor) where {N,M}
-    @assert EnvR.D == M
+    @assert EnvR.D[1] == M
     tmpEnvR = Vector{Any}(nothing,N)
     for i in 1:N, j in 1:M
         isnothing(B.m[i,j]) && continue
@@ -85,7 +85,7 @@ function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{N, M}, C::AdjointMPOT
 end
 
 function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{N, M}, C::AdjointMPOTensor{4}, EnvL::SparseLeftEnvironmentTensor) where {N,M}
-    @assert EnvL.D == N
+    @assert EnvL.D[1] == N
     tmpEnvL = Vector{Any}(nothing,M)
     for i in 1:N, j in 1:M
         isnothing(B.m[i,j]) && continue

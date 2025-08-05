@@ -107,53 +107,53 @@ end
 
 
 
-mutable struct SparseLeftEnvironmentTensor <: AbstractLeftEnvironmentTensor
-    A::Union{Vector{LeftEnvironmentTensor},Vector{LeftCompositeEnvironmentTensor}}
-    D::Int64
+mutable struct SparseLeftEnvironmentTensor{N} <: AbstractLeftEnvironmentTensor
+    A::Union{Array{LeftEnvironmentTensor},Array{LeftCompositeEnvironmentTensor}}
+    D::NTuple{N,Int}
 
-    function SparseLeftEnvironmentTensor(t::Vector{LeftEnvironmentTensor},D::Int64)
-        return new(t,D)
+    function SparseLeftEnvironmentTensor(t::Array{LeftEnvironmentTensor},D::Int64)
+        return new{1}(t,(D,))
     end
 
-    function SparseLeftEnvironmentTensor(t::Union{Vector{LeftEnvironmentTensor},Vector{LeftCompositeEnvironmentTensor}})
-        return new(t,length(t))
+    function SparseLeftEnvironmentTensor(t::Union{Array{LeftEnvironmentTensor},Array{LeftCompositeEnvironmentTensor}})
+        return new{ndims(t)}(t,size(t))
     end
 
     function SparseLeftEnvironmentTensor(t::LeftEnvironmentTensor)
-        return new(convert(Vector{LeftEnvironmentTensor},[t]),1)
+        return new{1}(convert(Array{LeftEnvironmentTensor},[t]),(1,))
     end
 
     function SparseLeftEnvironmentTensor(t::AbstractTensorMap)
-        return new(convert(Vector{LeftEnvironmentTensor},[LeftEnvironmentTensor(t)]),1)
+        return new{1}(convert(Array{LeftEnvironmentTensor},[LeftEnvironmentTensor(t)]),(1,))
     end
 
-    function SparseLeftEnvironmentTensor(t::Vector{AbstractTensorMap})
-        return new(convert(Vector{LeftEnvironmentTensor},[LeftEnvironmentTensor(ti) for ti in t]),length(t))
+    function SparseLeftEnvironmentTensor(t::Array)
+        return new{ndims(t)}(convert(Array{LeftEnvironmentTensor},[LeftEnvironmentTensor(ti) for ti in t]),size(t))
     end
 end
 
-mutable struct SparseRightEnvironmentTensor <: AbstractRightEnvironmentTensor
-    A::Union{Vector{RightEnvironmentTensor},Vector{RightCompositeEnvironmentTensor}}
-    D::Int64
+mutable struct SparseRightEnvironmentTensor{N} <: AbstractRightEnvironmentTensor
+    A::Union{Array{RightEnvironmentTensor},Array{RightCompositeEnvironmentTensor}}
+    D::NTuple{N,Int}
 
-    function SparseRightEnvironmentTensor(t::Vector{RightEnvironmentTensor},D::Int64)
-        return new(t,D)
+    function SparseRightEnvironmentTensor(t::Array{RightEnvironmentTensor},D::Int64)
+        return new{1}(t,(D,))
     end
 
-    function SparseRightEnvironmentTensor(t::Union{Vector{RightEnvironmentTensor},Vector{RightCompositeEnvironmentTensor}})
-        return new(t,length(t))
+    function SparseRightEnvironmentTensor(t::Union{Array{RightEnvironmentTensor},Array{RightCompositeEnvironmentTensor}})
+        return new{ndims(t)}(t,size(t))
     end
 
     function SparseRightEnvironmentTensor(t::RightEnvironmentTensor)
-        return new(convert(Vector{RightEnvironmentTensor},[t]),1)
+        return new{1}(convert(Array{RightEnvironmentTensor},[t]),(1,))
     end
 
     function SparseRightEnvironmentTensor(t::AbstractTensorMap)
-        return new(convert(Vector{RightEnvironmentTensor},[RightEnvironmentTensor(t)]),1)
+        return new{1}(convert(Array{RightEnvironmentTensor},[RightEnvironmentTensor(t)]),(1,))
     end
 
-    function SparseRightEnvironmentTensor(t::Vector{AbstractTensorMap})
-        return new(convert(Vector{RightEnvironmentTensor},[RightEnvironmentTensor(ti) for ti in t]),length(t))
+    function SparseRightEnvironmentTensor(t::Array)
+        return new{ndims(t)}(convert(Array{RightEnvironmentTensor},[RightEnvironmentTensor(ti) for ti in t]),size(t))
     end
 end
 
@@ -198,12 +198,12 @@ Monolayer Environment, i.e., only one layer MPO is considered.
 """
 mutable struct Environment{N,L} <: AbstractEnvironment
     layer::Vector
-    envs::Union{Nothing,Vector{AbstractEnvironmentTensor}}
+    envs::Union{Nothing,Array{AbstractEnvironmentTensor}}
     center::Vector{Int64}
     L::Int64
 
     function Environment(layer::Vector,
-        envs::Vector{AbstractEnvironmentTensor},
+        envs::Array{AbstractEnvironmentTensor},
         center::Union{Nothing,Vector{Int64}},
         L::Union{Nothing,Int64})
         return new{length(layer),length(layer[1])}(layer,envs,center,L)

@@ -44,8 +44,8 @@ function contract(A::MPSTensor{3}, B::LocalOperator{2,1}, EnvR::RightEnvironment
     return RightCompositeEnvironmentTensor(tmp)
 end
 
-function contract(EnvL::SparseLeftEnvironmentTensor,EnvR::SparseRightEnvironmentTensor)
-    @assert (w = EnvL.D) == EnvR.D
+function contract(EnvL::SparseLeftEnvironmentTensor{1},EnvR::SparseRightEnvironmentTensor{1})
+    @assert (w = EnvL.D[1]) == EnvR.D[1]
     mps = nothing 
     Nthr = get_num_threads_julia()
     if Nthr > 1

@@ -16,10 +16,10 @@ function pushright!(env::Environment{R}) where R
     ( env.center[1] > env.center[2] ) && ( env.center[2] += 1 )
 end
 
-function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRightEnvironmentTensor, site::Int64)
-    @assert mpo.D[site][2] == EnvR.D
+function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRightEnvironmentTensor{1}, site::Int64)
+    @assert mpo.D[site][2] == EnvR.D[1]
     tmpEnvR = Vector{Any}(nothing,mpo.D[site][1])
-    validinds = filter(x -> !isnothing(mpo.ts[site].m[x[1],x[2]]), [(i,j) for i in eachindex(tmpEnvR),j in 1:EnvR.D][:])
+    validinds = filter(x -> !isnothing(mpo.ts[site].m[x[1],x[2]]), [(i,j) for i in eachindex(tmpEnvR),j in 1:EnvR.D[1]][:])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -48,10 +48,10 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
 end
 
-function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseLeftEnvironmentTensor, site::Int64)
-    @assert mpo.D[site][1] == EnvL.D
+function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseLeftEnvironmentTensor{1}, site::Int64)
+    @assert mpo.D[site][1] == EnvL.D[1]
     tmpEnvL = Vector{Any}(nothing,mpo.D[site][2])
-    validinds = filter(x -> !isnothing(mpo.ts[site].m[x[1],x[2]]), [(i,j) for i in 1:EnvL.D,j in eachindex(tmpEnvL)][:])
+    validinds = filter(x -> !isnothing(mpo.ts[site].m[x[1],x[2]]), [(i,j) for i in 1:EnvL.D[1],j in eachindex(tmpEnvL)][:])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -251,20 +251,20 @@ end
 
 #= densify! =#
 
-function pushleft(A::SparseMPO, B::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64)
-    @assert A.D[site][2] == EnvR.D
+function pushleft(A::SparseMPO, B::AdjointMPO, EnvR::SparseRightEnvironmentTensor{1}, site::Int64)
+    @assert A.D[site][2] == EnvR.D[1]
     tmpEnvR = Vector{Any}(nothing,A.D[site][1])
-    for i in eachindex(tmpEnvR), j in 1:EnvR.D
+    for i in eachindex(tmpEnvR), j in 1:EnvR.D[1]
         isnothing(A.ts[site].m[i,j]) && continue
         tmpEnvR[i] = axpy!(1, contract(A.ts[site].m[i,j], B.ts[site], EnvR.A[j]), tmpEnvR[i])
     end
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
 end
 
-function pushright(A::SparseMPO, B::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64)
-    @assert A.D[site][1] == EnvL.D
+function pushright(A::SparseMPO, B::AdjointMPO, EnvL::SparseLeftEnvironmentTensor{1}, site::Int64)
+    @assert A.D[site][1] == EnvL.D[1]
     tmpEnvL = Vector{Any}(nothing,A.D[site][2])
-    for i in eachindex(tmpEnvL), j in 1:EnvL.D
+    for i in eachindex(tmpEnvL), j in 1:EnvL.D[1]
         isnothing(A.ts[site].m[j,i]) && continue
         tmpEnvL[i] = axpy!(1, contract(A.ts[site].m[j,i], B.ts[site],EnvL.A[j]),tmpEnvL[i])
     end

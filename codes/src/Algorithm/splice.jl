@@ -1,5 +1,5 @@
 function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
-    tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D)
+    tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -7,7 +7,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2}
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D && break
+                ct > Envorth.D[1] && break
                 C = contract(Envorth.A[ct],Λ)
                 lock(Lock)
                 try
@@ -20,7 +20,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2}
             end
         end
     else
-        for i in 1:Envorth.D
+        for i in 1:Envorth.D[1]
             tmp[i] = contract(Envorth.A[i],Λ)
         end
     end
@@ -28,7 +28,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2}
 end
 
 function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
-    tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D)
+    tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -36,7 +36,7 @@ function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D && break
+                ct > Envorth.D[1] && break
                 C = contract(Envorth.A[ct],Λ)
                 lock(Lock)
                 try
@@ -49,7 +49,7 @@ function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2
             end
         end
     else
-        for i in 1:Envorth.D
+        for i in 1:Envorth.D[1]
             tmp[i] = contract(Envorth.A[i],Λ)
         end
     end
@@ -57,7 +57,7 @@ function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2
 end
 
 function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
-    tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D)
+    tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -65,7 +65,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D && break
+                ct > Envorth.D[1] && break
                 C = contract(Envorth.A[ct],A)
                 lock(Lock)
                 try
@@ -78,7 +78,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4
             end
         end
     else
-        for i in 1:Envorth.D
+        for i in 1:Envorth.D[1]
             tmp[i] = contract(Envorth.A[i],A)
         end
     end
@@ -86,7 +86,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4
 end
 
 function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
-    tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D)
+    tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -94,7 +94,7 @@ function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D && break
+                ct > Envorth.D[1] && break
                 C = contract(Envorth.A[ct],A)
                 lock(Lock)
                 try
@@ -107,7 +107,7 @@ function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{
             end
         end
     else
-        for i in 1:Envorth.D
+        for i in 1:Envorth.D[1]
             tmp[i] = contract(Envorth.A[i],A)
         end
     end
