@@ -27,6 +27,7 @@ mutable struct InteractionTreeNode <: AbstractTreeNode
     end
 
     InteractionTreeNode() = InteractionTreeNode(IdentityOperator(0))
+    # InteractionTreeNode(A::AbstractTensorMap) = InteractionTreeNode(IdentityOperator(A,0))
 end
 
 AbstractTrees.nodevalue(node::AbstractTreeNode) = node.A

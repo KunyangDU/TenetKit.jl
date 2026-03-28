@@ -68,6 +68,29 @@ function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::De
     return tmp
 end
 
+function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::MPSTensor{3}, C::SparseMPOTensor{N₁,M₁}, D::SparseMPOTensor{N₂,M₂}, EnvR::SparseRightEnvironmentTensor) where {N₁,M₁,N₂,M₂}
+    @assert M₁ == N₂
+    tmp = nothing
+    for i in 1:N₁, j in 1:M₁, k in 1:M₂
+        isnothing(C.m[i,j]) | isnothing(D.m[j,k]) && continue
+        tmp1 = contract(EnvL.A[i], A, C.m[i,j])
+        tmp2 = contract(B, D.m[j,k], EnvR.A[k])
+        tmp = axpy!(1,contract(tmp1, tmp2),tmp)
+    end
+    return tmp
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 3}, EnvR::RightCompositeEnvironmentTensor{1, 3})
+    @tensor tmp[-1 -2 -3;-4] ≔ EnvL.A[-1,-2,1] * EnvR.A[1,-3,-4]
+    return CompositeMPSTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 4}, EnvR::RightCompositeEnvironmentTensor{1, 4})
+    @tensor tmp[-1 -2 -3;-4] ≔ EnvL.A[-1,-2,2,1] * EnvR.A[1,2,-3,-4]
+    return CompositeMPSTensor(tmp)
+end
+
+
 function contract(tr::DenseMPOTensor{2},obj::DenseMPOTensor{4})
     return DenseMPOTensor(@tensor tmp[-1,-2;-3,-4] ≔ tr.A[-2,1] * obj.A[-1,1,-3,-4])
 end

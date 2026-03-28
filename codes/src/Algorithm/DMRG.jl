@@ -1,5 +1,5 @@
 
-function DMRG1!(ψ::DenseMPS,H::SparseMPO;kwargs...)
+function DMRG1!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ'])
         initialize!(Env)
@@ -9,7 +9,7 @@ function DMRG1!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     solver = get(kwargs,:solver,DMRGDefaultLanczos)
     N = get(kwargs,:N,20)
     Etol = get(kwargs,:Etol,1e-7)
-    Stol = get(kwargs,:Etol,1e-6)
+    Stol = get(kwargs,:Stol,1e-6)
     λ = get(kwargs,:λ,1.2)
     Nfull = get(kwargs,:Nfull,4)
     subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
@@ -20,7 +20,7 @@ function DMRG1!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     return lsE,lsinfo
 end
 
-function DMRG2!(ψ::DenseMPS,H::SparseMPO;kwargs...)
+function DMRG2!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ'])
         initialize!(Env)
@@ -30,7 +30,7 @@ function DMRG2!(ψ::DenseMPS,H::SparseMPO;kwargs...)
     solver = get(kwargs,:solver,DMRGDefaultLanczos)
     N = get(kwargs,:N,20)
     Etol = get(kwargs,:Etol,1e-7)
-    Stol = get(kwargs,:Etol,1e-6)
+    Stol = get(kwargs,:Stol,1e-6)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
@@ -43,6 +43,7 @@ end
 function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
     lsinfo = []
     lsE = []
+    Sv = nothing
     for i in 1:Alg.N
         info =  DMRGinfo()
         l2rinfo = DMRGsweepinfo(L2R())
@@ -60,14 +61,17 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
         show(r2linfo)
         merge!(info,r2linfo)
         ΔE = (r2linfo.E[end] - l2rinfo.E[end]) / (r2linfo.E[end] + l2rinfo.E[end])
-        ΔS = (r2linfo.S[end] - l2rinfo.S[end]) / (r2linfo.S[end] + l2rinfo.S[end])
-        println("ΔE = El - Er = $(ΔE), ΔS = Sl - Sr = $(ΔS)")
+        # ΔS = norm((l2rinfo.S .- reverse(r2linfo.S))) / norm((l2rinfo.S .+ reverse(r2linfo.S))/2)
+        ΔS = abs(maximum(l2rinfo.S) - maximum(r2linfo.S))/(maximum(l2rinfo.S) + maximum(r2linfo.S))
+        println("ΔE = El - Er = $(ΔE), ΔS = |ΔŜ|/|Ŝ| = $(ΔS)")
         flush(stdout)
 
         push!(lsinfo,deepcopy(info))
         push!(lsE,info.E[end])
 
-        (ΔE < Alg.Etol && ΔS < Alg.Stol) && return lsE,lsinfo
+        if ΔE < Alg.Etol && ΔS < Alg.Stol
+            return lsE,lsinfo
+        end
     end
     return lsE,lsinfo
 end

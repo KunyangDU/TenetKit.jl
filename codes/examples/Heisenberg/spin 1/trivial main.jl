@@ -1,12 +1,11 @@
 using TensorKit
-include("../../../src/iMPS.jl")
+include("../../../src/TenetKit.jl")
 include("model.jl")
 dataname = "examples/Heisenberg/spin 1/data/trivial"
 
 
 D = 3^4
-for Lx in [4,6,8,10,20,40,60,80,100]
-# Lx = 8
+for Lx in 64
 Ly = 1
 params = (J=1,)
 
@@ -20,8 +19,8 @@ end
 
 H = TrivialHamiltonian(Latt;params...)
 
-lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 5)
-showQuantSweep(lsEg ./ size(Latt) .- 1/4)
+lsEg,lsinfo = DMRG2!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 10)
+showQuantSweep(lsEg ./ size(Latt))
 @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ

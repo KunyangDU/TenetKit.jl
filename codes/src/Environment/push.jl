@@ -105,6 +105,113 @@ pushleft(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvR::SparseRightEnvironmentT
 pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64) = SparseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL))
 pushleft(A::DenseMPS, B::AdjointMPS, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvR.A))
 
+#= Env4 =#
+
+function pushright(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::AdjointMPO, EnvL::SparseLeftEnvironmentTensor{2}, site::Int64)
+    tmpEnvL = Array{Any}(nothing, Hup.D[site][2], Hdown.D[site][2])
+    validinds = filter(x -> !isnothing(Hup.ts[site].m[x[1],x[3]]) && !isnothing(Hdown.ts[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:EnvL.D[1], j in 1:EnvL.D[2], k in 1:Hup.D[site][2], l in 1:Hdown.D[site][2]][:])
+    Nthr = get_num_threads_julia()
+    if Nthr > 1
+        Lock = Threads.ReentrantLock()
+        counter = Threads.Atomic{Int64}(1)
+        Threads.@sync for _ in 1:Nthr
+            Threads.@spawn while true
+                ct = Threads.atomic_add!(counter, 1)
+                ct > length(validinds) && break
+                i,j,k,l = validinds[ct]
+                C = pushright(Hup.ts[site].m[i,k],ρ.ts[site],Hdown.ts[site].m[j,l],ρ′.ts[site],EnvL.A[i,j])
+                lock(Lock)
+                try
+                    tmpEnvL[k,l] = axpy!(1,C,tmpEnvL[k,l])
+                    # sleep(1e-8)
+                catch
+                    rethrow()
+                finally
+                    unlock(Lock)
+                end
+            end
+        end
+    else
+        for (i,j,k,l) in validinds
+            tmpEnvL[k,l] = axpy!(1,pushright(Hup.ts[site].m[i,k], ρ.ts[site], Hdown.ts[site].m[j,l], ρ′.ts[site], EnvL.A[i,j]),tmpEnvL[k,l])
+        end
+    end
+    return SparseLeftEnvironmentTensor(convert(Array{LeftEnvironmentTensor}, tmpEnvL))
+end
+
+function pushleft(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::AdjointMPO, EnvR::SparseRightEnvironmentTensor{2}, site::Int64)
+    tmpEnvR = Array{Any}(nothing, Hup.D[site][1], Hdown.D[site][1])
+    validinds = filter(x -> !isnothing(Hup.ts[site].m[x[1],x[3]]) && !isnothing(Hdown.ts[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:Hup.D[site][1], j in 1:Hdown.D[site][1], k in 1:EnvR.D[1], l in 1:EnvR.D[2]][:])
+    Nthr = get_num_threads_julia()
+    if Nthr > 1
+        Lock = Threads.ReentrantLock()
+        counter = Threads.Atomic{Int64}(1)
+        Threads.@sync for _ in 1:Nthr
+            Threads.@spawn while true
+                ct = Threads.atomic_add!(counter, 1)
+                ct > length(validinds) && break
+                i,j,k,l = validinds[ct]
+                C = pushleft(Hup.ts[site].m[i,k],ρ.ts[site],Hdown.ts[site].m[j,l],ρ′.ts[site],EnvR.A[k,l])
+                lock(Lock)
+                try
+                    tmpEnvR[i,j] = axpy!(1,C,tmpEnvR[i,j])
+                    # sleep(1e-8)
+                catch
+                    rethrow()
+                finally
+                    unlock(Lock)
+                end
+            end
+        end
+    else
+        for (i,j,k,l) in validinds
+            tmpEnvR[i,j] = axpy!(1,pushleft(Hup.ts[site].m[i,k],ρ.ts[site],Hdown.ts[site].m[j,l],ρ′.ts[site],EnvR.A[k,l]),tmpEnvR[i,j])
+        end
+    end
+    return SparseRightEnvironmentTensor(convert(Array{RightEnvironmentTensor}, tmpEnvR))
+end
+
+pushright(::Nothing, A::DenseMPOTensor{4}, h::AbstractLocalOperator, A′::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2}) = contract(A,h,A′,EnvL)
+function pushright(h::LocalOperator{1, 1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+    @tensor tmp[-1;-2] ≔ h.A[1,5] * A.A[4,2,-2,1] * A′.A[-1,5,4,3] * EnvL.A[3,2]
+    return LeftEnvironmentTensor(tmp)
+end
+function pushright(::IdentityOperator{1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+    @tensor tmp[-1;-2] ≔ A.A[4,1,-2,3] * A′.A[-1,3,4,2] * EnvL.A[2,1]
+    return LeftEnvironmentTensor(tmp)
+end
+pushleft(::Nothing, A::DenseMPOTensor{4}, h::AbstractLocalOperator, A′::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2}) = contract(A,h,A′,EnvR)
+function pushleft(h::LocalOperator{1, 1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+    @tensor tmp[-1;-2] ≔ h.A[1,4] * A.A[5,-1,2,1] * A′.A[3,4,5,-2] * EnvR.A[2,3]
+    return RightEnvironmentTensor(tmp)
+end
+function pushleft(::IdentityOperator{1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+    @tensor tmp[-1;-2] ≔ A.A[4,-1,1,3] * A′.A[2,3,4,-2] * EnvR.A[1,2]
+    return RightEnvironmentTensor(tmp)
+end
+##
+function pushleft(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+    @tensor x[-1;-2] ≔ ht.A[1,6] * objt.A[2,-1,3,1] * hb.A[5,2] * objb.A[4,6,5,-2] * EnvR.A[3,4]
+    return RightEnvironmentTensor(x)
+end
+
+function pushleft(::IdentityOperator{1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+    # @tensor x[-1;-2] ≔ objt.A[2,-1,3,1] * hb.A[5,2] * objb.A[4,1,5,-2] * EnvR.A[3,4]
+    @tensor x[-1;-2] ≔ objt.A[1,-1,2,4] * hb.A[5,1] * objb.A[3,4,5,-2] * EnvR.A[2,3]
+    return RightEnvironmentTensor(x)
+end
+
+function pushleft(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+    # @tensor x[-1;-2] ≔ ht.A[1,5] * objt.A[2,-1,3,1] * objb.A[4,5,2,-2] * EnvR.A[3,4]
+    @tensor x[-1;-2] ≔ ht.A[1,5] * objt.A[4,-1,2,1] * objb.A[3,5,4,-2] * EnvR.A[2,3]
+    return RightEnvironmentTensor(x)
+end
+
+function pushleft(::IdentityOperator{1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+    @tensor x[-1;-2] ≔ objt.A[3,-1,1,4] * objb.A[2,4,3,-2] * EnvR.A[1,2]
+    return RightEnvironmentTensor(x)
+end
+
 #= TDVP =#
 
 # function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{2}, DenseMPOTensor{2}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})

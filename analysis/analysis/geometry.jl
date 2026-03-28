@@ -87,7 +87,7 @@ isinside(target::Tuple,boundary::Vector;basis = KBASIS2,kwargs...) = isinside(co
 
 v2m(lsv::Vector) = hcat(collect.(lsv)...)
 
-function vrange(lsv,N)
+function vrange(lsv::Vector,N::Int64)
     Ls = [norm(lsv[i+1] .- lsv[i]) for i in 1:length(lsv)-1]
     Ns = Int.(round.(N*Ls/sum(Ls);digits=0))
     rnode = vcat(0,[sum(Ls[1:i]) for i in eachindex(Ls)])

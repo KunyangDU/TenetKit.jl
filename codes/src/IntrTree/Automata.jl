@@ -92,7 +92,8 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
         tempMPO = Vector{SparseMPOTensor}(undef,L)
 
         # idtensor = getIdTensor(Root.children[1].children[1].A)
-        idtensor = getIdTensor(Root.children[1].A)
+        # idtensor = getIdTensor(Root.children[1].A)
+        idtensor = getIdTensor(first(Leaves(Root)).A)
 
         lastnode = Dict(
             "leaves" => [],

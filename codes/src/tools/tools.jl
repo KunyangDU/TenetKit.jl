@@ -27,14 +27,6 @@ function diag(A::AbstractMatrix)
     return [A[i,i] for i in 1:min(size(A)...)]
 end
 
-function vonNeumann(S::AbstractTensorMap{<:ElementarySpace,1,1})
-    _tmptrace(x) = @tensor x[1,1]
-    d = sqrt(_tmptrace(S*S'))
-    @assert d != 0
-    A = S/d |> x -> x*x'
-    return real(_tmptrace(-A*log(A)))
-end
-
 _maxdim(obj::Union{DenseMPS,DenseMPO}) = _maxdim(obj.ts)
 _maxdim(obj::Vector{MPSTensor}) = maximum(map(x -> dims(x) |> y -> max(y[1][1],y[2][1]),obj))
 _maxdim(obj::Vector{DenseMPOTensor}) = maximum(map(x -> dims(x) |> y -> max(y[1][2],y[2][1]),obj))

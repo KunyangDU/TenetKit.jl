@@ -50,4 +50,14 @@ function setdefault!(env::Environment{2};kwargs...)
     end
 end
 
+function setdefault!(Env::Environment{4})
+    if issparse(Env.layer[1]) && issparse(Env.layer[3])
+        ρ1 = Env.layer[2]
+        ρ2′ = Env.layer[4]
+        tmpL = (isometry(space(ρ2′.ts[1])[4]', space(ρ1.ts[1])[2]))
+        tmpR = (isometry(space(ρ1.ts[end])[3]', space(ρ2′.ts[end])[1]))
+        Env.envs[1] = SparseLeftEnvironmentTensor([tmpL;;])
+        Env.envs[end] = SparseRightEnvironmentTensor([tmpR;;])
+    end
+end
 

@@ -2,8 +2,8 @@ using FiniteLattices,CairoMakie
 include("../analysis/analysis.jl")
 
 
-Lx = 5
-Ly = 4
+Lx = 3
+Ly = 6
 Latt = ZZHoneyComb(Lx,Ly)  
 figsize = (width = 40*Lx*3,height = 40*(Ly+1/2)*sqrt(3))
 fig = Figure()

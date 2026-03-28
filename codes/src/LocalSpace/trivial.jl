@@ -119,6 +119,7 @@ const S₊ = let
     MatOp = diagm(1 => sqrt(2)*[1,1])
     TensorMap(MatOp,PhySpace,PhySpace)
 end
+
 const S₋ = S₊'
 const Sx = (S₊ + S₋) / 2
 const Sy = (S₊ - S₋) / 2im 
@@ -130,6 +131,9 @@ const S2 = TensorMap(diagm(ones(3))*2,PhySpace,PhySpace)
 const Sx2 = Sx*Sx 
 const Sy2 = Sy*Sy 
 const Sz2 = Sz*Sz
+
+const Sc = (Sx + Sy + Sz) / sqrt(3)
+const Sc2 = Sc*Sc
 
 const SxSy = Sx,Sy
 const SySx = Sy,Sx

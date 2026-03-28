@@ -126,6 +126,8 @@
 # end
 
 function calObs!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
+
+    get(kwargs,:isdisk, false) ? (global NODE_DATA_PATH = mktempdir(".")) : (global NODE_DATA_PATH = nothing)
     
     if get_num_threads_julia() ≤ 2
         to = _calObs_serial!(Obs,obj;kwargs...)
@@ -140,16 +142,74 @@ function calObs!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
 
     get(kwargs,:destroy,true) && (Obs.node = nothing)
 
+    !isnothing(NODE_DATA_PATH) && rm(NODE_DATA_PATH)
+
     return Obs.values
 end
 
 calObs!(Obs::Observable, Env::Environment; kwargs...) = calObs!(Obs.node,Env.layer[1];kwargs...)
 
 
+# function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
+#     nworker = get(kwargs,:nworker,get_num_threads_julia() - 1)
+#     cachesize =  get(kwargs,:cachesize,4*nworker)
+#     showtimes =  get(kwargs,:showtimes, 20)
+
+#     to = TimerOutput()
+
+#     ch = Channel{Union{AbstractObservableTreeNode,String}}(cachesize)
+#     ch_swap = Channel{AbstractObservableTreeNode}(Inf)
+#     ch_info = Channel{Tuple{Int64,TimerOutput}}(Inf)
+
+#     Threads.@spawn while isopen(ch)
+#         if Base.n_avail(ch) < div(cachesize,2) && isready(ch_swap)
+#             put!(ch,take!(ch_swap))
+#         else
+#             sleep(0.01)
+#         end
+#     end
+
+#     task_work = map(1:nworker) do _
+#         Threads.@spawn while isopen(ch)
+#             info = _calObs_work!(obj,ch,ch_swap)
+#             put!(ch_info,info)
+#         end
+#     end
+
+#     @timeit to "put!" put!(ch,Obs.node)
+
+#     let remain = 0
+#         map(x -> (remain += 1),Leaves(Obs.node))
+#         total = remain
+#         showspacing::Int64 = cld(total, showtimes)
+#         while remain > 0
+#             for task in task_work
+#                istaskfailed(task) && fetch(task)
+#             end
+#             info = take!(ch_info)
+#             remain -= info[1]
+#             merge!(to,info[2])
+#             if remain % showspacing == 0
+#                 show(to,title = "$(total - remain)/$(total)")
+#                 print("\n")
+#                 flush(stdout)
+#             end
+#         end
+#     end
+
+#     map([ch, ch_swap, ch_info]) do CH
+#         @assert !isready(CH)
+#         close(CH)
+#     end
+
+#     return to
+# end
+
 function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
     nworker = get(kwargs,:nworker,get_num_threads_julia() - 1)
     cachesize =  get(kwargs,:cachesize,4*nworker)
     showtimes =  get(kwargs,:showtimes, 20)
+    isdisk = get(kwargs,:isdisk, false)
 
     to = TimerOutput()
 
@@ -157,6 +217,8 @@ function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwarg
     ch_swap = Channel{AbstractObservableTreeNode}(Inf)
     ch_info = Channel{Tuple{Int64,TimerOutput}}(Inf)
 
+    println("initialization finish, begin to calculate Observables.")
+    flush(stdout)
     Threads.@spawn while isopen(ch)
         if Base.n_avail(ch) < div(cachesize,2) && isready(ch_swap)
             put!(ch,take!(ch_swap))
@@ -167,7 +229,7 @@ function _calObs_threading!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwarg
 
     task_work = map(1:nworker) do _
         Threads.@spawn while isopen(ch)
-            info = _calObs_work!(obj,ch,ch_swap)
+            info = _calObs_work!(obj,ch,ch_swap;isdisk = isdisk)
             put!(ch_info,info)
         end
     end
@@ -211,6 +273,7 @@ function _calObs_serial!(Obs::Observable,obj::Union{DenseMPO,DenseMPS};kwargs...
         @timeit to "update!" _update_node!(task,obj)
         if isempty(task.children)
             task.Leave.value = real(_scalar(task.Env))
+            # task.Leave.value = (_scalar(task.Env))
             Tuple!(task.Leave)
             task.Env = nothing
         else
@@ -225,30 +288,40 @@ function _calObs_serial!(Obs::Observable,obj::Union{DenseMPO,DenseMPS};kwargs...
     return to
 end
 
-function _calObs_work!(obj::Union{DenseMPO,DenseMPS},ch::Channel,ch_swap::Channel)
+function _calObs_work!(obj::Union{DenseMPO,DenseMPS},ch::Channel,ch_swap::Channel;isdisk::Bool = false)
     count = 0
     to = TimerOutput()
-    task = AbstractObservableTreeNode[]
+    task = []
     @timeit to "take!" push!(task,take!(ch))
     while !isempty(task)
         let p = pop!(task)
-            @timeit to "update!" _update_node!(p,obj)
+            @timeit to "update!" p = _update_node!(p,obj)
 
             if isempty(p.children)
                 p.Leave.value = real(_scalar(p.Env))
+                # p.Leave.value = (_scalar(p.Env))
                 Tuple!(p.Leave)
                 p.Env = nothing
                 # p.value = real(_scalar(p.Env))
                 count += 1
             else
                 for node in p.children 
-                    node.Env = p.Env
+                    if isdisk
+                        (filepath, io) = mktemp(NODE_DATA_PATH)
+                        serialize(io, p.Env)
+                        close(io)
+                        node.Env = filepath
+                    else
+                        node.Env = p.Env
+                    end
+                    
                     if length(task) < 1
                         push!(task,node)
                     else
                         @timeit to "put!" put!(ch_swap,node)
                     end
                 end
+
             end
             p.Env = nothing
         end
@@ -264,8 +337,15 @@ function _update_node!(node::AbstractObservableTreeNode,obj::Union{DenseMPO,Dens
             LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
         end
     else
+        if typeof(node.Env) <: String
+            filepath = node.Env
+            node.Env = deserialize(filepath)
+            rm(filepath)
+        end
         node.Env = contract(obj.ts[site],node.A,obj.ts[site]',node.Env)
     end
+
+    return node
 end
 
 function _update_node!(node::CompositeObservableTreeNode{2},obj::Union{DenseMPO,DenseMPS})
@@ -277,10 +357,24 @@ function _update_node!(node::CompositeObservableTreeNode{2},obj::Union{DenseMPO,
             LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
         end
     else
+        if typeof(node.Env) <: String
+            filepath = node.Env
+            node.Env = deserialize(filepath)
+            rm(filepath)
+        end
         # remove strength dependence
         node.Env = (isnan(node.A[1].strength) ? 1 : node.A[1].strength) * (isnan(node.A[2].strength) ? 1 : node.A[2].strength) * pushright(node.A[1], obj.ts[site],node.A[2], obj.ts[site]',node.Env)
     end
+    return node
 end
+
+
+# function _update_node!(filepath::String,obj::Union{DenseMPO,DenseMPS})
+#     node = deserialize(filepath)
+#     rm(filepath)
+#     return _update_node!(node, obj)
+# end
+
 
 function Base.Dict(Obs::Observable)
     data = Dict{Tuple,Dict}()

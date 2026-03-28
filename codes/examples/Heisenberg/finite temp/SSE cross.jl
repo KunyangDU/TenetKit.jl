@@ -4,10 +4,9 @@ include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
-ObservableTreeNode
 D = 2^7
 # for Ly in 4:2:20,Lx in Ly:2:20 
-Lx = 14
+Lx = 10
 Ly = 1
 
 Latt = YCSqua(Lx,Ly)
@@ -17,7 +16,6 @@ H = 1
 params = (J=J, )
 
 H =  let Root = InteractionTreeNode(), LocalSpace=TrivialSpinOneHalf
-    
     
     for pair in neighbor(Latt)
         addIntr!(Root,(LocalSpace.S₊, LocalSpace.S₋),pair,("S₊","S₋"),(false,false),J/2,nothing)
@@ -60,36 +58,42 @@ H
 # end
 
 
-@time root = let
-    rootup = InteractionTreeNode()
-    rootdown = InteractionTreeNode()
+@time lsroot = let
+    lsroot = CompositeObservableTreeNode[]
+    
     node_replace!(x,obj) = let 
         x.A = x.A*obj.A - obj.A*x.A 
         x.name = "[$(x.name),$(obj.name)]"
     end
 
-    for i in 1:4
+    for i in 14
+        rootcp = CompositeObservableTreeNode()
+        rootup = InteractionTreeNode()
         addIntr!(rootup,TrivialSpinOneHalf.S₊,i,"S₊",false,1,nothing)
         S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
-        rootc = commutate(H,S₋)
-        # @show rootc
-        merge!(rootdown,rootc)
+        rootdown = commutate(H,S₋)
+        tmpr = CompositeObservableTreeNode((rootup,rootdown))
+        buildtree!(tmpr)
+        merge!(rootcp,tmpr)
+        push!(lsroot,cutparent!(rootcp.children[1]))
     end
-        
-    root = CompositeObservableTreeNode((rootup,cutparent!(rootdown.children[1])))
-    # root.name =  [[],[]]
-    buildtree!(root)
+    lsroot
 end
-# Base.summarysize(root)/1024/1024
+# @show Base.summarysize(lsroot)/1024/1024
 # InteractionTreeNode
-treesize(root)
+# treesize(root)
+# root
 
 @load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 
 ρ = lsρ[end]
+for root in [lsroot[end],]
 Obs = Observable(root)
-calObs!(Obs,ρ;cachesize =  get_num_threads_julia() - 1, nworker = 1)
-
+# for _ in 1:size(Latt)
+calObs!(Obs,ρ;
+# cachesize =  2(get_num_threads_julia() - 1), nworker = get_num_threads_julia() - 1,
+destroy = false)
+end
 # EnvL = LeftEnvironmentTensor(isometry(ℂ^1,ℂ^1))
 # root.Env = EnvL
 # to = TimerOutput()

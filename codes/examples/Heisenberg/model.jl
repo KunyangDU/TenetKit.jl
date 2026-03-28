@@ -1,126 +1,5 @@
 
 
-# function SU2M2(Latt::AbstractLattice)
-#     LocalSpace = SU₂Spin
-
-#     Root = InteractionTreeNode()
-
-#     for i in 1:size(Latt),j in i+1:size(Latt)
-#         addIntr!(Root,LocalSpace.SS,(i,j),("S","S"),2,nothing)
-#     end
-
-#     for i in 1:size(Latt)
-#         addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
-#     end
-    
-#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-# end
-
-# function U1M2(Latt::AbstractLattice)
-#     LocalSpace = U₁Spin
-
-#     Root = InteractionTreeNode()
-
-#     for i in 1:size(Latt),j in i+1:size(Latt)
-#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
-#         addIntr!(Root,LocalSpace.S₊S₋,(i,j),("S₊","S₋"),1,nothing)
-#         addIntr!(Root,LocalSpace.S₋S₊,(i,j),("S₋","S₊"),1,nothing)
-#     end
-
-#     for i in 1:size(Latt)
-#         addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
-#     end
-    
-#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-# end
-
-# function U1Mz(Latt::AbstractLattice)
-#     LocalSpace = U₁Spin
-
-#     Root = InteractionTreeNode()
-
-#     # for i in 1:size(Latt),j in i+1:size(Latt)
-#     #     addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
-#     #     addIntr!(Root,LocalSpace.S₊S₋,(i,j),("S₊","S₋"),1,nothing)
-#     #     addIntr!(Root,LocalSpace.S₋S₊,(i,j),("S₋","S₊"),1,nothing)
-#     # end
-
-#     for i in 1:size(Latt)
-#         addIntr!(Root,LocalSpace.Sz,i,"Sz",1,nothing)
-#     end
-    
-#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-# end
-
-# function U1Mz2(Latt::AbstractLattice)
-#     LocalSpace = U₁Spin
-
-#     Root = InteractionTreeNode()
-
-#     for i in 1:size(Latt),j in i+1:size(Latt)
-#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)
-#     end
-
-#     for i in 1:size(Latt)
-#         addIntr!(Root,LocalSpace.Sz2,i,"Sz2",1,nothing)
-#     end
-    
-#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-# end
-
-# function TrivialM2(Latt::AbstractLattice)
-#     LocalSpace = TrivialSpinOneHalf
-
-#     Root = InteractionTreeNode()
-
-#     for i in 1:size(Latt),j in i+1:size(Latt)
-#         addIntr!(Root,LocalSpace.SxSx,(i,j),("Sx","Sx"),2,nothing)
-#         addIntr!(Root,LocalSpace.SySy,(i,j),("Sy","Sy"),2,nothing)
-#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
-#     end
-
-#     for i in 1:size(Latt)
-#         addIntr!(Root,LocalSpace.S2,i,"S2",1,nothing)
-#     end
-    
-#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-# end
-
-# function TrivialMz(Latt::AbstractLattice)
-#     LocalSpace = TrivialSpinOneHalf
-
-#     Root = InteractionTreeNode()
-
-#     # for i in 1:size(Latt),j in i+1:size(Latt)
-#     #     addIntr!(Root,LocalSpace.SxSx,(i,j),("Sx","Sx"),2,nothing)
-#     #     addIntr!(Root,LocalSpace.SySy,(i,j),("Sy","Sy"),2,nothing)
-#     #     addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
-#     # end
-
-#     for i in 1:size(Latt)
-#         addIntr!(Root,LocalSpace.Sz,i,"Sz",1,nothing)
-#     end
-    
-#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-# end
-
-# function TrivialMz2(Latt::AbstractLattice)
-#     LocalSpace = TrivialSpinOneHalf
-
-#     Root = InteractionTreeNode()
-
-#     for i in 1:size(Latt),j in i+1:size(Latt)
-#         addIntr!(Root,LocalSpace.SzSz,(i,j),("Sz","Sz"),2,nothing)    
-#     end
-
-#     for i in 1:size(Latt)
-#         addIntr!(Root,LocalSpace.Sz2,i,"Sz2",1,nothing)
-#     end
-    
-#     return AutomataSparseMPO(InteractionTree(Root),size(Latt))
-# end
-
-
 function PINVEC120(Latt,h)
     Lx,Ly = get_cellsize(Latt) 
     A0 = [0.,1.,0.] * h
@@ -129,9 +8,11 @@ function PINVEC120(Latt,h)
 end
 
 function TrivialHamiltonian(Latt::AbstractLattice;
-    J::Number=1, H::Number = 0, Δ::Number = 1,
+    J::Number=1, Hx::Number = 0, Hy::Number = 0, Hz::Number = 0, Δ::Number = 1,
+    hx::Number = 0,
     pinh::Vector = repeat([zeros(3),],2*get_cellsize(Latt)[2]),
-    pinsites::Vector = vcat(1:get_cellsize(Latt)[2], size(Latt)-get_cellsize(Latt)[2]+1:size(Latt))
+    pinsites::Vector = vcat(1:get_cellsize(Latt)[2], size(Latt)-get_cellsize(Latt)[2]+1:size(Latt)),
+    returnnode::Bool = false,
     )
 
     LocalSpace = TrivialSpinOneHalf
@@ -139,14 +20,19 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     Root = InteractionTreeNode()
     
     for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),J*Δ,nothing)
-        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),J*Δ,nothing)
-        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),J*Δ,nothing)
     end
 
     for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz,i,"Sz",false,-H,nothing)
+        addIntr!(Root,LocalSpace.Sx,i,"Sx",false,-Hx,nothing)
+        addIntr!(Root,LocalSpace.Sy,i,"Sy",false,-Hy,nothing)
+        addIntr!(Root,LocalSpace.Sz,i,"Sz",false,-Hz,nothing)
     end
+
+    addIntr!(Root,LocalSpace.Sx,1,"Sx",false,hx,nothing)
+
 
     if sum(abs.(vcat(pinh...))) != 0
         @assert length(pinh) == length(pinsites) "pin field not compatible"
@@ -157,8 +43,11 @@ function TrivialHamiltonian(Latt::AbstractLattice;
             addIntr!(Root,LocalSpace.Sz,site,"Sz",false,pinh[i][3],nothing)
         end
     end
-
-    return AutomataSparseMPO(Root,size(Latt))  
+    if returnnode
+        return Root
+    else
+        return AutomataSparseMPO(Root,size(Latt))  
+    end
     # return InteractionTree(Root)
 end
 

@@ -28,7 +28,7 @@ dySS = zeros(length(lsk),length(lsω),3)
 for (i,k) in enumerate(lsk)
     @load "$(dataname)/SS/lsSS_$(Lx)x$(Ly)_$(D)_$(params)_$(round.(k;digits = 3))_$(t)_$(Nt).jld2" lsSS
     map(1:3) do x
-        dySS[i,:,x] = [2real.(sum(lsSS[x] .* exp.(1im * lst * ω))) for ω in lsω]
+        dySS[i,:,x] = [2real.(sum(lsSS[x] .* exp.(1im * lst * ω) .* window.(lst/maximum(lst)))) for ω in lsω]
     end
 end
 

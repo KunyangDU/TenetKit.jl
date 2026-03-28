@@ -158,3 +158,65 @@ contract(A::DenseMPOTensor{4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{4},Env
 contract(A::DenseMPOTensor{4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{3}) = contract(EnvL,A,B,C)
 contract(A::DenseMPOTensor{4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{2}) = contract(EnvL,A,B,C)
 
+#= Env4 =#
+
+function contract(EnvL::SparseLeftEnvironmentTensor{2}, Hup::SparseMPOTensor, t::DenseMPOTensor, Hdown::SparseMPOTensor, t′::AdjointMPOTensor, EnvR::SparseRightEnvironmentTensor{2})
+    tmp = 0
+    validinds = filter(x -> !isnothing(Hup.m[x[1],x[3]]) && !isnothing(Hdown.m[x[2],x[4]]), [(i,j,k,l) for i in 1:EnvL.D[1], j in 1:EnvL.D[2], k in 1:EnvR.D[1], l in 1:EnvR.D[2]][:])
+    Nthr = get_num_threads_julia()
+    if Nthr > 1
+        Lock = Threads.ReentrantLock()
+        counter = Threads.Atomic{Int64}(1)
+        Threads.@sync for _ in 1:Nthr
+            Threads.@spawn while true
+                ct = Threads.atomic_add!(counter, 1)
+                ct > length(validinds) && break
+                i,j,k,l = validinds[ct]
+                C = contract(EnvL.A[i,j],Hup.m[i,k], t ,Hdown.m[j,l], t′ ,EnvR.A[k,l])
+                lock(Lock)
+                try
+                    tmp += C
+                catch
+                    rethrow()
+                finally
+                    unlock(Lock)
+                end
+            end
+        end
+    else
+        for (i,j,k,l) in validinds
+            tmp += contract(EnvL.A[i,j],Hup.m[i,k], t ,Hdown.m[j,l], t′ ,EnvR.A[k,l])
+        end
+    end
+    return tmp
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2},ht::LocalOperator{1,1},t::DenseMPOTensor{4},hb::LocalOperator{1,1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[4,3] * ht.A[1,5] * t.A[2,3,7,1] * hb.A[6,2] * t′.A[8,5,6,4] * EnvR.A[7,8]
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2},::IdentityOperator{1},t::DenseMPOTensor{4},hb::LocalOperator{1,1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[3,2] * t.A[1,2,6,4] * hb.A[5,1] * t′.A[7,4,5,3] * EnvR.A[6,7]
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2},ht::LocalOperator{1,1},t::DenseMPOTensor{4},::IdentityOperator{1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[3,2] * ht.A[1,4] * t.A[5,2,6,1] * t′.A[7,4,5,3] * EnvR.A[6,7]
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2},::IdentityOperator{1},t::DenseMPOTensor{4},::IdentityOperator{1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[2,1] * t.A[3,1,5,4] * t′.A[6,4,3,2] * EnvR.A[5,6]
+end
+
+function contract(A::MPSTensor{3}, A′::AdjointMPSTensor{3}, EnvR::RightEnvironmentTensor{2})
+    @tensor tmp[-1;-2] ≔ A.A[-1,3,1] * A′.A[2,-2,3] * EnvR.A[1,2]
+    return RightEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::DenseLeftEnvironmentTensor, A::MPSTensor, B::AdjointMPSTensor, EnvR::DenseRightEnvironmentTensor)
+    return contract(EnvL.A, A, B, EnvR.A)
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2}, A::MPSTensor{3}, A′::AdjointMPSTensor{3}, EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[1,2] * A.A[2,3,4] * A′.A[5,1,3] * EnvR.A[4,5]
+end
+

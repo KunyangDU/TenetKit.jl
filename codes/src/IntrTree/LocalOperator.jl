@@ -26,6 +26,16 @@ mutable struct InteractionTreeLeave{N}
             Z::Union{Nothing,AbstractTensorMap} = nothing)
         return new{1}((A,),(site,),(name,),(fermionic,),strength,Z)
     end
+
+    function InteractionTreeLeave(
+            A::Vector,
+            site::Vector,
+            name::Vector,
+            fermionic::Vector,
+            strength::Number,
+            Z::Union{Nothing,AbstractTensorMap} = nothing)
+        return new{length(A)}(Tuple(A),Tuple(site),Tuple(name),Tuple(fermionic),strength,Z)
+    end
 end
 
 replace!(::Nothing, y::InteractionTreeLeave) = y

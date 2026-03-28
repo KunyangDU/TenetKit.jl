@@ -62,7 +62,7 @@ function plotLatt!(ax::Axis,Latt::AbstractLattice,shift::Vector;kwargs...)
     sitesize = get(kwargs, :sitesize, 16 .* ones(length(selectedsite)))
     sitecolor = get(kwargs, :sitecolor, [:grey for _ in 1:length(selectedsite)])
     sitealpha = get(kwargs, :sitealpha, ones(length(selectedsite)))
-    
+    total_shift = get(kwargs, :total_shift, [0,0])
     
     linewidth = get(kwargs, :linewidth, 2)
     linecolor = get(kwargs, :linecolor, RGBf(0.5, 0.5, 0.5))
@@ -74,10 +74,10 @@ function plotLatt!(ax::Axis,Latt::AbstractLattice,shift::Vector;kwargs...)
             for (i, j) in get(kwargs,:pairs,neighbor(Latt;level = level))
 
                     x = map([i, j]) do i
-                        coordinate(Latt, i)[1]
+                        coordinate(Latt, i)[1] + total_shift[1]
                     end
                     y = map([i, j]) do i
-                        coordinate(Latt, i)[2]
+                        coordinate(Latt, i)[2] + total_shift[2]
                     end
 
                     if abs((coordinate(Latt,i) .- coordinate(Latt,j))[2]) > Ly/2 - 1e-5 
@@ -97,12 +97,12 @@ function plotLatt!(ax::Axis,Latt::AbstractLattice,shift::Vector;kwargs...)
         for (i,s) in enumerate(selectedsite)
                 x, y = coordinate(Latt, s)
 
-                CairoMakie.scatter!(ax, x, y;
+                CairoMakie.scatter!(ax, x + total_shift[1], y + total_shift[2];
                     markersize=sitesize[i],
                     color=sitecolor[i],
                     alpha = sitealpha[i])
         
-                sitelabel && text!(ax, x + 0.05, y + 0.05; text = "$s")
+                sitelabel && text!(ax, x + 0.05 + total_shift[1], y + 0.05 + total_shift[2]; text = "$s")
         end
     end
     
@@ -212,5 +212,16 @@ function arrowz!(ax::Axis3,x,y,z, s; arrowsize=0.386, color=:black, transparency
     lines!(ax,[x,x],[y,y+u], [z,z+v], color=(color,transparency),linewidth = linewidth)
     lines!(ax,[x,x],[y+u,y+u-v5[1]], [z+v,z+v-v5[2]], color=(color,transparency),linewidth = linewidth)
     lines!(ax,[x,x],[y+u,y+u-v4[1]], [z+v,z+v-v4[2]], color=(color,transparency),linewidth = linewidth)
+end
+
+function polyHexagon!(ax::Axis, sites::Vector, colors::Vector;kwargs...)
+    scale = get(kwargs, :scale, 1)
+    alpha = get(kwargs, :alpha, 1)
+    rot_mat = get(kwargs, :rot_mat, [1 0;0 1])
+    for (i,center) in enumerate(sites)
+        poly!(ax,
+        Point2f[Tuple.([rot_mat*[cos(pi/3) sin(pi/3);-sin(pi/3) cos(pi/3)]^i*[0,1]*scale + center for i in 0:5])...], 
+        color = (colors[i],alpha), strokewidth = 0)
+    end
 end
 

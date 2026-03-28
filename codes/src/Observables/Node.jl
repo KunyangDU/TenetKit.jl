@@ -13,7 +13,7 @@ end
 
 mutable struct ObservableTreeNode <: AbstractObservableTreeNode
     A::Union{Nothing,AbstractLocalOperator}
-    Env::Union{Nothing,AbstractEnvironmentTensor}
+    Env::Union{Nothing,AbstractEnvironmentTensor,String}
     parent::Union{Nothing,ObservableTreeNode}
     children::Vector{ObservableTreeNode}
     Leave::Union{Nothing,ObservableTreeLeave}
@@ -43,7 +43,7 @@ mutable struct CompositeObservableTreeNode{N} <: AbstractObservableTreeNode wher
     A::NTuple{N,Any}
     parent::Union{Nothing,CompositeObservableTreeNode}
     children::Vector{CompositeObservableTreeNode}
-    Env::Union{Nothing,LeftEnvironmentTensor}
+    Env::Union{Nothing,LeftEnvironmentTensor,String}
     Leave::Union{Nothing,ObservableTreeLeave}
 
     function CompositeObservableTreeNode(

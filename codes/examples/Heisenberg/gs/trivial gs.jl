@@ -4,12 +4,12 @@ include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^8
+D = 200
 # lsLx = 4:2:12
 # for Lx in lsLx
-Lx = 4
-Ly = 1
-params = (J=1,)
+Lx = 8
+Ly = 4
+params = (J=1, Δ = 1)
 
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -20,7 +20,7 @@ Latt = YCSqua(Lx,Ly)
 end
 
 J = 1
-Δ = 0.5
+Δ = 1
 H = 0
 
 # JE = let LocalSpace = TrivialSpinOneHalf, Root = InteractionTreeNode()
@@ -45,7 +45,7 @@ H = 0
 
 H = TrivialHamiltonian(Latt;params...)
 
-lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12))
+lsEg,lsinfo = DMRG2!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12), Etol = 1e-20, N = 10)
 # @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 # @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 # @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ

@@ -62,3 +62,23 @@ end
 
 update!(obj::Observable) = obj.L = treeheight(obj.node) - 1
 
+function TimerOutputs.merge!(A::AbstractTreeNode, B::AbstractTreeNode, value::Function = nodevalue)
+    ind = findfirst(x -> isequal(value(x), value(B)), A.children)
+    if !isnothing(ind)
+        for c in B.children
+            merge!(A.children[ind], c)
+        end
+    else
+        B′ = deepcopy(B)
+        B′.parent = nothing
+        addchild!(A,B′)
+        return A
+    end
+end
+
+function merge!!(A::AbstractTreeNode, B::AbstractTreeNode, value::Function = nodevalue)
+    map(B.children) do root 
+        merge!(A,root,value)
+    end
+    return A
+end

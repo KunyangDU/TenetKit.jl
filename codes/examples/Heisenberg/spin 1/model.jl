@@ -11,30 +11,30 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     Root = InteractionTreeNode()
     
     for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),J,nothing)
-        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),J,nothing)
-        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),J,nothing)
+        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),J,nothing)
+        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),J,nothing)
     end
 
     for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz,i,"Sz",-H,nothing)
+        addIntr!(Root,LocalSpace.Sz,i,"Sz",false,-H,nothing)
     end
 
     if sum(abs.(vcat(pinh...))) != 0
         @assert length(pinh) == length(pinsites) "pin field not compatible"
         for (i,site) in enumerate(pinsites)
             @show pinh
-            addIntr!(Root,LocalSpace.Sx,site,"Sx",pinh[i][1],nothing)
-            addIntr!(Root,LocalSpace.Sy,site,"Sy",pinh[i][2],nothing)
-            addIntr!(Root,LocalSpace.Sz,site,"Sz",pinh[i][3],nothing)
+            addIntr!(Root,LocalSpace.Sx,site,"Sx",false, pinh[i][1],nothing)
+            addIntr!(Root,LocalSpace.Sy,site,"Sy",false,pinh[i][2],nothing)
+            addIntr!(Root,LocalSpace.Sz,site,"Sz",false,pinh[i][3],nothing)
         end
     end
 
     for site in 1:size(Latt)
-        addIntr!(Root,LocalSpace.Sz2,site,"Sz2",D,nothing)
+        addIntr!(Root,LocalSpace.Sz2,site,"Sz2",false,D,nothing)
     end
 
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))  
+    return AutomataSparseMPO(Root,size(Latt))  
     
 end
 

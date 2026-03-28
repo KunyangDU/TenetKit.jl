@@ -2,8 +2,8 @@ using FiniteLattices,CairoMakie
 
 include("../analysis/analysis.jl")
 
-Lx = 8
-Ly = 6
+Lx = 5
+Ly = 4
 Latt = YCTria(Lx,Ly)
 # pairsx,pairsy = _ShastrySutherPairs(Latt)
 figsize = (width = 80*Lx*sqrt(3)/2,height = 80*(Ly+1))
