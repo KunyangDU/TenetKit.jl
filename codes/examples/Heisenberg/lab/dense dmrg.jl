@@ -2,10 +2,10 @@ using TensorKit
 
 include("../../../src/TenetKit.jl")
 include("../model.jl")
-dataname = "examples/Heisenberg/trivial/data"
+dataname = "examples/Heisenberg/lab/data"
 
-D = 100
-Lx = 64
+D = 20
+Lx = 8
 Ly = 1
 params = (J = 1, Δ = 1, Hx = 0,Hz = 0, hx = 0.0)
 
@@ -19,11 +19,20 @@ end
 
 H = TrivialHamiltonian(Latt;params...)
 
+ρ = let 
+    AuxSpaces = repeat([ℂ^1,], size(Latt)+1)
+    ρ = IdDenseMPO(TrivialSpinOneHalf.PhySpace, AuxSpaces)
+    canonicalize!(ρ,1)
+    ρ
+end
+
+H = densify!(ρ,H;trunc = truncdim(5))
+@save "$(dataname)/H_$(Lx)x$(Ly)_$(D)_$(params).jld2" H
+
 lsEg,lsinfo = DMRG2!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12),N = 100)
 @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 @save "$(dataname)/lsinfo_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsinfo
 @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
-# # end
 
-lsEg
+# end
 

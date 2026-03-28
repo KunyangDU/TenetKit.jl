@@ -39,7 +39,8 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         x₀ = deepcopy(composite(EnvAB.layer[3].ts[site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" t = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u].ts[site:site+1],1:2)...)..., EnvAB.envs[site+2])
-        @timeit localto "SVD" tl, tc, tr, ~ = tsvd(axpy!(α,t,nothing); direction=:center,trunc = Alg.trunc)
+        @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpy!(α,t,nothing); direction=:center,trunc = Alg.trunc)
+        localinfo.truncerr = truncerr
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "push right" begin
@@ -63,7 +64,8 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         x₀ = deepcopy(composite(EnvAB.layer[3].ts[site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" t = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u].ts[site-1:site],1:2)...)..., EnvAB.envs[site+1])
-        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(axpy!(α, t, nothing); direction=:center,trunc = Alg.trunc)
+        @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpy!(α, t, nothing); direction=:center,trunc = Alg.trunc)
+        localinfo.truncerr = truncerr
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "push left" begin
@@ -96,7 +98,8 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         @timeit localto "action" t = action(projH,EnvAB.layer[1].ts[site])
         @timeit localto "orthogonalize" begin
             # tl,tr = leftorth(axpy!(α, t, nothing))
-            tl,tr,ϵ = tsvd(axpy!(α, t, nothing); direction=:right,trunc = Alg.trunc)
+            tl,tr,truncerr = tsvd(axpy!(α, t, nothing); direction=:right,trunc = Alg.trunc)
+            localinfo.truncerr = truncerr
             localinfo.bond = BondInfo(tr)
             tr = contract(tr,EnvAB.layer[3].ts[site+1]')
             EnvAB.layer[3].ts[site:site+1] = adjoint.([tl, tr])
@@ -132,7 +135,8 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         @timeit localto "action" t = action(projH,EnvAB.layer[1].ts[site])
         @timeit localto "orthogonalize" begin
             # tl,tr = rightorth(axpy!(α, t, nothing))
-            tl,tr,ϵ = tsvd(axpy!(α, t, nothing); direction=:left,trunc = Alg.trunc)
+            tl,tr,truncerr = tsvd(axpy!(α, t, nothing); direction=:left,trunc = Alg.trunc)
+            localinfo.truncerr = truncerr
             localinfo.bond = BondInfo(tl)
             tl = contract(EnvAB.layer[3].ts[site-1]',tl)
             EnvAB.layer[3].ts[site-1:site] = adjoint.([tl, tr])

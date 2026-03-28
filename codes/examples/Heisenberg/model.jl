@@ -8,7 +8,7 @@ function PINVEC120(Latt,h)
 end
 
 function TrivialHamiltonian(Latt::AbstractLattice;
-    J::Number=1, Hx::Number = 0, Hy::Number = 0, Hz::Number = 0, Δ::Number = 1,
+    J::Number=1, Hx::Number = 0, Hy::Number = 0, Hz::Number = 0, Δ::Number = 1, hxd::Number = 0.0,
     hx::Number = 0,
     pinh::Vector = repeat([zeros(3),],2*get_cellsize(Latt)[2]),
     pinsites::Vector = vcat(1:get_cellsize(Latt)[2], size(Latt)-get_cellsize(Latt)[2]+1:size(Latt)),
@@ -32,7 +32,7 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     end
 
     addIntr!(Root,LocalSpace.Sx,1,"Sx",false,hx,nothing)
-
+    addIntr!(Root,LocalSpace.Sx^2,1,"Sx2",false,hxd,nothing)
 
     if sum(abs.(vcat(pinh...))) != 0
         @assert length(pinh) == length(pinsites) "pin field not compatible"

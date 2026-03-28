@@ -115,24 +115,27 @@ mutable struct Algebrainfo <: AlgorithmInfo
     bond::BondInfo
     n::Int64
     err::Number
-    Algebrainfo(bond::BondInfo, n::Int64, ϵ::Number) = new(bond,n,ϵ)
-    Algebrainfo(info::Algebrainfo) = new(BondInfo(),info.n,0)
-    Algebrainfo() = new(BondInfo(),0,0)
+    truncerr::Number
+    Algebrainfo(bond::BondInfo, n::Int64, ϵ::Number,truncerr::Number = 0) = new(bond,n,ϵ,truncerr)
+    Algebrainfo(info::Algebrainfo) = new(BondInfo(),info.n,0,0)
+    Algebrainfo() = new(BondInfo(),0,0,0)
 end
 
 mutable struct Algebrasweepinfo{Dir} <: AlgorithmInfo where Dir
     direction::SweepDirection
     bond::BondInfo
     err::Number
-    Algebrasweepinfo(direction::SweepDirection, bond::BondInfo, ϵ::Number) = new{typeof(direction)}(direction, bond, ϵ)
-    Algebrasweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), 0)
+    truncerr::Number
+    Algebrasweepinfo(direction::SweepDirection, bond::BondInfo, ϵ::Number, truncerr::Number = 0) = new{typeof(direction)}(direction, bond, ϵ,truncerr)
+    Algebrasweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), 0, 0)
 end
 
 mutable struct Algebrasiteinfo <: AlgorithmInfo
     bond::BondInfo
     err::Number
-    Algebrasiteinfo(bond::BondInfo, ϵ::Number) = new(bond,ϵ)
-    Algebrasiteinfo() = new(BondInfo(),0)
+    truncerr::Number
+    Algebrasiteinfo(bond::BondInfo, ϵ::Number, truncerr::Number = 0) = new(bond,ϵ,truncerr)
+    Algebrasiteinfo() = new(BondInfo(),0,0)
 end
 
 # function merge(A::DMRGsweepinfo{dir₁},B::DMRGsweepinfo{dir₂}) where {dir₁,dir₂}
@@ -163,6 +166,7 @@ end
 function TimerOutputs.merge!(A::Algebrainfo,B::Algebrasweepinfo{dir}) where dir
     merge!(A.bond, B.bond)
     A.err = B.err
+    A.truncerr = B.truncerr
     dir <: R2L && (A.n += 1)
     return A
 end
@@ -190,6 +194,7 @@ end
 function TimerOutputs.merge!(A::Algebrasweepinfo,B::Algebrasiteinfo)
     merge!(A.bond, B.bond)
     A.err = max(A.err,B.err)
+    A.truncerr = max(A.truncerr,B.truncerr)
     return A
 end
 
@@ -250,7 +255,7 @@ function BondInfo(A::TensorMap{<:ComplexSpace,1,1})
 end
 
 function Base.show(io::IO,info::Algebrainfo)
-    println(io,info.bond,", ProjErr = $(info.err)")
+    println(io,info.bond,", ProjErr = $(info.err), TruncErr = $(info.truncerr)")
 end
 
 function Base.show(io::IO,info::SETTNinfo)
@@ -280,7 +285,7 @@ function Base.show(io::IO,info::SETTNsweepinfo)
 end
 
 function Base.show(io::IO,info::Algebrasweepinfo)
-    println(io,info.bond,", ProjErr = $(info.err)")
+    println(io,info.bond,", ProjErr = $(info.err), TruncErr = $(info.truncerr)")
 end
 
 function Base.show(io::IO,info::BondInfo)

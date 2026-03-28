@@ -67,14 +67,14 @@ function projright0(env::Environment{3};E₀::Number = 0.0)
     return SparseProjectiveHamiltonian(EnvL,env.envs[site+1],E₀)
 end
 
-proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site]),E₀) : nothing
+proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site]),E₀) : DenseProjectiveHamiltonian(env.envs[site:site+1]...,[env.layer[2].ts[site],],E₀)
 
 function proj2(env::Environment{3},site1::Int64,site2::Int64;E₀::Number = 0.0)
-    !issparse(env.layer[2]) && return nothing
+    # !issparse(env.layer[2]) && return nothing
     return site1 < site2 ? projright2(env,site1,E₀) : projleft2(env,site2,E₀)
 end
-projright2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1]),E₀) : nothing
-projleft2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site]),E₀) : nothing
+projright2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1]),E₀) : DenseProjectiveHamiltonian(env.envs[[site,site+2]]...,env.layer[2].ts[site:site+1],E₀)
+projleft2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site]),E₀) : DenseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,env.layer[2].ts[site-1:site],E₀)
 proj2(EnvL::SparseLeftEnvironmentTensor,hl::SparseMPOTensor,hr::SparseMPOTensor,EnvR::SparseRightEnvironmentTensor;E₀::Number = 0.) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO([hl,hr]),E₀)
 
 function proj2(env::Environment{2},site1::Int64,site2::Int64;E₀::Number = 0.0)
@@ -93,7 +93,7 @@ mutable struct DenseProjectiveHamiltonian{N,L} <: AbstractProjectiveHamiltonian
     function DenseProjectiveHamiltonian(EnvL::DenseLeftEnvironmentTensor,
         EnvR::DenseRightEnvironmentTensor,
         H::Array,E₀::Number = 0.0) 
-        return new{3,length(H.ts)}(EnvL,EnvR,H,E₀)
+        return new{3,length(H)}(EnvL,EnvR,H,E₀)
     end
 
     function DenseProjectiveHamiltonian{N,L}(EnvL::DenseLeftEnvironmentTensor,
