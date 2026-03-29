@@ -220,3 +220,48 @@ function densify!(ρ::DenseMPO,H::SparseMPO;kwargs...)
     tol = get(kwargs,:tol,1e-12)
     return mul!(ρ,ρ,H,1,Algebraalgo(SingleSite(),algo,trunc,3,tol))[1]
 end
+
+function orthogonalize!(H::DenseMPOTensor,A::T,A′::T,EnvL::DenseLeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+    C = contract(EnvL.A,A,H) |> x -> x - contract(x,A′)
+    return C
+end
+
+function orthogonalize!(H::DenseMPOTensor,B::T,B′::T,EnvR::DenseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+    C = contract(B,H,EnvR.A) |> x -> x - contract(x,B′)
+    return C
+end
+
+function contract(El::LeftEnvironmentTensor{3},A::MPSTensor{3}, mpo::DenseMPOTensor{4})
+    @tensor tmp[-1 -2;-3 -4] ≔ El.A[-1,3,1] * A.A[1,2,-4] * mpo.A[-2,3,-3,2]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(A::MPSTensor{3}, B::DenseMPOTensor{4}, EnvR::RightEnvironmentTensor{3})
+    @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,3,1] * B.A[-3,-2,2,3] * EnvR.A[1,2,-4]
+    return RightCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvR::RightCompositeEnvironmentTensor{2,4}, B::MPSTensor{3})
+    RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4] ≔ EnvR.A[-1,-2,2,1] * B'.A[1,3,2] * B.A[3,-3,-4])
+end
+
+function contract(EnvR::RightCompositeEnvironmentTensor{2,4}, A::AdjointMPSTensor{3})
+    @tensor tmp[-1 -2;-3] ≔ EnvR.A[-1,-2,2,1] * A.A[1,-3,2] 
+    return RightEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftEnvironmentTensor{3}, EnvR::RightCompositeEnvironmentTensor{2, 4})
+    @tensor tmp[-1,-2;-3] ≔ EnvL.A[-1,2,1] * EnvR.A[1,2,-2,-3]
+    return MPSTensor(tmp)
+end
+
+function contract(EnvL::RightCompositeEnvironmentTensor{2, 4}, Λ::MPSTensor{2})
+    return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2,-3;-4] ≔ Λ.A[-1,1]*EnvL.A[1,-2,-3,-4])
+end
+
+function action(O::DenseProjectiveHamiltonian{3,0}, obj::MPSTensor{2})
+    @tensor x[-1;-2] ≔ O.EnvL.A.A[-1,3,1] * obj.A[1,2] * O.EnvR.A.A[2,3,-2]
+    x = MPSTensor(x)
+    !iszero(O.E₀) && (x = axpy!(-O.E₀, obj, x))
+    return x
+end

@@ -224,8 +224,8 @@ mutable struct CBEenvironment <: AbstractEnvironment
     D_i::Int64
     D_f::Int64
     Λ::Union{AbstractTensorWrapper,Nothing}
-    Lorth::Union{SparseLeftEnvironmentTensor,LeftCompositeEnvironmentTensor,LeftEnvironmentTensor,Nothing}
-    Rorth::Union{SparseRightEnvironmentTensor,RightCompositeEnvironmentTensor,RightEnvironmentTensor,Nothing}
+    Lorth::Union{SparseLeftEnvironmentTensor,LeftCompositeEnvironmentTensor,LeftEnvironmentTensor,DenseLeftEnvironmentTensor,Nothing}
+    Rorth::Union{SparseRightEnvironmentTensor,RightCompositeEnvironmentTensor,RightEnvironmentTensor,DenseRightEnvironmentTensor,Nothing}
 
     # function CBEenvironment(env::Environment{N,L},ind::Int64,D_i::Int64,D_f::Int64) where {N,L}
     #     return new(env,nothing,nothing,nothing,ind,D_i,D_f,N,L)
