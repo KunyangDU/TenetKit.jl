@@ -85,12 +85,15 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(L2R())
             @timeit localto "CBE" cbeto = CBE!(Env, Alg.alg, cbeinfo)
+            normalize!(Env.layer[1].ts[site])
+            normalize!(Env.layer[3].ts[site])
             merge!(localinfo,cbeinfo)
             merge!(localto,cbeto,tree_point = ["CBE"])
         end
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site;E₀ = E₀)
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
+            @show norm(Egv - Env.layer[1].ts[site])
             localinfo.E = E₀ + Eg |> real
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
@@ -120,6 +123,8 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(R2L())
             @timeit localto "CBE" cbeto = CBE!(Env, Alg.alg, cbeinfo)
+            normalize!(Env.layer[1].ts[site])
+            normalize!(Env.layer[3].ts[site])
             merge!(localinfo,cbeinfo)
             merge!(localto,cbeto,tree_point = ["CBE"])
         end
