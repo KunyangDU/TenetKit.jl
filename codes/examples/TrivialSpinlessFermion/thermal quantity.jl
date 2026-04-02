@@ -1,9 +1,9 @@
 using TensorKit
-include("../../src/iMPS.jl")
+include("../../src/TenetKit.jl")
 include("model.jl")
 
 
-Lx = 12
+Lx = 8
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)

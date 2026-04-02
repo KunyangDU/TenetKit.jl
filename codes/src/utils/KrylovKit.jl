@@ -1,4 +1,6 @@
 
+using SpecialFunctions: besseli
+
 # function MPLanczos(O::SparseProjectiveHamiltonian{N}, q1::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
 #     LanczosLevel::Int64;kwargs...) where N
 #     Q = Vector(undef, LanczosLevel)
@@ -125,6 +127,8 @@ end
 function groundEig(O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}},alg::Krylovalgo = DMRGDefaultLanczos;x₀ = _initialMPS(O)) where N
     reset_timer!(get_timer("action"))
     Eg,Ev,info = eigsolve(x -> action(O,x), x₀, 1, :SR, alg.Alg)
+    # Eh,_,_ = eigsolve(x -> action(O,x), randn(x₀), 1, :LR, alg.Alg)
+    # @show Eh,Eg
     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
 end
 
@@ -141,3 +145,98 @@ function evolve!(
     return obj, Lanczosinfo(info)
 end
 
+function evolve!(
+    obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+    O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}}, τ::Number,
+    alg::Chebyshev) where N
+
+    nm = normalize!(obj)
+
+    # estimate spectral bounds via eigsolve
+    lanczos_alg = KrylovKit.Lanczos(krylovdim=16, maxiter=2, tol=1e-4, orth=ModifiedGramSchmidt(), eager=true, verbosity=0)
+    Eg, _, _ = eigsolve(x -> action(O, x), obj, 1, :SR, lanczos_alg)
+    Eh, _, _ = eigsolve(x -> action(O, x), obj, 1, :LR, lanczos_alg)
+    λ_min = real(Eg[1])
+    λ_max = real(Eh[1])
+
+    W     = λ_max - λ_min
+    λ_bar = (λ_max + λ_min) / 2
+    z = τ * W / 2   # argument for modified Bessel functions
+
+    # Chebyshev expansion: exp(-τH) = exp(-τλ_bar) · Σ cₖ Tₖ(H̃)
+    # exp(-zt) = besseli(0,-z) + 2·Σ besseli(k,-z)·Tₖ(t)
+    coeffs = ComplexF64[]
+    push!(coeffs, besseli(0, -z))
+    k = 1
+    while k <= alg.maxiter
+        ak = 2 * besseli(k, -z)
+        push!(coeffs, ak)
+        if abs(ak) < alg.tol && k > abs(z)
+            break
+        end
+        k += 1
+    end
+    m = length(coeffs)
+
+    # H̃ action: (2/W)*H - (2λ_bar/W)*I, maps spectrum to [-1,1]
+    Ht(u) = begin
+        w = action(O, u)
+        # w = (2/W)*w - (2λ_bar/W)*u
+        rmul!(w, 2/W)
+        axpy!(-2λ_bar/W, u, w)
+        return w
+    end
+
+    # three-term Chebyshev recurrence
+    v0 = copy(obj)   # T_0(H̃)|v⟩ = |v⟩
+    v1 = Ht(obj)     # T_1(H̃)|v⟩ = H̃|v⟩
+
+    # result = c0*v0 + c1*v1
+    result = coeffs[1] * v0
+    axpy!(coeffs[2], v1, result)
+
+    for i in 2:(m-1)
+        # T_{i}(H̃)|v⟩ = 2*H̃*T_{i-1} - T_{i-2}
+        v_new = Ht(v1)
+        rmul!(v_new, 2)
+        axpy!(-1, v0, v_new)
+
+        axpy!(coeffs[i+1], v_new, result)
+
+        v0 = v1
+        v1 = v_new
+    end
+
+    # overall factor: exp(-τ * λ_bar)  (τ can be complex for real-time evolution)
+    phase = exp(-τ * λ_bar)
+    rmul!(result, nm * phase)
+
+    obj.A = result.A
+    return obj, m
+end
+
+# function evolve!(
+#     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+#     O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}}, 
+#     τ::Number,
+#     alg::Krylovalgo = TDVPDefaultGMRES) where N
+#     nm = normalize!(obj)
+#     reset_timer!(get_timer("action"))
+#     dt_half = τ / 2.0
+#     # b = obj - dt_half * action(O, obj)
+#     # M = x -> x + dt_half * action(O, x)
+#     # tmp, info = linsolve(M, b, obj, alg.Alg, 1.0, 0.0)
+#     # τ 是实数步长 Δβ
+#     b = obj  # 右侧不再有 (I - H) 项，直接就是初态
+#     M = x -> x + τ * action(O, x) # 左侧算子： (I + τH)
+
+#     # 调用 GMRES (同样需要传入 AI 初猜 obj)
+#     tmp, info = linsolve(M, b, obj, alg.Alg, 1.0, 0.0)
+#     rmul!(tmp, nm)
+#     obj.A = tmp.A
+#     # 示例：根据你的 info 结构调整返回
+#     # info.converged 在 GMRES 中通常是迭代步数
+#     # info.residual 是最后的残差向量
+#     res_norm = norm(info.residual)
+#     return obj, Lanczosinfo(info.converged, info.numops)
+# end

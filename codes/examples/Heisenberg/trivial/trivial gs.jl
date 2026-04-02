@@ -4,8 +4,8 @@ include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/trivial/data"
 
-D = 100
-Lx = 64
+D = 20
+Lx = 12
 Ly = 1
 params = (J = 1, Δ = 1, Hx = 0,Hz = 0, hx = 0.0)
 

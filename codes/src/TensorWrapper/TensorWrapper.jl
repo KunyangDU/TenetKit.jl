@@ -143,6 +143,10 @@ scale!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: A
 zerovector(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = zerovector((t[1].A,t[2]))
 add!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = add!!((t[1].A,t[2].A,t[3],t[4]))
 
+TensorKit.codomain(A::AbstractTensorWrapper) = codomain(A.A)
+TensorKit.domain(A::AbstractTensorWrapper) = domain(A.A)
+Base.eltype(A::AbstractTensorWrapper) = eltype(A.A)
+Base.randn(A::T) where T <: AbstractTensorWrapper = T(TensorMap(randn, eltype(A), codomain(A), domain(A)))
 
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B

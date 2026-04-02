@@ -3,7 +3,7 @@ include("../../src/TenetKit.jl")
 include("model.jl")
 
 dataname = "examples/TrivialSpinlessFermion/data"
-Lx = 6
+Lx = 8
 Ly = 1
 D = 2^7
 

@@ -17,3 +17,12 @@ global TDVPDefaultLanczos = Krylovalgo(KrylovKit.Lanczos(;
      verbosity = 0
 ))
 
+global TDVPDefaultChebyshev = Chebyshev(tol=1e-10, maxiter=500)
+
+# global TDVPDefaultGMRES = Krylovalgo(KrylovKit.GMRES(;
+#      krylovdim = 16,
+#      maxiter = 2,
+#      tol = 1e-8,
+#      orth = ModifiedGramSchmidt(),
+#      verbosity = 0
+# ))
