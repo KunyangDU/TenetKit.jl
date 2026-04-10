@@ -28,7 +28,7 @@ lsβ = vcat(2. .^ (-20:1:-1),1:10)
 ρ = SETTN1!(lsβ[1],H,deepcopy(ρ);trunc = truncdim(2^6))
 Z = normalize!(ρ)^2
 
-lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ, H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12))
+lsρ,lsinfo,lsF,lsE = tanTRG1!(ρ, H, lsβ;lnZ = log(Z),trunc = truncdim(D) & truncbelow(1e-12),solver = Chebyshev())
 
 @save "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 @save "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF

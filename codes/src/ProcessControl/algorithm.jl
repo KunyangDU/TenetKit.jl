@@ -33,10 +33,10 @@ struct DMRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     N::Int64
     Etol::Number
     Stol::Number
-    solver::SolverAlgo
+    solver::AbstractAlgorithm
     GCsweep::Bool 
     GCsite::Bool
-    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, Etol::Number, Stol::Number, solver::SolverAlgo,GCsweep::Bool,GCsite::Bool)
+    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, Etol::Number, Stol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool)
         new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,Etol,Stol,solver,GCsweep,GCsite)
     end
 end
@@ -47,10 +47,10 @@ mutable struct TDVPalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     trunc::TruncationScheme
     τ::Number 
     tol::Number
-    solver::SolverAlgo
+    solver::AbstractAlgorithm
     GCsweep::Bool 
     GCsite::Bool
-    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, τ::Number, tol::Number, solver::SolverAlgo,GCsweep::Bool,GCsite::Bool)
+    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, τ::Number, tol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool)
         new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,τ,tol,solver,GCsweep,GCsite)
     end
 end
@@ -75,6 +75,20 @@ struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     tol::Number
     function Algebraalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme,N::Int64, tol::Number)
         new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol)
+    end
+end
+
+mutable struct LKANalgo{N,M} <: AbstractAlgorithm where {N,M}
+    order::Int64
+    mode::Symbol
+    filepath::String
+    tailname::String
+    solver::SolverAlgo
+    scale::Number
+    algo::SolverAlgo
+    count::Int64
+    function LKANalgo(order::Int64, mode::Symbol, filepath::String, tailname::String, solver::SolverAlgo, scale::Number = 1., algo::SolverAlgo = mode == :dmrg ? DMRGDefaultLanczos : HamiltonianBoundDefaultLanczos, count::Int64 = 0)
+        new{order,mode}(order, mode, filepath, tailname, solver, scale, algo, count)
     end
 end
 

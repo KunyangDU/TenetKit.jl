@@ -127,8 +127,6 @@ end
 function groundEig(O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}},alg::Krylovalgo = DMRGDefaultLanczos;x₀ = _initialMPS(O)) where N
     reset_timer!(get_timer("action"))
     Eg,Ev,info = eigsolve(x -> action(O,x), x₀, 1, :SR, alg.Alg)
-    # Eh,_,_ = eigsolve(x -> action(O,x), randn(x₀), 1, :LR, alg.Alg)
-    # @show Eh,Eg
     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
 end
 
@@ -149,15 +147,12 @@ function evolve!(
     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}}, τ::Number,
     alg::Chebyshev) where N
+    reset_timer!(get_timer("action"))
 
     nm = normalize!(obj)
 
     # estimate spectral bounds via eigsolve
-    lanczos_alg = KrylovKit.Lanczos(krylovdim=16, maxiter=2, tol=1e-4, orth=ModifiedGramSchmidt(), eager=true, verbosity=0)
-    Eg, _, _ = eigsolve(x -> action(O, x), obj, 1, :SR, lanczos_alg)
-    Eh, _, _ = eigsolve(x -> action(O, x), obj, 1, :LR, lanczos_alg)
-    λ_min = real(Eg[1])
-    λ_max = real(Eh[1])
+    λ_min, λ_max = _H_bound(obj,O)
 
     W     = λ_max - λ_min
     λ_bar = (λ_max + λ_min) / 2
@@ -212,7 +207,38 @@ function evolve!(
     rmul!(result, nm * phase)
 
     obj.A = result.A
-    return obj, m
+    return obj, Lanczosinfo(1, m)
+end
+
+function _H_bound(obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+    O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}},
+    lanczos_alg::KrylovKit.KrylovAlgorithm = KrylovKit.Lanczos(krylovdim=16, maxiter=2, tol=1e-4, orth=ModifiedGramSchmidt(), eager=true, verbosity=0)) where N
+    Eg, _, _ = eigsolve(x -> action(O, x), obj, 1, :SR, lanczos_alg)
+    Eh, _, _ = eigsolve(x -> action(O, x), obj, 1, :LR, lanczos_alg)
+    return real(Eg[1]),real(Eh[1])
+end
+
+function evolve!(
+    obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
+    O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}}, τ::Number,
+    alg::LKANalgo) where N
+    nm = normalize!(obj)
+    reset_timer!(get_timer("action"))
+
+    N ≠ 0 && lkan_prepare(obj,O,alg)
+
+    tmp,info = exponentiate(x -> action(O,x), -τ, obj, alg.solver.Alg)
+    rmul!(tmp,nm)
+    obj.A = tmp.A
+    @assert info.residual ≈ 0
+    return obj, Lanczosinfo(info)
+end
+
+function groundEig(O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}},alg::LKANalgo;x₀ = _initialMPS(O)) where N
+    reset_timer!(get_timer("action"))
+    N ≠ 0 && lkan_prepare(x₀,O,alg)
+    Eg,Ev,info = eigsolve(x -> action(O,x), x₀, 1, :SR, alg.algo.Alg)
+    return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
 end
 
 # function evolve!(

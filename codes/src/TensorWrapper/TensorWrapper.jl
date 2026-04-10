@@ -148,6 +148,9 @@ TensorKit.domain(A::AbstractTensorWrapper) = domain(A.A)
 Base.eltype(A::AbstractTensorWrapper) = eltype(A.A)
 Base.randn(A::T) where T <: AbstractTensorWrapper = T(TensorMap(randn, eltype(A), codomain(A), domain(A)))
 
+Base.copy(A::T) where T <: AbstractTensorWrapper = T(copy(A.A))
+
+rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B
 # end
