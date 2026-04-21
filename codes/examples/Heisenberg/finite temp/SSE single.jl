@@ -76,4 +76,5 @@ for (i,ρ) in enumerate(lsρ)
 end
 
 @save "$(dataname)/lsI_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsI
+@show lsI
 end
