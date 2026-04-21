@@ -8,42 +8,41 @@
 逐阶构造局域 Krylov 子空间基底。
 
 返回：
-  total_G           — AbstractTensorMap 列表，长度 N*L+1，每个 token 为 (d,d;d,d)
-  total_basis       — MPSTensor 列表，长度 N*L+1，基底张量 {A, EhA_k, Eh(HA)_k, ...}
-  total_basis_coord — Vector{Float32} 列表，长度 N+1，各命名向量在基底上的坐标
-                        coord[1] = [1,0,...,0]        (:A)
-                        coord[2] = [0,1,...,1,0,...,0] (:HA)
-                        coord[3] = [0,...,0,1,...,1]   (:H2A，N=2 时)
+  total_G     — AbstractTensorMap 列表，长度 N*L+1，每个 token 为 (d,d;d,d)
+  total_basis — MPSTensor 列表，长度 N*L+1，基底张量 {A, EhA_k, Eh(HA)_k, ...}
 """
-function span_basis(obj::Union{MPSTensor,DenseMPOTensor}, O::SparseProjectiveHamiltonian, N::Int64;scale::Number = 1.0)
+function span_basis(obj::Union{MPSTensor,DenseMPOTensor}, O::SparseProjectiveHamiltonian, N::Int64; scale::Number = 1.0)
     total_basis = MPSTensor[]
-    total_G = AbstractTensorMap[]
-    total_basis_coord = Vector[]
+    total_G     = AbstractTensorMap[]
 
     push!(total_basis, obj)
-    push!(total_basis_coord, [1.0,])
     push!(total_G, _identity_G(obj))
 
+    # current_level 存储上一阶的所有基向量（初始为 {A}）
+    # 每阶对 current_level 中的每个向量单独做 sparse_action，
+    # 得到 {H_j b : b ∈ current_level, j ∈ bonds}，即 H_j H_... A。
+    current_level = MPSTensor[obj]
+
     for i in 1:N
-        Gs, Bs = sparse_action(obj, O)
-        obj = sum(Bs)
-        push!(total_G, Gs...)
-        push!(total_basis, Bs...)
-        push!(total_basis_coord, repeat([1.0,], length(Bs)))
+        next_level = MPSTensor[]
+        for b in current_level
+            Gs, Bs = sparse_action(b, O)
+            push!(total_G,     Gs...)
+            push!(total_basis, Bs...)
+            push!(next_level,  Bs...)
+        end
+        current_level = next_level
     end
 
-    total_basis_coord = map(x -> vcat(x...),
-        eachrow([t for _ in eachindex(total_basis_coord), t in total_basis_coord] .*
-                diagm(ones(length(total_basis_coord)))))
-    return total_G, total_basis, total_basis_coord
+    return total_G, total_basis
 end
 
 function sparse_action(obj::MPSTensor, O::SparseProjectiveHamiltonian{1})
-    L = length(O.validinds)
+    L  = length(O.validinds)
     Gs = Vector{AbstractTensorMap}(undef, L)   # token: (d,d;d,d)
     Bs = Vector{MPSTensor}(undef, L)            # basis: (D,d,D)
     for (ind, (i,j)) in enumerate(O.validinds)
-        x = _sparse_action(obj, O.EnvL.A[i], map(x -> x.m[i,j], O.H.ts)..., O.EnvR.A[j])
+        x       = _sparse_action(obj, O.EnvL.A[i], map(x -> x.m[i,j], O.H.ts)..., O.EnvR.A[j])
         Gs[ind] = _sparse_G(x, obj)
         Bs[ind] = _sparse_basis(x)
     end
@@ -100,116 +99,73 @@ function _token_to_vec(G::AbstractTensorMap; is_complex::Bool = false)
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
-# lkan_prepare：单格点样本生成
+# lkan_prepare：单格点样本生成（DMRG 和 TDVP 共用 State Head）
 #
-# 给定当前格点的 MPS 张量 obj 和局域有效哈密顿量 O，构造 NamedTuple 样本。
-# 通过 mode 控制 eigsolve 开销，只计算训练所需的监督信号：
+# 给定当前格点的 MPS 张量 obj 和局域有效哈密顿量 O，构造训练样本 NamedTuple。
 #
-#   mode=:dmrg  — 仅 eigsolve(:SR)，返回 V_new（State Head 监督信号）
-#                  E_spec_lo/hi = NaN32
-#   mode=:tdvp  — eigsolve(:SR) + eigsolve(:LR)，返回 E_spec_lo/hi（Energy Head）
-#                  V_new = Float32[]
-#   mode=:both  — 同上两者，全字段填充（适合一次采集两种训练数据）
+# 返回字段（对应 LKANArraySample 构造器）：
+#   tokens     (token_dim, L+1)    — G tensor 拉平，网络输入（Float32）
+#   Gram       (L+1, L+1)          — ⟨B_k|B_l⟩，ComplexF32 Hermitian 矩阵
+#   V_new      (L+1,)              — ⟨B_k|A_new⟩，ComplexF32 监督标签
+#                                    DMRG：A_new = eigsolve(:SR) 基态（近实数）
+#                                    TDVP：A_target（实时演化，含虚部）
+#   is_complex Bool                — token 是否含虚部
 #
 # 参数：
-#   obj  — 当前格点 MPS 张量
-#   O    — SparseProjectiveHamiltonian（proj1(env, site) 的返回值）
-#   N    — Krylov 阶数（k_order）：1, 2 或 3
-#   mode — :dmrg / :tdvp / :both（默认 :dmrg）
-#   alg  — eigsolve 使用的 Krylov 算法
+#   obj      — 当前格点 MPS 张量
+#   O        — SparseProjectiveHamiltonian（proj1(env, site) 的返回值）
+#   N        — Krylov 阶数（k_order）：1, 2 或 3
+#   A_target — 监督标签张量（默认 nothing → 自动 eigsolve(:SR)，即 DMRG 模式）
+#              传入时直接用于计算 V_new，跳过 eigsolve（TDVP 相位修正后使用）
+#   alg      — eigsolve 使用的 Krylov 算法（A_target=nothing 时有效）
 # ─────────────────────────────────────────────────────────────────────────────
 function lkan_prepare(obj::MPSTensor, O::SparseProjectiveHamiltonian, N::Int;
-                      mode::Symbol = :dmrg,
-                      alg          = HamiltonianBoundDefaultLanczos,
-                      scale::Number = 1.)
-    @assert mode in (:dmrg, :tdvp, :both) "mode 须为 :dmrg、:tdvp 或 :both"
+                      A_target  = nothing,
+                      alg       = HamiltonianBoundDefaultLanczos,
+                      scale::Number    = 1.,
+                      tau_step::Float64 = 0.0)   # 单步实时步长 τ/2（正实数）
 
     # ── 1. 构造 Krylov 子空间基底 ───────────────────────────────────────────
-    total_G, total_basis, total_basis_coord = span_basis(obj, O, N)
+    total_G, total_basis = span_basis(obj, O, N; scale=scale)
     L1 = length(total_basis)   # L+1 = 基底总数
 
-    # ── 2. Gram 矩阵 G[k,l] = Re(⟨B_k|B_l⟩) ────────────────────────────────
-    # 对 Hermitian H，Gram 的虚部反对称，实系数 loss 中自动消除，只存实部
-    Gram = Float32.([real(dot(total_basis[k].A, total_basis[l].A))
-                     for k in 1:L1, l in 1:L1])
-            
-    Heff = zeros(ComplexF32,L1,L1)
-    for l in 1:L1
-        A′ = action(O,total_basis[l])
-        Heff[:,l] = ([dot(total_basis[k].A, A′.A) for k in 1:L1])
-    end
-    # Ritz 值：广义本征值 Heff v = λ S v
-    #
-    # 问题：Krylov 基底 {obj, H·obj, H²·obj,...} 未归一化，范数指数增长，
-    # Gram 矩阵 S 条件数极大，ε·I 正则化不足 → ρ_max 可超出 λ_max（违反 Rayleigh-Ritz）。
-    #
-    # 修复：对 S 做谱分解，截断线性相关方向（小特征值），在显著子空间上
-    # 构造正交归一基 W（W†SW=I），转化为标准特征值问题 → 数值稳定，ρ ∈ [λ_min,λ_max]。
-    S_full  = Hermitian(ComplexF32.([dot(total_basis[k].A, total_basis[l].A)
-                                     for k in 1:L1, l in 1:L1]))
-    F_S     = LinearAlgebra.eigen(S_full)                     # 升序本征值和本征向量
-    σ_vals  = real.(F_S.values)
-    mask    = σ_vals .> maximum(σ_vals) * Float32(1e-6) * L1  # 截断线性相关方向
-    U_S     = F_S.vectors[:, mask]
-    W       = U_S * Diagonal(1f0 ./ sqrt.(σ_vals[mask]))      # W†SW = I
-    H_ortho = Hermitian(W' * Heff * W)
-    ritz_vals = sort(real.(LinearAlgebra.eigen(H_ortho).values))
+    # ── 2. Gram 矩阵 G[k,l] = ⟨B_k|B_l⟩（复数 Hermitian）────────────────────
+    # v3.5：保留完整复数（不再只取 Re），支持实时 TDVP 的虚部监督信号。
+    # Gram 为 ComplexF32 Hermitian 矩阵；对角线（基底模长²）为实数。
+    Gram = ComplexF32.([dot(total_basis[k].A, total_basis[l].A)
+                        for k in 1:L1, l in 1:L1])
+    Heff = ComplexF32.([dot(total_basis[k].A, action(O,total_basis[l]).A)
+                        for k in 1:L1, l in 1:L1])
 
     # ── 3. tokens：将 G tensor 拉平为 Float32 向量 → (token_dim, L+1) ───────
-    # 先扫描全部 G 判断是否有复数 block，再统一格式，避免混批时向量长度不一致
     is_complex = any(g -> eltype(block(g, Trivial())) <: Complex, total_G)
     token_vecs = [_token_to_vec(g; is_complex=is_complex) for g in total_G]
     tokens     = reduce(hcat, token_vecs)   # (token_dim, L+1)
 
-    # ── 4. coords Dict：:A, :HA, :H2A, :H3A ────────────────────────────────
-    coord_keys = [:A, :HA, :H2A, :H3A]
-    coords = Dict{Symbol, Vector{Float32}}(
-        coord_keys[i] => Float32.(total_basis_coord[i]) for i in 1:N+1
-    )
-
-    # ── 5. eigsolve（按 mode 选择）──────────────────────────────────────────
-    V_new     = Float32[]
-    E_spec_lo = NaN32
-    E_spec_hi = NaN32
-
-    if mode == :dmrg || mode == :both
-        # :SR → 基态本征向量，用于 State Head 监督信号 V_new
-        Eg_vals, Eg_vecs, _ = eigsolve(x -> action(O, x), obj, 1, :SR, alg.Alg)
-        A_new  = Eg_vecs[1]
-        V_new  = Float32.([real(dot(total_basis[k].A, A_new.A)) for k in 1:L1])
-        if mode == :both
-            E_spec_lo = Float32(real(Eg_vals[1]))   # :both 时顺带记录下界
-        end
+    # ── 4. 监督标签 V_new[k] = ⟨B_k|A_new⟩（复数）──────────────────────────
+    # v3.5：保留完整复数。实时 TDVP 中 A_new 包含虚部（虚时方向的动力学），
+    # Re 和 Im 均作为监督信号参与损失；DMRG/近实数情况下 Im ≈ 0，自动退化。
+    A_new = if isnothing(A_target)
+        _, Eg_vecs, _ = eigsolve(x -> action(O, x), obj, 1, :SR, alg.Alg)
+        Eg_vecs[1]
+    else
+        A_target
     end
+    V_new = ComplexF32.([dot(total_basis[k].A, A_new.A) for k in 1:L1])
 
-    if mode == :tdvp || mode == :both
-        # :SR → 能谱下界；:LR → 能谱上界
-        if mode == :tdvp   # :both 的 :SR 已在上面运行，避免重复
-            Eg_vals, _, _ = eigsolve(x -> action(O, x), obj, 1, :SR, alg.Alg)
-            E_spec_lo = Float32(real(Eg_vals[1]))
-        end
-        Eh_vals, _, _ = eigsolve(x -> action(O, x), obj, 1, :LR, alg.Alg)
-        E_spec_hi = Float32(real(Eh_vals[1]))
-    end
-
-    # ── 6. 返回纯 NamedTuple（张量侧不依赖 LKANTypes）──────────────────────
-    # ML 侧用 LKANArraySample(nt.tokens, nt.Gram, nt.coords, nt.V_new,
-    #                          nt.E_spec_lo, nt.E_spec_hi; is_complex=nt.is_complex)
+    # ── 5. 返回纯 NamedTuple（张量侧不依赖 LKANTypes）──────────────────────
+    # ML 侧用 LKANArraySample(nt.tokens, nt.Gram, nt.V_new; Heff=nt.Heff, is_complex=nt.is_complex)
+    # Gram/V_new/Heff 为 ComplexF32，构造器自动处理。
     return (tokens     = tokens,
             Gram       = Gram,
-            coords     = coords,
+            Heff       = Heff,
             V_new      = V_new,
-            E_spec_lo  = E_spec_lo,
-            E_spec_hi  = E_spec_hi,
-            is_complex = is_complex,
-            Ritz_vals  = ritz_vals)
+            tau_step   = tau_step,
+            is_complex = is_complex)
 end
 
-function lkan_prepare(obj::MPSTensor, O::SparseProjectiveHamiltonian, alg::LKANalgo)
-    O′ = deepcopy(O)
-    O′.E₀ = 0.0
-    data = lkan_prepare(obj, O′, alg.order; mode = alg.mode, alg = alg.algo, scale = alg.scale)
-    # @show data.E_spec_lo, data.E_spec_hi
+function lkan_prepare(obj::MPSTensor, O::SparseProjectiveHamiltonian, alg::LKANalgo, tau_step::Number)
+    data   = lkan_prepare(obj, O, alg.order; alg=alg.algo, scale=alg.scale, tau_step = abs(tau_step))
     @save "$(alg.filepath)/lkan_data_$(alg.tailname)_$(alg.count).jld2" data
     alg.count += 1
 end

@@ -225,7 +225,7 @@ function evolve!(
     nm = normalize!(obj)
     reset_timer!(get_timer("action"))
 
-    N ≠ 0 && lkan_prepare(obj,O,alg)
+    N ≠ 0 && lkan_prepare(obj,O,alg,τ)
 
     tmp,info = exponentiate(x -> action(O,x), -τ, obj, alg.solver.Alg)
     rmul!(tmp,nm)

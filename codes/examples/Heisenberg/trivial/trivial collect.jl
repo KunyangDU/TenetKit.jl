@@ -10,7 +10,6 @@ D = 2^6
 Lx = 20
 Ly = 1
 params = (J = 1, Δ = 1)
-tailname = "$(Lx)x$(Ly)_$(D)_$(params)"
 
 @load "$(gsdataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(gsdataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
@@ -20,16 +19,21 @@ H = TrivialHamiltonian(Latt;params...)
 
 v₀ = [0,0] * pi
 v₁ = [1,0] * pi
-lsc = 0:0.5
+lsc = [0.4,]
 lsk = [(v₀ + c*(v₁-v₀)) for c in lsc]
 
 t₀ = 0.0
-τ = 0.5
+τ = 0.1
 Nt = 10
 
 xyznames = ["x","y","z"]
 symbs = [:Sx,:Sy,:Sz]
 ψsymbs = [:ψx,:ψy,:ψz]
+
+alg = TDVPalgo(SingleSite(),
+    CBEalgo(dynamicSVD(1.2,-1),DSA(),1,D),
+    truncdim(D) & truncbelow(1e-12),1im * τ/2,1,LKANalgo(2,:tdvp,filepath,tailname,TDVPDefaultLanczos,1/size(Latt),TDVPDefaultLanczos),true,false
+)
  
 
 for k in lsk
@@ -55,10 +59,6 @@ for k in lsk
         end
 
         info = TDVPinfo()
-        alg = TDVPalgo(SingleSite(),
-            CBEalgo(dynamicSVD(1.2,-1),DSA(),1,D),
-            truncdim(D) & truncbelow(1e-12),1im * τ/2,1,LKANalgo(3,:tdvp,filepath,tailname,TDVPDefaultLanczos,1/size(Latt)),true,false
-        )
         @time "initialize environment" begin 
             Env = Environment([ψ′,H,ψ′'])
             initialize!(Env)
