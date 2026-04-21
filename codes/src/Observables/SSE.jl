@@ -145,22 +145,22 @@ function buildtree!(A::CompositeObservableTreeNode)
     return A
 end
 
-function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{<:Number, 4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor x[-1;-2] ≔ ht.A[2,6] * objt.A[1,3,-2,2] * hb.A[5,1] * objb.A[-1,6,5,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
 
-function pushright(::IdentityOperator{1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+function pushright(::IdentityOperator{1}, objt::DenseMPOTensor{<:Number, 4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor x[-1;-2] ≔ objt.A[1,3,-2,2] * hb.A[5,1] * objb.A[-1,2,5,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
 
-function pushright(::IdentityOperator{1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+function pushright(::IdentityOperator{1}, objt::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor x[-1;-2] ≔ objt.A[1,3,-2,2] * objb.A[-1,2,1,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
 
-function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor x[-1;-2] ≔ ht.A[2,5] * objt.A[1,3,-2,2] * objb.A[-1,5,1,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end

@@ -1,203 +1,248 @@
 
 """
-     struct MPSTensor <: AbstractMPSTensor
-          A::AbstractTensorMap
-     end 
-          
-Wrapper type for MPS local tensors.
+     struct MPSTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractMPSTensor
+          A::T
+     end
 
-Convention (' marks codomain): 
+Wrapper type for MPS local tensors.  The first type parameter `S` is the scalar
+(numeric) type shared by the TensorMap and its underlying data matrix.
+
+Convention (' marks codomain):
 
     1' - A - R
-         | \
+         | \\
          2' 3...R-1
 
 In particular, R == 2 for bond tensor.
 
 # Constructors
-     MPSTensor(::AbstractTensorMap) 
+     MPSTensor(::AbstractTensorMap)
+     MPSTensor{S}(::AbstractTensorMap)   # override scalar type; R and TM inferred
 """
-mutable struct MPSTensor{R} <: AbstractMPSTensor 
-    A::AbstractTensorMap
+mutable struct MPSTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractMPSTensor
+    A::T
 
-    function MPSTensor(ts::AbstractTensorMap)
-        return new{rank(ts)}(ts)
+    # Primary: infer everything from the tensor.
+    function MPSTensor(ts::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(ts), rank(ts), TM}(ts)
     end
 
-    function MPSTensor{r}(ts::AbstractTensorMap) where r
-        return new{r}(ts)
+    # Explicitly override the scalar type S; rank and TM are still inferred.
+    function MPSTensor{S}(ts::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, rank(ts), TM}(ts)
     end
 
-    function MPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(fc,codomain,domain)
-        return new{rank(A)}(A)
+    # Identity constructor for fully-parameterized type (needed by typeof(obj)(tm) dispatch).
+    function MPSTensor{S, R, TM}(ts::TM) where {S<:Number, R, TM<:AbstractTensorMap}
+        return new{S, R, TM}(ts)
     end
 
-    function MPSTensor(data::AbstractMatrix,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(data[:],codomain,domain)
-        return new{rank(A)}(A)
+    function MPSTensor(fc::Function, codomain::Union{VectorSpace,ElementarySpace}, domain::Union{VectorSpace,ElementarySpace}; type::Type{<:Number} = scalartype(codomain))
+        A = TensorMap(fc, type, codomain, domain)
+        return new{scalartype(A), rank(A), typeof(A)}(A)
     end
 
-    function MPSTensor(data::AbstractVector,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(data,codomain,domain)
-        return new{rank(A)}(A)
+    function MPSTensor(data::AbstractMatrix, codomain::Union{VectorSpace,ElementarySpace}, domain::Union{VectorSpace,ElementarySpace})
+        A = TensorMap(data[:], codomain, domain)
+        return new{scalartype(A), rank(A), typeof(A)}(A)
+    end
+
+    function MPSTensor(data::AbstractVector, codomain::Union{VectorSpace,ElementarySpace}, domain::Union{VectorSpace,ElementarySpace})
+        A = TensorMap(data, codomain, domain)
+        return new{scalartype(A), rank(A), typeof(A)}(A)
     end
 
 end
-"""
-Wrapper type for ajoint of MPS local tensors.
 
-Convention (' marks codomain): 
+"""
+Wrapper type for adjoint of MPS local tensors.
+
+Convention (' marks codomain):
 
     1 - A - R'
-        | \
+        | \\
         2 3'...(R-1)'
-         
+
 In particular, R == 2 for bond tensor.
 
 # Constructors
-     MPSTensor(::AbstractTensorMap) 
+     AdjointMPSTensor(::AbstractTensorMap)
+     AdjointMPSTensor{S}(::AbstractTensorMap)
 """
-mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor
-    A::AbstractTensorMap
+mutable struct AdjointMPSTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractMPSTensor
+    A::T
 
-    function AdjointMPSTensor(ts::AbstractTensorMap)
-        return new{rank(ts)}(ts)
+    function AdjointMPSTensor(ts::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(ts), rank(ts), TM}(ts)
     end
 
-    function AdjointMPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(fc,codomain,domain)
-        return new{rank(A)}(A)
+    function AdjointMPSTensor{S}(ts::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, rank(ts), TM}(ts)
+    end
+
+    function AdjointMPSTensor{S, R, TM}(ts::TM) where {S<:Number, R, TM<:AbstractTensorMap}
+        return new{S, R, TM}(ts)
+    end
+
+    function AdjointMPSTensor(fc::Function, codomain::Union{VectorSpace,ElementarySpace}, domain::Union{VectorSpace,ElementarySpace}; type::Type{<:Number} = scalartype(codomain))
+        A = TensorMap(fc, type, codomain, domain)
+        return new{scalartype(A), rank(A), typeof(A)}(A)
     end
 
 end
 
 Base.adjoint(t::MPSTensor) = AdjointMPSTensor(t.A')
-Base.adjoint(ts::Vector{MPSTensor}) = convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(t.A') for t in ts])
+Base.adjoint(ts::Vector{<:MPSTensor}) = [AdjointMPSTensor(t.A') for t in ts]
 Base.adjoint(t::AdjointMPSTensor) = MPSTensor(t.A')
-Base.adjoint(ts::Vector{AdjointMPSTensor}) = convert(Vector{MPSTensor},[MPSTensor(t.A') for t in ts])
+Base.adjoint(ts::Vector{<:AdjointMPSTensor}) = [MPSTensor(t.A') for t in ts]
 
 """
 todo {}
     1' - A - R
-         | \
+         | \\
          2' 3'...(R-1)'
 """
-mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor
-    A::AbstractTensorMap
+mutable struct CompositeMPSTensor{S<:Number, N, R, T<:AbstractTensorMap} <: AbstractMPSTensor
+    A::T
 
-    function CompositeMPSTensor(A::AbstractTensorMap)
-        return new{length(codomain(A))-1, rank(A)}(A)
-    end
-    function CompositeMPSTensor{n,r}(A::AbstractTensorMap) where {n,r}
-        return new{n,r}(A)
+    function CompositeMPSTensor(A::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(A), length(codomain(A))-1, rank(A), TM}(A)
     end
 
-    function CompositeMPSTensor(fc::Function, codom, dom)
-        A = TensorMap(fc,codom,dom)
-        return new{length(codomain(A))-1, rank(A)}(A)
+    function CompositeMPSTensor{S}(A::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, length(codomain(A))-1, rank(A), TM}(A)
+    end
+
+    function CompositeMPSTensor{S, N, R, TM}(A::TM) where {S<:Number, N, R, TM<:AbstractTensorMap}
+        return new{S, N, R, TM}(A)
+    end
+
+    function CompositeMPSTensor(fc::Function, codom, dom; type::Type{<:Number} = scalartype(codom))
+        A = TensorMap(fc, type, codom, dom)
+        return new{scalartype(A), length(codomain(A))-1, rank(A), typeof(A)}(A)
     end
 end
 
-mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor
-    A::AbstractTensorMap
+mutable struct AdjointCompositeMPSTensor{S<:Number, N, R, T<:AbstractTensorMap} <: AbstractMPSTensor
+    A::T
 
-    function AdjointCompositeMPSTensor(A::AbstractTensorMap)
-        return new{length(domain(A))-1, rank(A)}(A)
+    function AdjointCompositeMPSTensor(A::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(A), length(domain(A))-1, rank(A), TM}(A)
     end
 
-    function AdjointCompositeMPSTensor{n,r}(A::AbstractTensorMap) where {n,r}
-        return new{n, r}(A)
+    function AdjointCompositeMPSTensor{S}(A::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, length(domain(A))-1, rank(A), TM}(A)
     end
 
-    function AdjointCompositeMPSTensor(fc::Function,codom,dom)
-        A = TensorMap(fc,codom,dom)
-        return new{length(domain(A))-1, rank(A)}(A)
+    function AdjointCompositeMPSTensor{S, N, R, TM}(A::TM) where {S<:Number, N, R, TM<:AbstractTensorMap}
+        return new{S, N, R, TM}(A)
+    end
+
+    function AdjointCompositeMPSTensor(fc::Function, codom, dom; type::Type{<:Number} = scalartype(codom))
+        A = TensorMap(fc, type, codom, dom)
+        return new{scalartype(A), length(domain(A))-1, rank(A), typeof(A)}(A)
     end
 end
 
 Base.adjoint(t::CompositeMPSTensor) = AdjointCompositeMPSTensor(t.A')
 Base.adjoint(t::AdjointCompositeMPSTensor) = CompositeMPSTensor(t.A')
-Base.adjoint(ts::Vector{CompositeMPSTensor}) = convert(Vector{AdjointCompositeMPSTensor},[t' for t in ts])
-Base.adjoint(ts::Vector{AdjointCompositeMPSTensor}) = convert(Vector{CompositeMPSTensor},[t' for t in ts])
+Base.adjoint(ts::Vector{<:CompositeMPSTensor}) = [t' for t in ts]
+Base.adjoint(ts::Vector{<:AdjointCompositeMPSTensor}) = [t' for t in ts]
 
-mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
-    A::AbstractTensorMap
+mutable struct DenseMPOTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractMPOTensor
+    A::T
 
-    function DenseMPOTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+    function DenseMPOTensor(t::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), rank(t), TM}(t)
     end
 
-    function DenseMPOTensor{r}(t::AbstractTensorMap) where r
-        return new{r}(t)
+    function DenseMPOTensor{S}(t::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, rank(t), TM}(t)
     end
-    function DenseMPOTensor(fc::Function,codom,dom)
-        A = TensorMap(fc,codom,dom)
-        return new{rank(A)}(A)
+
+    function DenseMPOTensor{S, R, TM}(t::TM) where {S<:Number, R, TM<:AbstractTensorMap}
+        return new{S, R, TM}(t)
+    end
+
+    function DenseMPOTensor(fc::Function, codom, dom; type::Type{<:Number} = scalartype(codom))
+        A = TensorMap(fc, type, codom, dom)
+        return new{scalartype(A), rank(A), typeof(A)}(A)
     end
 end
 
 
-mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
-    A::AbstractTensorMap
+mutable struct AdjointMPOTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractMPOTensor
+    A::T
 
-    function AdjointMPOTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+    function AdjointMPOTensor(t::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), rank(t), TM}(t)
     end
 
-    function AdjointMPOTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(fc,codomain,domain)
-        return new{rank(A)}(A)
+    function AdjointMPOTensor(fc::Function, codomain::Union{VectorSpace,ElementarySpace}, domain::Union{VectorSpace,ElementarySpace}; type::Type{<:Number} = scalartype(codomain))
+        A = TensorMap(fc, type, codomain, domain)
+        return new{scalartype(A), rank(A), typeof(A)}(A)
     end
 
-    function AdjointMPOTensor{r}(t::AbstractTensorMap) where r
-        return new{r}(t)
+    function AdjointMPOTensor{S}(t::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, rank(t), TM}(t)
+    end
+
+    function AdjointMPOTensor{S, R, TM}(t::TM) where {S<:Number, R, TM<:AbstractTensorMap}
+        return new{S, R, TM}(t)
     end
 end
 
 Base.adjoint(t::DenseMPOTensor) = AdjointMPOTensor(t.A')
 Base.adjoint(t::AdjointMPOTensor) = DenseMPOTensor(t.A')
-Base.adjoint(ts::Vector{DenseMPOTensor}) = convert(Vector{AdjointMPOTensor},[t' for t in ts])
-Base.adjoint(ts::Vector{AdjointMPOTensor}) = convert(Vector{DenseMPOTensor},[t' for t in ts])
+Base.adjoint(ts::Vector{<:DenseMPOTensor}) = [t' for t in ts]
+Base.adjoint(ts::Vector{<:AdjointMPOTensor}) = [t' for t in ts]
 
-mutable struct CompositeMPOTensor{N, R} <: AbstractMPOTensor
-    A::AbstractTensorMap
+mutable struct CompositeMPOTensor{S<:Number, N, R, T<:AbstractTensorMap} <: AbstractMPOTensor
+    A::T
 
-    function CompositeMPOTensor(A::AbstractTensorMap)
-        return new{length(codomain(A))-1, rank(A)}(A)
+    function CompositeMPOTensor(A::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(A), length(codomain(A))-1, rank(A), TM}(A)
     end
 
-    function CompositeMPOTensor{n,r}(A::AbstractTensorMap) where {n,r}
-        return new{n,r}(A)
+    function CompositeMPOTensor{S}(A::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, length(codomain(A))-1, rank(A), TM}(A)
     end
 
-    function CompositeMPOTensor(fc::Function, codom, dom)
-        A = TensorMap(fc,codom,dom)
-        return new{length(codomain(A))-1, rank(A)}(A)
-    end
-end
-
-mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
-    A::AbstractTensorMap
-
-    function AdjointCompositeMPOTensor(A::AbstractTensorMap)
-        return new{length(domain(A))-1, rank(A)}(A)
+    function CompositeMPOTensor{S, N, R, TM}(A::TM) where {S<:Number, N, R, TM<:AbstractTensorMap}
+        return new{S, N, R, TM}(A)
     end
 
-    function AdjointCompositeMPOTensor{n,r}(A::AbstractTensorMap) where {n,r}
-        return new{n,r}(A)
-    end
-
-    function AdjointCompositeMPOTensor(fc::Function,codom,dom)
-        A = TensorMap(fc,codom,dom)
-        return new{length(domain(A))-1, rank(A)}(A)
+    function CompositeMPOTensor(fc::Function, codom, dom; type::Type{<:Number} = scalartype(codom))
+        A = TensorMap(fc, type, codom, dom)
+        return new{scalartype(A), length(codomain(A))-1, rank(A), typeof(A)}(A)
     end
 end
 
-Base.adjoint(t::CompositeMPOTensor) = return AdjointCompositeMPOTensor(t.A')
-Base.adjoint(t::AdjointCompositeMPOTensor) = return CompositeMPOTensor(t.A')
-Base.adjoint(ts::Vector{CompositeMPOTensor}) = return convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
-Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
+mutable struct AdjointCompositeMPOTensor{S<:Number, N, R, T<:AbstractTensorMap} <: AbstractMPOTensor
+    A::T
+
+    function AdjointCompositeMPOTensor(A::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(A), length(domain(A))-1, rank(A), TM}(A)
+    end
+
+    function AdjointCompositeMPOTensor{S}(A::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, length(domain(A))-1, rank(A), TM}(A)
+    end
+
+    function AdjointCompositeMPOTensor{S, N, R, TM}(A::TM) where {S<:Number, N, R, TM<:AbstractTensorMap}
+        return new{S, N, R, TM}(A)
+    end
+
+    function AdjointCompositeMPOTensor(fc::Function, codom, dom; type::Type{<:Number} = scalartype(codom))
+        A = TensorMap(fc, type, codom, dom)
+        return new{scalartype(A), length(domain(A))-1, rank(A), typeof(A)}(A)
+    end
+end
+
+Base.adjoint(t::CompositeMPOTensor) = AdjointCompositeMPOTensor(t.A')
+Base.adjoint(t::AdjointCompositeMPOTensor) = CompositeMPOTensor(t.A')
+Base.adjoint(ts::Vector{<:CompositeMPOTensor}) = [t' for t in ts]
+Base.adjoint(ts::Vector{<:AdjointCompositeMPOTensor}) = [t' for t in ts]
 
 mutable struct SparseMPOTensor{N,M} <: AbstractMPOTensor
     m::Matrix{Union{Nothing, AbstractLocalOperator}}
@@ -206,12 +251,10 @@ mutable struct SparseMPOTensor{N,M} <: AbstractMPOTensor
         return new{size(m)...}(m::Matrix{Union{Nothing,AbstractLocalOperator}})
     end
 
-    function SparseMPOTensor(::Nothing,N::Int64,M::Int64)
-        return new{N,M}(Matrix{Union{Nothing,AbstractLocalOperator}}(nothing,N,M))
+    function SparseMPOTensor(::Nothing, N::Int64, M::Int64)
+        return new{N,M}(Matrix{Union{Nothing,AbstractLocalOperator}}(nothing, N, M))
     end
 end
 
 
 #= ====================== =#
-
-

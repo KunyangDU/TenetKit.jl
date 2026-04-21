@@ -1,10 +1,11 @@
 
 
 
+
 mutable struct SparseMPO{L} <: AbstractMPO
     ts::Vector{SparseMPOTensor}
     D::Vector{NTuple{2,Int64}}
-    
+
     function SparseMPO(ts::Vector{SparseMPOTensor},
         D::Vector{NTuple{2,Int64}})
         return new{length(ts)}(ts,D)
@@ -18,61 +19,68 @@ mutable struct SparseMPO{L} <: AbstractMPO
     function SparseMPO(t::SparseMPOTensor{N,M}) where {N,M}
         D = convert(Vector{NTuple{2,Int64}},[(N,M)])
         ts = convert(Vector{SparseMPOTensor},[t])
-        return new{length(ts)}(ts,D)        
+        return new{length(ts)}(ts,D)
     end
 end
 
-mutable struct DenseMPO{L} <: AbstractMPO
-    ts::Vector{DenseMPOTensor}
+mutable struct DenseMPO{L, Sc<:Union{Float64, ComplexF64}, MT<:AbstractMPOTensor} <: AbstractMPO
+    ts::Vector{MT}
     center::Vector{Int64}
-    
-    function DenseMPO(A::Vector{DenseMPOTensor},center::Vector{Int64})
-        return new{length(A)}(A,center)
+
+    function DenseMPO(A::Vector{MT}, center::Vector{Int64}) where {MT<:AbstractMPOTensor}
+        Sc = scalartype(A[1].A)
+        return new{length(A), Sc, MT}(A, center)
     end
 
-    function DenseMPO(A::Vector{DenseMPOTensor{R}}) where R
-        return new{length(A)}(A,[1,length(A)])
+    function DenseMPO(A::Vector{MT}) where {MT<:AbstractMPOTensor}
+        Sc = scalartype(A[1].A)
+        return new{length(A), Sc, MT}(A, [1,length(A)])
     end
 
-    function DenseMPO(t::DenseMPOTensor)
-        A = convert(Vector{DenseMPOTensor},[t])
-        return new{1}(A,[1,1])        
+    function DenseMPO(t::MT) where {MT<:AbstractMPOTensor}
+        Sc = scalartype(t.A)
+        A  = [t]
+        return new{1, Sc, MT}(A, [1,1])
     end
 
     function DenseMPO(t::Vector)
-        tmp = map(DenseMPOTensor,t)
-        A = convert(Vector{DenseMPOTensor},tmp)
-        return new{length(A)}(A,[1,length(A)])        
+        tmp = map(DenseMPOTensor, t)
+        MT  = eltype(tmp)
+        Sc  = scalartype(tmp[1].A)
+        return new{length(tmp), Sc, MT}(tmp, [1,length(tmp)])
     end
 end
 const DenseMPQ = Union{DenseMPO,DenseMPS}
 
-mutable struct AdjointMPO{L} <: AbstractMPO
-    ts::Vector{AdjointMPOTensor}
+mutable struct AdjointMPO{L, Sc<:Union{Float64, ComplexF64}, MT<:AbstractMPOTensor} <: AbstractMPO
+    ts::Vector{MT}
     center::Vector{Int64}
-    
-    function AdjointMPO(A::Vector{AdjointMPOTensor},center::Vector{Int64})
-        return new{length(A)}(A,center)
+
+    function AdjointMPO(A::Vector{MT}, center::Vector{Int64}) where {MT<:AbstractMPOTensor}
+        Sc = scalartype(A[1].A)
+        return new{length(A), Sc, MT}(A, center)
     end
 
-    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}) where R
-        return new{length(A)}(A,[1,length(A)])
+    function AdjointMPO(A::Vector{MT}) where {MT<:AbstractMPOTensor}
+        Sc = scalartype(A[1].A)
+        return new{length(A), Sc, MT}(A, [1,length(A)])
     end
 
-    function AdjointMPO(t::AdjointMPOTensor)
-        A = convert(Vector{AdjointMPOTensor},[t])
-        return new{1}(A,[1,1])        
+    function AdjointMPO(t::MT) where {MT<:AbstractMPOTensor}
+        Sc = scalartype(t.A)
+        A  = [t]
+        return new{1, Sc, MT}(A, [1,1])
     end
 
     function AdjointMPO(t::Vector{AbstractTensorMap})
-        tmp = map(AdjointMPOTensor,t)
-        A = convert(Vector{AdjointMPOTensor},tmp)
-        return new{length(A)}(A,[1,length(A)])        
+        tmp = map(AdjointMPOTensor, t)
+        MT  = eltype(tmp)
+        Sc  = scalartype(tmp[1].A)
+        return new{length(tmp), Sc, MT}(tmp, [1,length(tmp)])
     end
 end
 
-Base.adjoint(A::DenseMPO{L}) where {L} = AdjointMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
-Base.adjoint(A::AdjointMPO{L}) where {L} = DenseMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
-
+Base.adjoint(A::DenseMPO{L,Sc,MT}) where {L,Sc,MT} = AdjointMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
+Base.adjoint(A::AdjointMPO{L,Sc,MT}) where {L,Sc,MT} = DenseMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
 
 

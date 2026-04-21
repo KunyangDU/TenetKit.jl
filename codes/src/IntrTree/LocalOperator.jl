@@ -1,30 +1,30 @@
 
 
-mutable struct InteractionTreeLeave{N}
+mutable struct InteractionTreeLeave{N, S<:Number}
     A::NTuple{N,AbstractTensorMap}
     site::NTuple{N,Int64}
     name::NTuple{N,String}
     fermionic::NTuple{N,Bool}
-    strength::Number
+    strength::S
     Z::Union{Nothing,AbstractTensorMap}
 
     function InteractionTreeLeave(A::NTuple{N,AbstractTensorMap},
             site::NTuple{N,Int64},
             name::NTuple{N,String},
             fermionic::NTuple{N,Bool},
-            strength::Number,
-            Z::Union{Nothing,AbstractTensorMap} = nothing) where N
+            strength::S,
+            Z::Union{Nothing,AbstractTensorMap} = nothing) where {N, S<:Number}
             @assert issorted(site) "sites not sorted!"
-        return new{N}(A,site,name,fermionic,strength,Z)
+        return new{N,S}(A,site,name,fermionic,strength,Z)
     end
 
     function InteractionTreeLeave(A::AbstractTensorMap,
             site::Int64,
             name::String,
             fermionic::Bool,
-            strength::Number,
-            Z::Union{Nothing,AbstractTensorMap} = nothing)
-        return new{1}((A,),(site,),(name,),(fermionic,),strength,Z)
+            strength::S,
+            Z::Union{Nothing,AbstractTensorMap} = nothing) where {S<:Number}
+        return new{1,S}((A,),(site,),(name,),(fermionic,),strength,Z)
     end
 
     function InteractionTreeLeave(
@@ -32,9 +32,9 @@ mutable struct InteractionTreeLeave{N}
             site::Vector,
             name::Vector,
             fermionic::Vector,
-            strength::Number,
-            Z::Union{Nothing,AbstractTensorMap} = nothing)
-        return new{length(A)}(Tuple(A),Tuple(site),Tuple(name),Tuple(fermionic),strength,Z)
+            strength::S,
+            Z::Union{Nothing,AbstractTensorMap} = nothing) where {S<:Number}
+        return new{length(A),S}(Tuple(A),Tuple(site),Tuple(name),Tuple(fermionic),strength,Z)
     end
 end
 
@@ -55,22 +55,24 @@ function Base.show(::IO, x::InteractionTreeLeave)
 end
 
 
-mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
+mutable struct LocalOperator{R₁,R₂,S<:Number} <: AbstractLocalOperator{R₁,R₂}
     A::Union{Nothing,AbstractTensorMap}
     name::String
     site::Int64
-    strength::Union{Nothing,Number}
+    strength::S
 
     function LocalOperator(A::AbstractTensorMap, name::String, site::Int64)
-        return new{length(codomain(A)),length(domain(A))}(A, name, site, NaN)
+        return new{length(codomain(A)),length(domain(A)),Float64}(A, name, site, NaN)
     end
 
-    function LocalOperator(A::AbstractTensorMap, name::String, site::Int64, strength::Number)
-        return new{length(codomain(A)),length(domain(A))}(A, name, site, strength)
+    function LocalOperator(A::AbstractTensorMap, name::String, site::Int64, strength::S) where {S<:Number}
+        return new{length(codomain(A)),length(domain(A)),S}(A, name, site, strength)
     end
 
     function LocalOperator(Leave::InteractionTreeLeave{1})
-        return new{length(codomain(Leave.A[1])),length(domain(Leave.A[1]))}(Leave.A[1], Leave.name[1], Leave.site[1], Leave.strength[1])
+        A  = Leave.A[1]
+        st = Leave.strength
+        return new{length(codomain(A)),length(domain(A)),typeof(st)}(A, Leave.name[1], Leave.site[1], st)
     end
 end
 
@@ -82,29 +84,29 @@ function Base.show(io::IO,A::LocalOperator)
 end
 
 
-mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
+mutable struct IdentityOperator{R, S<:Number} <: AbstractLocalOperator{0,0}
     A::Union{Nothing, AbstractTensorMap}
     site::Int64
-    strength::Number 
+    strength::S
     name::Union{Nothing,String,Tuple}
-    function IdentityOperator(A::AbstractTensorMap,site::Int64)
-        return new{length(codomain(A))}(nothing, site, NaN ,nothing)
-   end
-    function IdentityOperator(site::Int64, strength::Number = NaN)
-         return new{0}(nothing, site, strength,nothing)
+    function IdentityOperator(A::AbstractTensorMap, site::Int64)
+        return new{length(codomain(A)), Float64}(nothing, site, NaN, nothing)
+    end
+    function IdentityOperator(site::Int64, strength::S = NaN) where {S<:Number}
+        return new{0, S}(nothing, site, strength, nothing)
     end
 
     function IdentityOperator(site::Int64, name::Union{String,Tuple})
-        return new{0}(nothing, site, NaN ,name)
+        return new{0, Float64}(nothing, site, NaN, name)
     end
 
     function IdentityOperator(site::Int64)
-        return new{0}(nothing, site, NaN ,nothing)
+        return new{0, Float64}(nothing, site, NaN, nothing)
     end
 
     function IdentityOperator(A::LocalOperator)
         A′ = getIdTensor(A)
-        return new{length(codomain(A′))}(nothing, deepcopy(A.site), NaN ,nothing)
+        return new{length(codomain(A′)), Float64}(nothing, deepcopy(A.site), NaN, nothing)
     end
 
     function IdentityOperator(A::IdentityOperator)

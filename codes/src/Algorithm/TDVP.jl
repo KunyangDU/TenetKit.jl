@@ -1,10 +1,9 @@
 
 function TDVP1!(Env::Environment{3}, lst::AbstractVector;kwargs...)
 
-    lsobj = Vector(undef,1)
-    lsobj[1] = deepcopy(Env.layer[1])
-    info = TDVPinfo()
-    lsinfo = []
+    lsobj  = Any[deepcopy(Env.layer[1])]
+    info   = TDVPinfo()
+    lsinfo = Vector{TDVPinfo}()
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
     tol = get(kwargs,:tol,1e-4)
@@ -33,10 +32,9 @@ end
 
 function TDVP2!(Env::Environment{3}, lst::AbstractVector;kwargs...)
 
-    lsobj = Vector(undef,1)
-    lsobj[1] = deepcopy(Env.layer[1])
-    info = TDVPinfo()
-    lsinfo = []
+    lsobj  = Any[deepcopy(Env.layer[1])]
+    info   = TDVPinfo()
+    lsinfo = Vector{TDVPinfo}()
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
     tol = get(kwargs,:tol,1e-4)
@@ -274,7 +272,7 @@ function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
 
     lnZ = get(kwargs,:lnZ,0.0)
     info = TDVPinfo(lnZ)
-    lsinfo = []
+    lsinfo = Vector{TDVPinfo}()
 
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
@@ -284,7 +282,7 @@ function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     GCsite = get(kwargs, :GCsite, false)
     alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
 
-    lsobj = []
+    lsobj = Any[]
     lsF = Float64[]
     lsE = Float64[]
 
@@ -293,7 +291,7 @@ function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
         println("t = $(lsβ[i])")
         flush(stdout)
         alg.τ = τ
-        
+
         TDVP!(Env, alg, info)
 
         info.err > alg.tol && break
@@ -307,10 +305,10 @@ function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
 end
 
 function tanTRG1!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
-    
+
     lnZ = get(kwargs,:lnZ,0.0)
     info = TDVPinfo(lnZ)
-    lsinfo = []
+    lsinfo = Vector{TDVPinfo}()
 
     trunc = get(kwargs,:trunc,notrunc())
     solver = get(kwargs,:solver,TDVPDefaultLanczos)
@@ -321,7 +319,7 @@ function tanTRG1!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     GCsite = get(kwargs, :GCsite, false)
     alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
 
-    lsobj = []
+    lsobj = Any[]
     lsF = Float64[]
     lsE = Float64[]
     

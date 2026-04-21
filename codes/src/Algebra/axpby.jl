@@ -201,7 +201,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
     return localto
 end
 
-function axpby!(α::Number, x::CompositeMPOTensor{N₁,R₁}, β::Number, y::CompositeMPOTensor{N₂,R₂}) where {N₁,R₁,N₂,R₂}
+function axpby!(α::Number, x::CompositeMPOTensor{<:Number,N₁,R₁}, β::Number, y::CompositeMPOTensor{<:Number,N₂,R₂}) where {N₁,R₁,N₂,R₂}
     @assert N₁ == N₂ && R₁ == R₂
     y.A = x.A * α + y.A * β
     return y

@@ -76,8 +76,8 @@ function _identity_G(obj::MPSTensor)
     return @tensor G[-1,-2;-3,-4] ≔ h[-1,-3] * obj.A[1,-2,2] * obj.A'[2,1,-4]
 end
 
-_phy_isometry(obj::MPSTensor)      = isometry(space(obj)[2], space(obj)[2])
-_phy_isometry(obj::DenseMPOTensor) = isometry(space(obj)[1], space(obj)[4])
+_phy_isometry(obj::MPSTensor)      = one(scalartype(obj)) * isometry(space(obj)[2], space(obj)[2])
+_phy_isometry(obj::DenseMPOTensor) = one(scalartype(obj)) * isometry(space(obj)[1], space(obj)[4])
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 辅助：token → Float32 向量（无对称性版本，单 Trivial() block）

@@ -1,4 +1,4 @@
-function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
+function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{<:Number, 2},MPSTensor{<:Number, 2}})
     tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
@@ -27,7 +27,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2}
     return SparseLeftEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
+function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{<:Number, 2},MPSTensor{<:Number, 2}})
     tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
@@ -56,7 +56,7 @@ function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2
     return SparseRightEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
+function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{<:Number, 4},AdjointMPSTensor{<:Number, 3}})
     tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
@@ -85,7 +85,7 @@ function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4
     return SparseLeftEnvironmentTensor(tmp)
 end
 
-function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
+function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{<:Number, 4},AdjointMPSTensor{<:Number, 3}})
     tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D[1])
     Nthr = get_num_threads_julia()
     if Nthr > 1
@@ -115,13 +115,13 @@ function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{
 end
 
 function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},
-    Λ::Union{MPSTensor{2},AdjointMPSTensor{3},DenseMPOTensor{2},AdjointMPOTensor{4}})
+    Λ::Union{MPSTensor{<:Number, 2},AdjointMPSTensor{<:Number, 3},DenseMPOTensor{<:Number, 2},AdjointMPOTensor{<:Number, 4}})
     Envorth.A = splice(Envorth,Λ).A
 end
 
 #######################
 
-# function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
+# function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{<:Number, 4}, csite::Int64) where L
 #     site = obj.center[1]
 #     if csite == site + 1
 #         @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,-2,4,-4] * A.A[2,4,1,3] * obj.ts[csite]'.A[1,3,2,-3]
@@ -134,12 +134,12 @@ end
 #     end
 # end
 
-function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
+function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{<:Number, 4}, csite::Int64) where L
     site = obj.center[1]
     obj.ts[site] = splice(obj,A,csite)
 end
 
-function splice(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
+function splice(obj::DenseMPO{L}, A::DenseMPOTensor{<:Number, 4}, csite::Int64) where L
     site = obj.center[1]
     if csite == site + 1
         @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,-2,4,-4] * A.A[2,4,1,3] * obj.ts[csite]'.A[1,3,2,-3]
@@ -152,19 +152,19 @@ function splice(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
     end
 end
 
-function splice(tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}, A::DenseMPOTensor{4}, ::L2R)
+function splice(tl::DenseMPOTensor{<:Number, 4}, tr::DenseMPOTensor{<:Number, 4}, A::DenseMPOTensor{<:Number, 4}, ::L2R)
     @tensor tmp[-1,-2;-3,-4] ≔ tl.A[-1,-2,4,-4] * tr.A[2,4,1,3] * A'.A[1,3,2,-3]
     return DenseMPOTensor(tmp)
 end
 
-function splice(tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}, A::DenseMPOTensor{4}, ::R2L)
+function splice(tl::DenseMPOTensor{<:Number, 4}, tr::DenseMPOTensor{<:Number, 4}, A::DenseMPOTensor{<:Number, 4}, ::R2L)
     @tensor tmp[-1,-2;-3,-4] ≔ tr.A[-1,4,-3,-4] * tl.A[2,1,4,3] * A'.A[-2,3,2,1]
     return DenseMPOTensor(tmp)
 end
 
 #######################
 
-# function splice!(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
+# function splice!(obj::DenseMPS{L}, A::MPSTensor{<:Number, 3}, csite::Int64) where L
 #     site = obj.center[1]
 #     if csite == site + 1
 #         @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[-1,-2,1] * A.A[1,3,2] * obj.ts[csite]'.A[2,-3,3]
@@ -178,7 +178,7 @@ end
 # end
 
 
-function splice(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
+function splice(obj::DenseMPS{L}, A::MPSTensor{<:Number, 3}, csite::Int64) where L
     site = obj.center[1]
     if csite == site + 1
         @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[-1,-2,1] * A.A[1,3,2] * obj.ts[csite]'.A[2,-3,3]
@@ -191,29 +191,29 @@ function splice(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
     end
 end
 
-function splice!(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
+function splice!(obj::DenseMPS{L}, A::MPSTensor{<:Number, 3}, csite::Int64) where L
     site = obj.center[1]
     obj.ts[site] = splice(obj,A,csite)
 end
 
-function splice(tl::MPSTensor{3}, tr::MPSTensor{3}, A::MPSTensor{3}, ::L2R)
+function splice(tl::MPSTensor{<:Number, 3}, tr::MPSTensor{<:Number, 3}, A::MPSTensor{<:Number, 3}, ::L2R)
     @tensor tmp[-1,-2;-3] ≔ tl.A[-1,-2,1] * tr.A[1,3,2] * A'.A[2,-3,3]
     return MPSTensor(tmp)
 end
 
-function splice(tl::MPSTensor{3}, tr::MPSTensor{3}, A::MPSTensor{3}, ::R2L)
+function splice(tl::MPSTensor{<:Number, 3}, tr::MPSTensor{<:Number, 3}, A::MPSTensor{<:Number, 3}, ::R2L)
     @tensor tmp[-1,-2;-3] ≔ tr.A[1,-2,-3] * tl.A[2,3,1] * A'.A[-1,2,3]
     return MPSTensor(tmp)
 end
 
-splice(tl::T, tr::T, A::T, direction::AbstractDirection) where T <: Union{AdjointMPOTensor{4},AdjointMPSTensor{3}}= splice(tl',tr',A',direction)'
+splice(tl::T, tr::T, A::T, direction::AbstractDirection) where T <: Union{AdjointMPOTensor{<:Number, 4},AdjointMPSTensor{<:Number, 3}}= splice(tl',tr',A',direction)'
 
-splice(Envorth::T,A::Union{DenseMPOTensor{2},MPSTensor{2}}) where T <: Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor} = contract(Envorth,A)
+splice(Envorth::T,A::Union{DenseMPOTensor{<:Number, 2},MPSTensor{<:Number, 2}}) where T <: Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor} = contract(Envorth,A)
 
-splice(Envorth::T,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}}) where T <: Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor} = contract(Envorth,A)
+splice(Envorth::T,A::Union{AdjointMPOTensor{<:Number, 4},AdjointMPSTensor{<:Number, 3}}) where T <: Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor} = contract(Envorth,A)
 
 function splice!(Envorth::Union{LeftCompositeEnvironmentTensor,RightCompositeEnvironmentTensor},
-    Λ::Union{MPSTensor{2},AdjointMPSTensor{3},DenseMPOTensor{2},AdjointMPOTensor{4}})
+    Λ::Union{MPSTensor{<:Number, 2},AdjointMPSTensor{<:Number, 3},DenseMPOTensor{<:Number, 2},AdjointMPOTensor{<:Number, 4}})
     Envorth = splice(Envorth,Λ)
 end
 

@@ -41,8 +41,8 @@ end
 
 
 function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
-    lsinfo = []
-    lsE = []
+    lsinfo = Vector{DMRGinfo}()
+    lsE    = Vector{Float64}()
     Sv = nothing
     for i in 1:Alg.N
         info =  DMRGinfo()
@@ -93,7 +93,6 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site;E₀ = E₀)
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
-            @show norm(Egv - Env.layer[1].ts[site])
             localinfo.E = E₀ + Eg |> real
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])

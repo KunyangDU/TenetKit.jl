@@ -1,11 +1,11 @@
 
 
 mutable struct BondInfo <: AbstractInformation
-    Deff::Int64 
+    Deff::Int64
     D::Int64
-    S::Number
-    BondInfo(Deff::Int64,D::Int64,S::Number) = new(Deff,D,S)   
-    BondInfo() = new(0,0,0)
+    S::Float64
+    BondInfo(Deff::Int64, D::Int64, S::Real) = new(Deff, D, Float64(S))
+    BondInfo() = new(0, 0, 0.0)
 end
 
 mutable struct Lanczosinfo <: SolverInfo
@@ -20,122 +20,122 @@ mutable struct DMRGinfo <: AlgorithmInfo
     bond::BondInfo
     solver::SolverInfo
     n::Int64
-    err::Number
+    err::Float64
     E::Vector{Float64}
     S::Vector{Float64}
-    DMRGinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number, E::Vector{Float64}, S::Vector{Float64}) = new(bond,solver,n,ϵ,E,S)
-    DMRGinfo(info::DMRGinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.E,info.S)
-    DMRGinfo() = new(BondInfo(), Lanczosinfo(),0,0,Float64[],Float64[])
+    DMRGinfo(bond::BondInfo, solver::SolverInfo, n::Int64, ϵ::Real, E::Vector{Float64}, S::Vector{Float64}) = new(bond, solver, n, Float64(ϵ), E, S)
+    DMRGinfo(info::DMRGinfo) = new(BondInfo(), Lanczosinfo(), info.n, 0.0, info.E, info.S)
+    DMRGinfo() = new(BondInfo(), Lanczosinfo(), 0, 0.0, Float64[], Float64[])
 end
 
 mutable struct DMRGsweepinfo{Dir} <: AlgorithmInfo where Dir
     direction::SweepDirection
     bond::BondInfo
     solver::SolverInfo
-    err::Number
+    err::Float64
     E::Vector{Float64}
     S::Vector{Float64}
-    DMRGsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number,E::Vector{Float64}, S::Vector{Float64}) = new{typeof(direction)}(direction,bond,solver,ϵ,E,S)
-    DMRGsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0,Float64[],Float64[])
+    DMRGsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Real, E::Vector{Float64}, S::Vector{Float64}) = new{typeof(direction)}(direction, bond, solver, Float64(ϵ), E, S)
+    DMRGsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(), 0.0, Float64[], Float64[])
 end
 
 mutable struct DMRGsiteinfo <: AlgorithmInfo
     bond::BondInfo
     solver::SolverInfo
-    err::Number
+    err::Float64
     E::Float64
     S::Float64
-    DMRGsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Number,E::Vector{Float64}, S::Vector{Float64}) = new(bond,solver,ϵ,E,S)
-    DMRGsiteinfo() = new(BondInfo(), Lanczosinfo(),0,Inf,0)
+    DMRGsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Real, E::Vector{Float64}, S::Vector{Float64}) = new(bond, solver, Float64(ϵ), E, S)
+    DMRGsiteinfo() = new(BondInfo(), Lanczosinfo(), 0.0, Inf, 0.0)
 end
 
 mutable struct CBEinfo{Dir} <: AlgorithmInfo where Dir
     direction::SweepDirection
-    err::Number
-    CBEinfo(direction::SweepDirection,ϵ::Number) = new{typeof(direction)}(direction,ϵ)
-    CBEinfo(direction::SweepDirection) = new{typeof(direction)}(direction,0)
+    err::Float64
+    CBEinfo(direction::SweepDirection, ϵ::Real) = new{typeof(direction)}(direction, Float64(ϵ))
+    CBEinfo(direction::SweepDirection) = new{typeof(direction)}(direction, 0.0)
 end
 
 mutable struct TDVPinfo <: AlgorithmInfo
     bond::BondInfo
     solver::SolverInfo
     n::Int64
-    err::Number
-    lnZ::Number
-    E::Number
+    err::Float64
+    lnZ::Float64
+    E::Float64
     S::Vector{Float64}
-    TDVPinfo(bond::BondInfo, solver::SolverInfo,n::Int64,ϵ::Number,lnZ::Number,E::Number,S::Vector{Float64}) = new(bond,solver,n,ϵ,lnZ,E,S)
-    TDVPinfo(info::TDVPinfo) = new(BondInfo(),Lanczosinfo(),info.n,0,info.lnZ,info.E,info.S)
-    TDVPinfo() = new(BondInfo(), Lanczosinfo(),0,0,0,0,Float64[])
-    TDVPinfo(lnZ::Number) = new(BondInfo(), Lanczosinfo(),0,0,lnZ,0,Float64[])
+    TDVPinfo(bond::BondInfo, solver::SolverInfo, n::Int64, ϵ::Real, lnZ::Real, E::Real, S::Vector{Float64}) = new(bond, solver, n, Float64(ϵ), Float64(lnZ), Float64(E), S)
+    TDVPinfo(info::TDVPinfo) = new(BondInfo(), Lanczosinfo(), info.n, 0.0, info.lnZ, info.E, info.S)
+    TDVPinfo() = new(BondInfo(), Lanczosinfo(), 0, 0.0, 0.0, 0.0, Float64[])
+    TDVPinfo(lnZ::Real) = new(BondInfo(), Lanczosinfo(), 0, 0.0, Float64(lnZ), 0.0, Float64[])
 end
 
 mutable struct TDVPsweepinfo{Dir} <: AlgorithmInfo where Dir
     direction::SweepDirection
     bond::BondInfo
     solver::SolverInfo
-    err::Number
-    E::Number
+    err::Float64
+    E::Float64
     S::Vector{Float64}
-    TDVPsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Number, E::Number, S::Vector{Float64}) = new{typeof(direction)}(direction,bond,solver,ϵ,E,S)
-    TDVPsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),0,0,Float64[])
-    TDVPsweepinfo(direction::SweepDirection,err::Number) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(),err,0,Float64[])
+    TDVPsweepinfo(direction::SweepDirection, bond::BondInfo, solver::SolverInfo, ϵ::Real, E::Real, S::Vector{Float64}) = new{typeof(direction)}(direction, bond, solver, Float64(ϵ), Float64(E), S)
+    TDVPsweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(), 0.0, 0.0, Float64[])
+    TDVPsweepinfo(direction::SweepDirection, err::Real) = new{typeof(direction)}(direction, BondInfo(), Lanczosinfo(), Float64(err), 0.0, Float64[])
 end
 
 mutable struct TDVPsiteinfo <: AlgorithmInfo
     bond::BondInfo
     solver::SolverInfo
-    err::Number
-    E::Number
-    S::Number
-    TDVPsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Number, E::Number, S::Number) = new(bond,solver,ϵ,E,S)
-    TDVPsiteinfo() = new(BondInfo(), Lanczosinfo(),0,0,0)
+    err::Float64
+    E::Float64
+    S::Float64
+    TDVPsiteinfo(bond::BondInfo, solver::SolverInfo, ϵ::Real, E::Real, S::Real) = new(bond, solver, Float64(ϵ), Float64(E), Float64(S))
+    TDVPsiteinfo() = new(BondInfo(), Lanczosinfo(), 0.0, 0.0, 0.0)
 end
 
 mutable struct SETTNinfo <: AlgorithmInfo
     bond::BondInfo
     n::Int64
-    err::Number
-    lnZ::Number
-    SETTNinfo(bond::BondInfo,n::Int64,ϵ::Number,lnZ::Number) = new(bond,n,ϵ,lnZ)
-    SETTNinfo(info::SETTNinfo) = new(BondInfo(),info.n,NaN,NaN)
-    SETTNinfo() = new(BondInfo(),0,NaN,NaN)
+    err::Float64
+    lnZ::Float64
+    SETTNinfo(bond::BondInfo, n::Int64, ϵ::Real, lnZ::Real) = new(bond, n, Float64(ϵ), Float64(lnZ))
+    SETTNinfo(info::SETTNinfo) = new(BondInfo(), info.n, NaN, NaN)
+    SETTNinfo() = new(BondInfo(), 0, NaN, NaN)
 end
 
 mutable struct SETTNsweepinfo <: AlgorithmInfo
     bond::BondInfo
-    err::Number
-    lnZ::Number
-    SETTNsweepinfo(bond::BondInfo, ϵ::Number, lnZ::Number) = new(bond,ϵ,lnZ)
-    SETTNsweepinfo(err::Number) = new(BondInfo(),err,0)
-    SETTNsweepinfo() = new(BondInfo(),0,0)
+    err::Float64
+    lnZ::Float64
+    SETTNsweepinfo(bond::BondInfo, ϵ::Real, lnZ::Real) = new(bond, Float64(ϵ), Float64(lnZ))
+    SETTNsweepinfo(err::Real) = new(BondInfo(), Float64(err), 0.0)
+    SETTNsweepinfo() = new(BondInfo(), 0.0, 0.0)
 end
 
 mutable struct Algebrainfo <: AlgorithmInfo
     bond::BondInfo
     n::Int64
-    err::Number
-    truncerr::Number
-    Algebrainfo(bond::BondInfo, n::Int64, ϵ::Number,truncerr::Number = 0) = new(bond,n,ϵ,truncerr)
-    Algebrainfo(info::Algebrainfo) = new(BondInfo(),info.n,0,0)
-    Algebrainfo() = new(BondInfo(),0,0,0)
+    err::Float64
+    truncerr::Float64
+    Algebrainfo(bond::BondInfo, n::Int64, ϵ::Real, truncerr::Real = 0) = new(bond, n, Float64(ϵ), Float64(truncerr))
+    Algebrainfo(info::Algebrainfo) = new(BondInfo(), info.n, 0.0, 0.0)
+    Algebrainfo() = new(BondInfo(), 0, 0.0, 0.0)
 end
 
 mutable struct Algebrasweepinfo{Dir} <: AlgorithmInfo where Dir
     direction::SweepDirection
     bond::BondInfo
-    err::Number
-    truncerr::Number
-    Algebrasweepinfo(direction::SweepDirection, bond::BondInfo, ϵ::Number, truncerr::Number = 0) = new{typeof(direction)}(direction, bond, ϵ,truncerr)
-    Algebrasweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), 0, 0)
+    err::Float64
+    truncerr::Float64
+    Algebrasweepinfo(direction::SweepDirection, bond::BondInfo, ϵ::Real, truncerr::Real = 0) = new{typeof(direction)}(direction, bond, Float64(ϵ), Float64(truncerr))
+    Algebrasweepinfo(direction::SweepDirection) = new{typeof(direction)}(direction, BondInfo(), 0.0, 0.0)
 end
 
 mutable struct Algebrasiteinfo <: AlgorithmInfo
     bond::BondInfo
-    err::Number
-    truncerr::Number
-    Algebrasiteinfo(bond::BondInfo, ϵ::Number, truncerr::Number = 0) = new(bond,ϵ,truncerr)
-    Algebrasiteinfo() = new(BondInfo(),0,0)
+    err::Float64
+    truncerr::Float64
+    Algebrasiteinfo(bond::BondInfo, ϵ::Real, truncerr::Real = 0) = new(bond, Float64(ϵ), Float64(truncerr))
+    Algebrasiteinfo() = new(BondInfo(), 0.0, 0.0)
 end
 
 # function merge(A::DMRGsweepinfo{dir₁},B::DMRGsweepinfo{dir₂}) where {dir₁,dir₂}
@@ -232,7 +232,7 @@ end
 
 TimerOutputs.merge(A::BondInfo,B::BondInfo) = BondInfo(max(A.Deff, B.Deff), max(A.D,B.D), max(A.S,B.S) )
 
-function update!(A::BondInfo,B::Union{MPSTensor{2},DenseMPOTensor{2}})
+function update!(A::BondInfo,B::Union{MPSTensor{<:Number, 2},DenseMPOTensor{<:Number, 2}})
     merge!(A,BondInfo(B))
 end
 

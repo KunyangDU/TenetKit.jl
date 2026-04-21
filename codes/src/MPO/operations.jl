@@ -1,11 +1,11 @@
 
 
-function TensorKit.leftorth(elm::DenseMPOTensor{4})
+function TensorKit.leftorth(elm::DenseMPOTensor{<:Number, 4})
     Q,R = leftorth(elm.A,(1,2,4),(3,))
     return map(DenseMPOTensor,(permute(Q,(1,2),(4,3)),R))
 end
 
-function TensorKit.leftorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
+function TensorKit.leftorth!(A::DenseMPOTensor{<:Number, 4}, B::DenseMPOTensor{<:Number, 4})
     Q, Rm = leftorth(A)
     @tensor tmp[-1 -2;-3 -4] ≔ Rm.A[-2,1]*B.A[-1,1,-3,-4]
     A.A = Q.A
@@ -16,12 +16,12 @@ function TensorKit.leftorth!(obj::DenseMPO,site::Int64)
     leftorth!(obj.ts[site:site+1]...)
 end
 
-function TensorKit.rightorth(A::DenseMPOTensor{4})
+function TensorKit.rightorth(A::DenseMPOTensor{<:Number, 4})
     L,Q = rightorth(A.A,(2,),(1,3,4))
     return map(DenseMPOTensor,(L,permute(Q,(2,1),(3,4))))
 end
 
-function TensorKit.rightorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
+function TensorKit.rightorth!(A::DenseMPOTensor{<:Number, 4}, B::DenseMPOTensor{<:Number, 4})
     Lm,Q = rightorth(B)
     @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,-2,1,-4]*Lm.A[1,-3]
     A.A = tmp
@@ -32,7 +32,7 @@ function TensorKit.rightorth!(obj::DenseMPO,site::Int64)
     rightorth!(obj.ts[site-1:site]...)
 end
 
-function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
+function TensorKit.tsvd(A::CompositeMPOTensor{<:Number, 2,6}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
     vns = nothing
     U,S,V,ϵ = tsvd(A.A,(2,3,6),(1,4,5);kwargs...)
@@ -58,7 +58,7 @@ function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, k
     end
 end
 
-function TensorKit.tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, index_tuple = ((1,2,4),(3,)), kwargs...)
+function TensorKit.tsvd(A::DenseMPOTensor{<:Number, 4}; direction::Symbol=:center, index_tuple = ((1,2,4),(3,)), kwargs...)
     @assert direction in [:center,:left,:right]
     if direction == :center 
         U,S,V,ϵ = tsvd(A.A,index_tuple...;kwargs...)

@@ -1,4 +1,4 @@
-# function TensorKit.leftorth(elm::MPSTensor{3})
+# function TensorKit.leftorth(elm::MPSTensor{<:Number, 3})
 #     Q,Rm = leftorth(elm.A,(1,2),(3,))
 #     return map(MPSTensor,(Q,Rm))
 # end
@@ -8,11 +8,11 @@
 #     Q,Rm = leftorth(A.A,(1,2),tuple(3:R...))
 #     return Q,Rm
 # end
-TensorKit.leftorth(A::MPSTensor{3}) = map(MPSTensor,leftorth(A.A,(1,2),(3,)))
-TensorKit.leftorth(A::MPSTensor{4}) = map(MPSTensor,leftorth(A.A,(1,2,4),(3,)) |> x -> (permute(x[1],(1,2),(4,3)),x[2]))
+TensorKit.leftorth(A::MPSTensor{<:Number, 3}) = map(MPSTensor,leftorth(A.A,(1,2),(3,)))
+TensorKit.leftorth(A::MPSTensor{<:Number, 4}) = map(MPSTensor,leftorth(A.A,(1,2,4),(3,)) |> x -> (permute(x[1],(1,2),(4,3)),x[2]))
 
 
-function TensorKit.leftorth(A::MPSTensor{3}, B::MPSTensor{3})
+function TensorKit.leftorth(A::MPSTensor{<:Number, 3}, B::MPSTensor{<:Number, 3})
     Q, Rm = leftorth(A)
     @tensor tmp[-1 -2;-3] ≔ Rm.A[-1,1]*B.A[1,-2,-3]
     return Q,MPSTensor(tmp)
@@ -22,7 +22,7 @@ function TensorKit.leftorth!(obj::DenseMPS,site::Int64)
     obj.ts[site:site+1] = collect(leftorth(obj.ts[site:site+1]...))
 end
 
-# function TensorKit.rightorth(A::MPSTensor{3})
+# function TensorKit.rightorth(A::MPSTensor{<:Number, 3})
 #     Lm,Q = rightorth(A.A,(1,),(2,3))
 #     return map(MPSTensor,(Lm,permute(Q,(1,2),(3,))))
 # end
@@ -33,10 +33,10 @@ end
 #     return Lm, Q
 # end
 
-TensorKit.rightorth(A::MPSTensor{3}) = map(MPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[1],permute(x[2],(1,2),(3,)))) 
-TensorKit.rightorth(A::MPSTensor{4}) = map(MPSTensor,rightorth(A.A,(1,),(2,3,4)) |> x -> (x[1],permute(x[2],(1,2),(3,4)))) 
+TensorKit.rightorth(A::MPSTensor{<:Number, 3}) = map(MPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[1],permute(x[2],(1,2),(3,)))) 
+TensorKit.rightorth(A::MPSTensor{<:Number, 4}) = map(MPSTensor,rightorth(A.A,(1,),(2,3,4)) |> x -> (x[1],permute(x[2],(1,2),(3,4)))) 
 
-function TensorKit.rightorth(A::MPSTensor{3}, B::MPSTensor{3})
+function TensorKit.rightorth(A::MPSTensor{<:Number, 3}, B::MPSTensor{<:Number, 3})
     Lm,Q = rightorth(B)
     return MPSTensor(A.A*Lm.A),Q
 end
@@ -47,7 +47,7 @@ end
 
 
 
-function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
+function TensorKit.tsvd(A::CompositeMPSTensor{<:Number, 2, R}; direction::Symbol=:center, kwargs...) where {R}
     @assert direction in [:center,:left,:right]
     vns = nothing
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
@@ -68,7 +68,7 @@ function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, 
     end
 end
 
-function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, index_tuple = ((1,2),(3,)), kwargs...)
+function TensorKit.tsvd(A::MPSTensor{<:Number, 3}; direction::Symbol=:center, index_tuple = ((1,2),(3,)), kwargs...)
     @assert direction in [:center,:left,:right]
     if direction == :center
         U,S,V,ϵ = tsvd(A.A,index_tuple...;kwargs...)

@@ -332,9 +332,10 @@ end
 function _update_node!(node::AbstractObservableTreeNode,obj::Union{DenseMPO,DenseMPS})
     site = node.A.site
     if isnothing(node.Env)
-        node.Env = let 
+        node.Env = let
+            S = scalartype(obj.ts[1])
             AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj.ts[1],obj.ts[1]']))
-            LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
+            LeftEnvironmentTensor(one(S) * isometry(AuxSpaces[1],AuxSpaces[2]))
         end
     else
         if typeof(node.Env) <: String
@@ -352,9 +353,10 @@ function _update_node!(node::CompositeObservableTreeNode{2},obj::Union{DenseMPO,
     @assert node.A[1].site == node.A[2].site
     site = node.A[1].site
     if isnothing(node.Env)
-        node.Env = let 
+        node.Env = let
+            S = scalartype(obj.ts[1])
             AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj.ts[1],obj.ts[1]']))
-            LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
+            LeftEnvironmentTensor(one(S) * isometry(AuxSpaces[1],AuxSpaces[2]))
         end
     else
         if typeof(node.Env) <: String

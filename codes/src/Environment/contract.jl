@@ -4,62 +4,62 @@
 MPS + ENVR
 push left 
 """
-function contract(A::MPSTensor{3},::IdentityOperator{1},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
+function contract(A::MPSTensor{<:Number, 3},::IdentityOperator{1},B::AdjointMPSTensor{<:Number, 3},EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[-1,2,1] * B.A[3,-2,2] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},mpot::LocalOperator{1,1},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
+function contract(A::MPSTensor{<:Number, 3},mpot::LocalOperator{1,1},B::AdjointMPSTensor{<:Number, 3},EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[-1,2,1] * mpot.A[4,2] * B.A[3,-2,4] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},mpot::LocalOperator{2,1},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
+function contract(A::MPSTensor{<:Number, 3},mpot::LocalOperator{2,1},B::AdjointMPSTensor{<:Number, 3},EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1 -2;-3] ≔ A.A[-1,2,1] * mpot.A[4,-2,2] * B.A[3,-3,4] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},::IdentityOperator{1},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3},::IdentityOperator{1},B::AdjointMPSTensor{<:Number, 3},EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1 -2 ; -3] ≔ A.A[-1,2,1] * B.A[4,-3,2] * EnvR.A[1,-2,4]
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},mpot::LocalOperator{1,2},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3},mpot::LocalOperator{1,2},B::AdjointMPSTensor{<:Number, 3},EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1;-2] ≔ A.A[-1,2,1] * mpot.A[5,3,2] * B.A[4,-2,5] * EnvR.A[1,3,4]
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},mpot::LocalOperator{1,1},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
+function contract(A::MPSTensor{<:Number, 3},mpot::LocalOperator{1,1},B::AdjointMPSTensor{<:Number, 3},EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[3,4,-2] * mpot.A[2,4] * B.A[-1,1,2] * EnvL.A[1,3]
     return LeftEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},::IdentityOperator{1},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
+function contract(A::MPSTensor{<:Number, 3},::IdentityOperator{1},B::AdjointMPSTensor{<:Number, 3},EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[3,2,-2] * B.A[-1,1,2] * EnvL.A[1,3]
     return LeftEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},mpot::LocalOperator{1,2},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
+function contract(A::MPSTensor{<:Number, 3},mpot::LocalOperator{1,2},B::AdjointMPSTensor{<:Number, 3},EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2 -3] ≔ A.A[3,4,-3] * mpot.A[2,-2,4] * B.A[-1,1,2] * EnvL.A[1,3]
     return LeftEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},::IdentityOperator{1},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3},::IdentityOperator{1},B::AdjointMPSTensor{<:Number, 3},EnvL::LeftEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1 -2 ; -3] ≔ A.A[3,2,-3] * B.A[-1,1,2] * EnvL.A[1,-2,3]
     return LeftEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},mpot::LocalOperator{2,1},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3},mpot::LocalOperator{2,1},B::AdjointMPSTensor{<:Number, 3},EnvL::LeftEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1;-2] ≔ A.A[4,5,-2] * mpot.A[3,2,5] * B.A[-1,1,3] * EnvL.A[1,2,4]
     return LeftEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3}, mpot::LocalOperator{1, 1}, B::AdjointMPSTensor{3}, EnvR::RightEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3}, mpot::LocalOperator{1, 1}, B::AdjointMPSTensor{<:Number, 3}, EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1,-2;-3] ≔ A.A[-1,2,1] * mpot.A[4,2] * B.A[3,-3,4] * EnvR.A[1,-2,3]
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3},mpot::LocalOperator{1,1},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3},mpot::LocalOperator{1,1},B::AdjointMPSTensor{<:Number, 3},EnvL::LeftEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1;-2 -3] ≔ A.A[3,4,-3] * mpot.A[2,4] * B.A[-1,1,2] * EnvL.A[1,-2,3]
     return LeftEnvironmentTensor(tmp)
 end
@@ -70,7 +70,7 @@ end
 MPO + sparse MPO + ENVR
 push left
 """
-function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{N, M}, C::AdjointMPOTensor{4}, EnvR::SparseRightEnvironmentTensor) where {N,M}
+function contract(A::DenseMPOTensor{<:Number, 4}, B::SparseMPOTensor{N, M}, C::AdjointMPOTensor{<:Number, 4}, EnvR::SparseRightEnvironmentTensor) where {N,M}
     @assert EnvR.D[1] == M
     tmpEnvR = Vector{Any}(nothing,N)
     for i in 1:N, j in 1:M
@@ -84,7 +84,7 @@ function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{N, M}, C::AdjointMPOT
     return convert(Vector{RightEnvironmentTensor},tmpEnvR)
 end
 
-function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{N, M}, C::AdjointMPOTensor{4}, EnvL::SparseLeftEnvironmentTensor) where {N,M}
+function contract(A::DenseMPOTensor{<:Number, 4}, B::SparseMPOTensor{N, M}, C::AdjointMPOTensor{<:Number, 4}, EnvL::SparseLeftEnvironmentTensor) where {N,M}
     @assert EnvL.D[1] == N
     tmpEnvL = Vector{Any}(nothing,M)
     for i in 1:N, j in 1:M
@@ -102,23 +102,23 @@ end
 ENVL + MPO + sparse MPO
 push right
 """
-function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, B::LocalOperator{1,2}, C::AdjointMPOTensor{4})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2}, A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{1,2}, C::AdjointMPOTensor{<:Number, 4})
     @tensor tmp[-1;-2 -3] ≔ EnvL.A[3,1] * A.A[2,1,-3,5] * B.A[4,-2,2] * C.A[-1,5,4,3]
     return LeftEnvironmentTensor(tmp)
 end
-function contract(EnvL::LeftEnvironmentTensor{3}, A::DenseMPOTensor{4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{4})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 3}, A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{<:Number, 4})
     @tensor tmp[-1;-2] ≔ EnvL.A[4,2,1] * A.A[3,1,-2,6] * B.A[5,2,3] * C.A[-1,6,5,4]
     return LeftEnvironmentTensor(tmp)
 end
-function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, B::LocalOperator{1,1}, C::AdjointMPOTensor{4})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2}, A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{1,1}, C::AdjointMPOTensor{<:Number, 4})
     @tensor tmp[-1;-2] ≔ EnvL.A[3,1] * A.A[2,1,-2,5] * B.A[4,2] * C.A[-1,5,4,3]
     return LeftEnvironmentTensor(tmp)
 end
-function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, ::IdentityOperator{1}, C::AdjointMPOTensor{4})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2}, A::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, C::AdjointMPOTensor{<:Number, 4})
     @tensor tmp[-1;-2] ≔ EnvL.A[3,1] * A.A[2,1,-2,4] * C.A[-1,4,2,3]
     return LeftEnvironmentTensor(tmp)
 end
-function contract(EnvL::LeftEnvironmentTensor{3}, A::DenseMPOTensor{4}, ::IdentityOperator{1}, C::AdjointMPOTensor{4})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 3}, A::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, C::AdjointMPOTensor{<:Number, 4})
     @tensor tmp[-1;-2 -3] ≔ EnvL.A[3,-2,1] * A.A[2,1,-3,4] * C.A[-1,4,2,3]
     return LeftEnvironmentTensor(tmp)
 end
@@ -126,37 +126,37 @@ end
 MPOs + ENVR
 push left
 """
-function contract(A::DenseMPOTensor{4}, ::IdentityOperator{1}, C::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+function contract(A::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, C::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[2,-1,1,4] * C.A[3,4,2,-2] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
-function contract(A::DenseMPOTensor{4}, B::LocalOperator{1,1}, C::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+function contract(A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{1,1}, C::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[2,-1,1,5] * B.A[4,2] * C.A[3,5,4,-2] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
-function contract(A::DenseMPOTensor{4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+function contract(A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1 -2;-3] ≔ A.A[2,-1,1,5] * B.A[4,-2,2] * C.A[3,5,4,-3] * EnvR.A[1,3]
     return RightEnvironmentTensor(tmp)
 end
-function contract(A::DenseMPOTensor{4}, B::LocalOperator{1,2}, C::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{3})
+function contract(A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{1,2}, C::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1;-2] ≔ A.A[3,-1,1,6] * B.A[5,2,3] * C.A[4,6,5,-2] * EnvR.A[1,2,4]
     return RightEnvironmentTensor(tmp)
 end
-function contract(A::DenseMPOTensor{4}, ::IdentityOperator{1}, C::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{3})
+function contract(A::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, C::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1 -2;-3] ≔ A.A[2,-1,1,4] * C.A[3,4,2,-3] * EnvR.A[1,-2,3]
     return RightEnvironmentTensor(tmp)
 end
-function contract(A::DenseMPOTensor{4}, B::LocalOperator{1,1}, C::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{3})
+function contract(A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{1,1}, C::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1 -2;-3] ≔ A.A[2,-1,1,4] * B.A[5,2] * C.A[3,4,5,-3] * EnvR.A[1,-2,3]
     return RightEnvironmentTensor(tmp)
 end
 
 
 
-contract(A::DenseMPOTensor{4}, B::LocalOperator{1,2}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{2}) = contract(EnvL,A,B,C)
-contract(A::DenseMPOTensor{4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{3}) = contract(EnvL,A,B,C)
-contract(A::DenseMPOTensor{4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{3}) = contract(EnvL,A,B,C)
-contract(A::DenseMPOTensor{4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{4},EnvL::LeftEnvironmentTensor{2}) = contract(EnvL,A,B,C)
+contract(A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{1,2}, C::AdjointMPOTensor{<:Number, 4},EnvL::LeftEnvironmentTensor{<:Number, 2}) = contract(EnvL,A,B,C)
+contract(A::DenseMPOTensor{<:Number, 4}, B::LocalOperator{2,1}, C::AdjointMPOTensor{<:Number, 4},EnvL::LeftEnvironmentTensor{<:Number, 3}) = contract(EnvL,A,B,C)
+contract(A::DenseMPOTensor{<:Number, 4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{<:Number, 4},EnvL::LeftEnvironmentTensor{<:Number, 3}) = contract(EnvL,A,B,C)
+contract(A::DenseMPOTensor{<:Number, 4}, B::Union{LocalOperator{1,1}, IdentityOperator{1}}, C::AdjointMPOTensor{<:Number, 4},EnvL::LeftEnvironmentTensor{<:Number, 2}) = contract(EnvL,A,B,C)
 
 #= Env4 =#
 
@@ -191,23 +191,23 @@ function contract(EnvL::SparseLeftEnvironmentTensor{2}, Hup::SparseMPOTensor, t:
     return tmp
 end
 
-function contract(EnvL::LeftEnvironmentTensor{2},ht::LocalOperator{1,1},t::DenseMPOTensor{4},hb::LocalOperator{1,1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2},ht::LocalOperator{1,1},t::DenseMPOTensor{<:Number, 4},hb::LocalOperator{1,1},t′::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 2})
     return @tensor EnvL.A[4,3] * ht.A[1,5] * t.A[2,3,7,1] * hb.A[6,2] * t′.A[8,5,6,4] * EnvR.A[7,8]
 end
 
-function contract(EnvL::LeftEnvironmentTensor{2},::IdentityOperator{1},t::DenseMPOTensor{4},hb::LocalOperator{1,1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2},::IdentityOperator{1},t::DenseMPOTensor{<:Number, 4},hb::LocalOperator{1,1},t′::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 2})
     return @tensor EnvL.A[3,2] * t.A[1,2,6,4] * hb.A[5,1] * t′.A[7,4,5,3] * EnvR.A[6,7]
 end
 
-function contract(EnvL::LeftEnvironmentTensor{2},ht::LocalOperator{1,1},t::DenseMPOTensor{4},::IdentityOperator{1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2},ht::LocalOperator{1,1},t::DenseMPOTensor{<:Number, 4},::IdentityOperator{1},t′::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 2})
     return @tensor EnvL.A[3,2] * ht.A[1,4] * t.A[5,2,6,1] * t′.A[7,4,5,3] * EnvR.A[6,7]
 end
 
-function contract(EnvL::LeftEnvironmentTensor{2},::IdentityOperator{1},t::DenseMPOTensor{4},::IdentityOperator{1},t′::AdjointMPOTensor{4},EnvR::RightEnvironmentTensor{2})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2},::IdentityOperator{1},t::DenseMPOTensor{<:Number, 4},::IdentityOperator{1},t′::AdjointMPOTensor{<:Number, 4},EnvR::RightEnvironmentTensor{<:Number, 2})
     return @tensor EnvL.A[2,1] * t.A[3,1,5,4] * t′.A[6,4,3,2] * EnvR.A[5,6]
 end
 
-function contract(A::MPSTensor{3}, A′::AdjointMPSTensor{3}, EnvR::RightEnvironmentTensor{2})
+function contract(A::MPSTensor{<:Number, 3}, A′::AdjointMPSTensor{<:Number, 3}, EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[-1,3,1] * A′.A[2,-2,3] * EnvR.A[1,2]
     return RightEnvironmentTensor(tmp)
 end
@@ -216,7 +216,7 @@ function contract(EnvL::DenseLeftEnvironmentTensor, A::MPSTensor, B::AdjointMPST
     return contract(EnvL.A, A, B, EnvR.A)
 end
 
-function contract(EnvL::LeftEnvironmentTensor{2}, A::MPSTensor{3}, A′::AdjointMPSTensor{3}, EnvR::RightEnvironmentTensor{2})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 2}, A::MPSTensor{<:Number, 3}, A′::AdjointMPSTensor{<:Number, 3}, EnvR::RightEnvironmentTensor{<:Number, 2})
     return @tensor EnvL.A[1,2] * A.A[2,3,4] * A′.A[5,1,3] * EnvR.A[4,5]
 end
 

@@ -10,7 +10,8 @@ function _funcDenseMPO(func::Function, PhySpace::ElementarySpace, AuxSpaces::Abs
 end
 
 function IdDenseMPO(PhySpace::ElementarySpace, AuxSpaces::AbstractVector)
-    tmp = [DenseMPOTensor(isometry(PhySpace ⊗ AuxSpaces[i], AuxSpaces[i+1] ⊗ PhySpace)) for i in eachindex(AuxSpaces)[1:end-1]]
+    S = scalartype(PhySpace)
+    tmp = [DenseMPOTensor(one(S) * isometry(PhySpace ⊗ AuxSpaces[i], AuxSpaces[i+1] ⊗ PhySpace)) for i in eachindex(AuxSpaces)[1:end-1]]
     return DenseMPO(tmp)
 end
 

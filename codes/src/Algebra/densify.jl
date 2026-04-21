@@ -88,90 +88,90 @@
 # end
 
 
-# function contract(El::LeftEnvironmentTensor{2}, A::LocalOperator{1, 2})
+# function contract(El::LeftEnvironmentTensor{<:Number, 2}, A::LocalOperator{1, 2})
 #     iso = _isometry(space(El)[2]',space(A)[2]')'
 #     @tensor tmp[-1,-2;-3,-4] ≔ El.A[-1,1] * A.A[-2,2,-4] * iso[1,2,-3]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(El::LeftEnvironmentTensor{2}, A::LocalOperator{2, 1})
+# function contract(El::LeftEnvironmentTensor{<:Number, 2}, A::LocalOperator{2, 1})
 #     iso = _isometry(space(El)[2]',space(A)[2]')'
 #     @tensor tmp[-1,-2;-3,-4] ≔ El.A[-1,1] * A.A[-2,2,-4] * iso[1,2,-3]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(El::LeftEnvironmentTensor{2}, A::LocalOperator{1, 1})
+# function contract(El::LeftEnvironmentTensor{<:Number, 2}, A::LocalOperator{1, 1})
 #     @tensor tmp[-1,-2;-3,-4] ≔ El.A[-1,-3] * A.A[-2,-4]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(El::LeftCompositeEnvironmentTensor{2, 4, 3, 3}, A::IdentityOperator{1})
+# function contract(El::LeftCompositeEnvironmentTensor{<:Number, 2, 4, 3, 3}, A::IdentityOperator{1})
 #     @tensor tmp[-1,-2,-3;-4,-5,-6] ≔ El.A[-1,-2,-4,-6] * A.A[-3,-5]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(El::LeftEnvironmentTensor{2}, A::IdentityOperator{1})
+# function contract(El::LeftEnvironmentTensor{<:Number, 2}, A::IdentityOperator{1})
 #     @tensor tmp[-1,-2;-3,-4] ≔ El.A[-1,-3] * A.A[-2,-4]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(El::LeftCompositeEnvironmentTensor{2, 4, 3, 3}, A::LocalOperator{1, 2})
+# function contract(El::LeftCompositeEnvironmentTensor{<:Number, 2, 4, 3, 3}, A::LocalOperator{1, 2})
 #     iso = _isometry(space(El)[3]',space(A)[2]')'
 #     @tensor tmp[-1,-2,-3;-4,-5,-6] ≔ El.A[-1,-2,1,-6] * A.A[-3,2,-5] * iso[1,2,-4]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(El::LeftCompositeEnvironmentTensor{2, 4, 3, 3}, A::LocalOperator{2, 1})
+# function contract(El::LeftCompositeEnvironmentTensor{<:Number, 2, 4, 3, 3}, A::LocalOperator{2, 1})
 #     iso = _isometry(space(El)[3]',space(A)[2]')'
 #     @tensor tmp[-1,-2,-3;-4,-5,-6] ≔ El.A[-1,-2,1,-6] * A.A[-3,2,-5] * iso[1,2,-4]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(El::LeftCompositeEnvironmentTensor{2, 4, 3, 3}, A::LocalOperator{1, 1})
+# function contract(El::LeftCompositeEnvironmentTensor{<:Number, 2, 4, 3, 3}, A::LocalOperator{1, 1})
 #     @tensor tmp[-1,-2,-3;-4,-5,-6] ≔ El.A[-1,-2,-4,-6] * A.A[-3,-5]
 #     return LeftCompositeEnvironmentTensor(tmp)
 # end
 
-# function contract(::IdentityOperator{1}, obj::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+# function contract(::IdentityOperator{1}, obj::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
 #     @tensor tmp[-1;-2] ≔ obj.A[2,1,1,-2] * EnvR.A[-1,2]
 #     return RightEnvironmentTensor(tmp)
 # end
 
-# function contract(A::LocalOperator{1, 2}, obj::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+# function contract(A::LocalOperator{1, 2}, obj::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
 #     iso = _isometry(space(A)[2],space(EnvR)[1])
 #     @tensor tmp[-1;-2] ≔ iso[-1,4,5] * A.A[2,4,1] * obj.A[3,1,2,-2] * EnvR.A[5,3]
 #     return RightEnvironmentTensor(tmp)
 # end
 
-# function contract(A::LocalOperator{2, 1}, obj::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+# function contract(A::LocalOperator{2, 1}, obj::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
 #     iso = _isometry(space(A)[2],space(EnvR)[1])
 #     @tensor tmp[-1;-2] ≔ iso[-1,4,5] * A.A[2,4,1] * obj.A[3,1,2,-2] * EnvR.A[5,3]
 #     return RightEnvironmentTensor(tmp)
 # end
 
-# function contract(A::LocalOperator{1, 1}, obj::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+# function contract(A::LocalOperator{1, 1}, obj::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
 #     @tensor tmp[-1;-2] ≔ A.A[2,1] * obj.A[3,1,2,-2] * EnvR.A[-1,3]
 #     return RightEnvironmentTensor(tmp)
 # end
 
-# function contract(A::LocalOperator{1, 2}, obj::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+# function contract(A::LocalOperator{1, 2}, obj::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
 #     iso = _isometry(space(EnvL)[2]',space(A)[2]')'
 #     @tensor tmp[-1;-2] ≔ EnvL.A[3,4] * A.A[2,5,1] * obj.A[-1,1,2,3] * iso[4,5,-2]
 #     return LeftEnvironmentTensor(tmp)
 # end
 
-# function contract(A::LocalOperator{2, 1}, obj::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+# function contract(A::LocalOperator{2, 1}, obj::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
 #     iso = _isometry(space(EnvL)[2]',space(A)[2]')'
 #     @tensor tmp[-1;-2] ≔ EnvL.A[3,4] * A.A[2,5,1] * obj.A[-1,1,2,3] * iso[4,5,-2]
 #     return LeftEnvironmentTensor(tmp)
 # end
 
-# function contract(A::LocalOperator{1, 1}, obj::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+# function contract(A::LocalOperator{1, 1}, obj::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
 #     @tensor tmp[-1;-2] ≔ EnvL.A[3,-2] * A.A[2,1] * obj.A[-1,1,2,3]
 #     return LeftEnvironmentTensor(tmp)
 # end
 
-# function contract(::IdentityOperator{1}, obj::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+# function contract(::IdentityOperator{1}, obj::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
 #     @tensor tmp[-1;-2] ≔ EnvL.A[2,-2] * obj.A[-1,1,1,2]
 #     return LeftEnvironmentTensor(tmp)
 # end
@@ -187,17 +187,17 @@ function pushright(A::AbstractMPS, mpo::DenseMPO, B::AbstractMPS, EnvL::DenseLef
     return DenseLeftEnvironmentTensor(x)
 end
 
-function contract(A::MPSTensor{3}, mpot::DenseMPOTensor{4}, B::AdjointMPSTensor{3}, EnvR::RightEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3}, mpot::DenseMPOTensor{<:Number, 4}, B::AdjointMPSTensor{<:Number, 3}, EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1,-2;-3] ≔ A.A[-1,2,1] * mpot.A[5,-2,3,2] * B.A[4,-3,5] * EnvR.A[1,3,4]
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3}, mpot::DenseMPOTensor{4}, B::AdjointMPSTensor{3}, EnvL::LeftEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3}, mpot::DenseMPOTensor{<:Number, 4}, B::AdjointMPSTensor{<:Number, 3}, EnvL::LeftEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1;-2 -3] ≔ A.A[5,4,-3] * mpot.A[2,3,-2,4] * B.A[-1,1,2] * EnvL.A[1,3,5]
     return LeftEnvironmentTensor(tmp)
 end
 
-function action(O::DenseProjectiveHamiltonian{3,1}, obj::MPSTensor{3})
+function action(O::DenseProjectiveHamiltonian{3,1}, obj::MPSTensor{<:Number, 3})
     h = O.H[1]
     @tensor x[-1 -2;-3] ≔ O.EnvL.A.A[-1,3,1] * obj.A[1,2,4] * O.EnvR.A.A[4,5,-3] * h.A[-2,3,5,2]
     x = MPSTensor(x)
@@ -205,7 +205,7 @@ function action(O::DenseProjectiveHamiltonian{3,1}, obj::MPSTensor{3})
     return x
 end
 
-function action(O::DenseProjectiveHamiltonian{3,2}, obj::CompositeMPSTensor{2,4})
+function action(O::DenseProjectiveHamiltonian{3,2}, obj::CompositeMPSTensor{<:Number, 2,4})
     hl,hr = O.H
     @tensor x[-1 -2 -3;-4] ≔ O.EnvL.A.A[-1,3,1] * obj.A[1,2,4,6] * O.EnvR.A.A[6,7,-4] * hl.A[-2,3,5,2] * hr.A[-3,5,7,4]
     x = CompositeMPSTensor(x)
@@ -221,45 +221,45 @@ function densify!(ρ::DenseMPO,H::SparseMPO;kwargs...)
     return mul!(ρ,ρ,H,1,Algebraalgo(SingleSite(),algo,trunc,3,tol))[1]
 end
 
-function orthogonalize!(H::DenseMPOTensor,A::T,A′::T,EnvL::DenseLeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+function orthogonalize!(H::DenseMPOTensor,A::T,A′::T,EnvL::DenseLeftEnvironmentTensor) where T <: Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}}
     C = contract(EnvL.A,A,H) |> x -> x - contract(x,A′)
     return C
 end
 
-function orthogonalize!(H::DenseMPOTensor,B::T,B′::T,EnvR::DenseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+function orthogonalize!(H::DenseMPOTensor,B::T,B′::T,EnvR::DenseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}}
     C = contract(B,H,EnvR.A) |> x -> x - contract(x,B′)
     return C
 end
 
-function contract(El::LeftEnvironmentTensor{3},A::MPSTensor{3}, mpo::DenseMPOTensor{4})
+function contract(El::LeftEnvironmentTensor{<:Number, 3},A::MPSTensor{<:Number, 3}, mpo::DenseMPOTensor{<:Number, 4})
     @tensor tmp[-1 -2;-3 -4] ≔ El.A[-1,3,1] * A.A[1,2,-4] * mpo.A[-2,3,-3,2]
     return LeftCompositeEnvironmentTensor(tmp)
 end
 
-function contract(A::MPSTensor{3}, B::DenseMPOTensor{4}, EnvR::RightEnvironmentTensor{3})
+function contract(A::MPSTensor{<:Number, 3}, B::DenseMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 3})
     @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,3,1] * B.A[-3,-2,2,3] * EnvR.A[1,2,-4]
     return RightCompositeEnvironmentTensor(tmp)
 end
 
-function contract(EnvR::RightCompositeEnvironmentTensor{2,4}, B::MPSTensor{3})
+function contract(EnvR::RightCompositeEnvironmentTensor{<:Number, 2,4}, B::MPSTensor{<:Number, 3})
     RightCompositeEnvironmentTensor(@tensor tmp[-1,-2;-3,-4] ≔ EnvR.A[-1,-2,2,1] * B'.A[1,3,2] * B.A[3,-3,-4])
 end
 
-function contract(EnvR::RightCompositeEnvironmentTensor{2,4}, A::AdjointMPSTensor{3})
+function contract(EnvR::RightCompositeEnvironmentTensor{<:Number, 2,4}, A::AdjointMPSTensor{<:Number, 3})
     @tensor tmp[-1 -2;-3] ≔ EnvR.A[-1,-2,2,1] * A.A[1,-3,2] 
     return RightEnvironmentTensor(tmp)
 end
 
-function contract(EnvL::LeftEnvironmentTensor{3}, EnvR::RightCompositeEnvironmentTensor{2, 4})
+function contract(EnvL::LeftEnvironmentTensor{<:Number, 3}, EnvR::RightCompositeEnvironmentTensor{<:Number, 2, 4})
     @tensor tmp[-1,-2;-3] ≔ EnvL.A[-1,2,1] * EnvR.A[1,2,-2,-3]
     return MPSTensor(tmp)
 end
 
-function contract(EnvL::RightCompositeEnvironmentTensor{2, 4}, Λ::MPSTensor{2})
+function contract(EnvL::RightCompositeEnvironmentTensor{<:Number, 2, 4}, Λ::MPSTensor{<:Number, 2})
     return RightCompositeEnvironmentTensor(@tensor tmp[-1,-2,-3;-4] ≔ Λ.A[-1,1]*EnvL.A[1,-2,-3,-4])
 end
 
-function action(O::DenseProjectiveHamiltonian{3,0}, obj::MPSTensor{2})
+function action(O::DenseProjectiveHamiltonian{3,0}, obj::MPSTensor{<:Number, 2})
     @tensor x[-1;-2] ≔ O.EnvL.A.A[-1,3,1] * obj.A[1,2] * O.EnvR.A.A[2,3,-2]
     x = MPSTensor(x)
     !iszero(O.E₀) && (x = axpy!(-O.E₀, obj, x))

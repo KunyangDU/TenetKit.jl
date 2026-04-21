@@ -1,4 +1,4 @@
-_getD(A::DenseMPOTensor{4}) = dims(domain(A.A))[1]
+_getD(A::DenseMPOTensor{<:Number, 4}) = dims(domain(A.A))[1]
 _getD(A::LeftEnvironmentTensor) = dims(domain(A.A))[end]
 _getD(A::RightEnvironmentTensor) = dims(codomain(A.A))[end]
 _getD(A::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor}) = _getD(A.A[1])
@@ -10,11 +10,12 @@ function Main.dims(A::Union{LeftEnvironmentTensor,RightEnvironmentTensor,
     return dims(codomain(A.A)),dims(domain(A.A))
 end
 
-function anisometry(codom,dom)
-    physpace = codom[1],dom[2]
-    auxspace = codom[2],dom[1]
-    atmp = TensorMap(ones,auxspace...)
-    ptmp = isometry(physpace...)
+function anisometry(codom, dom)
+    physpace = codom[1], dom[2]
+    auxspace = codom[2], dom[1]
+    S = scalartype(codom[1])
+    atmp = TensorMap(ones, S, auxspace...)
+    ptmp = one(S) * isometry(physpace...)
     @tensor tmp[-1,-2;-3,-4] ≔ ptmp[-1,-4] * atmp[-2,-3]
     return tmp
 end
@@ -43,18 +44,18 @@ TensorKit.truncdim(trunc::TruncationScheme) = truncdim(_getdim(trunc))
 
 Base.:≈(A::Tuple,B::Tuple) = collect(A) ≈ collect(B) 
 
-getAuxSpace(t::DenseMPOTensor{4}) = collect(codomain(t.A))[2], collect(domain(t.A))[1]
-getAuxSpace(t::AdjointMPOTensor{4}) = collect(domain(t.A))[2], collect(codomain(t.A))[1]
+getAuxSpace(t::DenseMPOTensor{<:Number, 4}) = collect(codomain(t.A))[2], collect(domain(t.A))[1]
+getAuxSpace(t::AdjointMPOTensor{<:Number, 4}) = collect(domain(t.A))[2], collect(codomain(t.A))[1]
 
 Base.length(::DenseMPOTensor) = 1
 rank(A::AbstractTensorMap) = length(codomain(A)) + length(domain(A))
 
-composite(A::MPSTensor{3}, B::MPSTensor{3}) = CompositeMPSTensor(@tensor tmp[-1 -2 -3; -4] ≔ A.A[-1,-2,1]*B.A[1,-3,-4])
-composite(A::DenseMPOTensor{4}, B::DenseMPOTensor{4}) = CompositeMPOTensor(@tensor tmp[-1 -2 -3;-4 -5 -6] ≔ A.A[-2,-3,1,-6] * B.A[-1,1,-4,-5])
-composite(A::T, B::T) where T <: Union{AdjointMPSTensor{3},AdjointMPOTensor{4}} = composite(A',B')'
+composite(A::MPSTensor{<:Number, 3}, B::MPSTensor{<:Number, 3}) = CompositeMPSTensor(@tensor tmp[-1 -2 -3; -4] ≔ A.A[-1,-2,1]*B.A[1,-3,-4])
+composite(A::DenseMPOTensor{<:Number, 4}, B::DenseMPOTensor{<:Number, 4}) = CompositeMPOTensor(@tensor tmp[-1 -2 -3;-4 -5 -6] ≔ A.A[-2,-3,1,-6] * B.A[-1,1,-4,-5])
+composite(A::T, B::T) where T <: Union{AdjointMPSTensor{<:Number, 3},AdjointMPOTensor{<:Number, 4}} = composite(A',B')'
 
 getPhySpace(t::DenseMPS) = getPhySpace(t.ts[1])
-getPhySpace(t::MPSTensor{R}) where R = 3 ≤ R ? codomain(t.A)[2] : nothing
+getPhySpace(t::MPSTensor{<:Number, R}) where R = 3 ≤ R ? codomain(t.A)[2] : nothing
 getAuxSpace(t::DenseMPS) = getAuxSpace(t.ts[1])
 getAuxSpace(t::MPSTensor) = collect(codomain(t.A))[1], collect(domain(t.A))[end]
 getAuxSpace(t::AdjointMPSTensor) = collect(domain(t.A))[1], collect(codomain(t.A))[end]

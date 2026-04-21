@@ -37,7 +37,7 @@ function _scalar(Env::Environment{N}) where N
     return tmp
 end
 
-function _scalar(EnvL::LeftEnvironmentTensor{2})
+function _scalar(EnvL::LeftEnvironmentTensor{<:Number, 2})
     return @tensor EnvL.A[1,1]
 end
 

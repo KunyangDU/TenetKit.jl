@@ -1,4 +1,4 @@
-function action(O::SparseProjectiveHamiltonian, obj::T) where T <: Union{MPSTensor{2},DenseMPOTensor{2},MPSTensor{3},DenseMPOTensor{4},CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
+function action(O::SparseProjectiveHamiltonian, obj::T) where T <: Union{MPSTensor{<:Number, 2},DenseMPOTensor{<:Number, 2},MPSTensor{<:Number, 3},DenseMPOTensor{<:Number, 4},CompositeMPSTensor{<:Number, 2,4}, CompositeMPOTensor{<:Number, 2, 6}}
     x = nothing
     to = get_timer("action")
     timer_acc = TimerOutput()
@@ -36,7 +36,7 @@ function action(O::SparseProjectiveHamiltonian, obj::T) where T <: Union{MPSTens
 end
 
 
-function action(O::DenseProjectiveHamiltonian{2,1}, obj::DenseMPOTensor{4})
+function action(O::DenseProjectiveHamiltonian{2,1}, obj::DenseMPOTensor{<:Number, 4})
     @tensor x[-1 -2;-3 -4] ≔ O.EnvL.A.A[-2,1] * obj.A[-1,1,2,-4] * O.EnvR.A.A[2,-3]
     return DenseMPOTensor(x)
 end
@@ -56,18 +56,18 @@ end
 
 # dirty detail, threads free
 
-function _action(O::SparseProjectiveHamiltonian{0}, obj::T,i::Int64) where T <: Union{MPSTensor{2},DenseMPOTensor{2}}
+function _action(O::SparseProjectiveHamiltonian{0}, obj::T,i::Int64) where T <: Union{MPSTensor{<:Number, 2},DenseMPOTensor{<:Number, 2}}
     tmp,localto = _action0(obj,O.EnvL.A[i],O.EnvR.A[i])
     return tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{1}, obj::T, ind::Tuple) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
+function _action(O::SparseProjectiveHamiltonian{1}, obj::T, ind::Tuple) where T <: Union{MPSTensor{<:Number, 3},DenseMPOTensor{<:Number, 4}}
     i,j = ind
     tmp,localto = _action1(obj,O.EnvL.A[i],O.H.ts[1].m[i,j],O.EnvR.A[j])
     return tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple) where T <: Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
+function _action(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple) where T <: Union{CompositeMPSTensor{<:Number, 2,4}, CompositeMPOTensor{<:Number, 2, 6}}
     i,j,k = ind
     tmp,localto = _action2(obj,O.EnvL.A[i],O.H.ts[1].m[i,j],O.H.ts[2].m[j,k],O.EnvR.A[k])
     return tmp, localto
@@ -83,19 +83,19 @@ function _action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2}, ind::Tupl
 end
 
 
-function _action0(obj::T,El::LeftEnvironmentTensor{el},Er::RightEnvironmentTensor{er}) where {el,er, T <: Union{MPSTensor{2},DenseMPOTensor{2}}}
+function _action0(obj::T,El::LeftEnvironmentTensor{el},Er::RightEnvironmentTensor{er}) where {el,er, T <: Union{MPSTensor{<:Number, 2},DenseMPOTensor{<:Number, 2}}}
     localto = TimerOutput()
     @timeit localto "_action0_0_$(el)_$(er)" tmp = _action0_contract(obj,El,Er)
     return T(tmp),localto
 end
 
-function _action1(obj::T,El::LeftEnvironmentTensor{el},h::AbstractLocalOperator{h1,h2},Er::RightEnvironmentTensor{er}) where {el,h1,h2,er, T <: Union{DenseMPOTensor{4},MPSTensor{3}}}
+function _action1(obj::T,El::LeftEnvironmentTensor{el},h::AbstractLocalOperator{h1,h2},Er::RightEnvironmentTensor{er}) where {el,h1,h2,er, T <: Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}}}
     localto = TimerOutput()
     @timeit localto "_action1_1_$(el)_$(h1)$(h2)_$(er)" tmp = _action1_contract(obj,El,h,Er)
     return T(tmp), localto
 end
 
-function _action2(obj::T,El::LeftEnvironmentTensor{el},hl::AbstractLocalOperator{hl1,hl2},hr::AbstractLocalOperator{hr1,hr2},Er::RightEnvironmentTensor{er}) where {el,hl1,hl2,hr1,hr2,er, T<:Union{CompositeMPOTensor{2,6},CompositeMPSTensor{2,4}}}
+function _action2(obj::T,El::LeftEnvironmentTensor{el},hl::AbstractLocalOperator{hl1,hl2},hr::AbstractLocalOperator{hr1,hr2},Er::RightEnvironmentTensor{er}) where {el,hl1,hl2,hr1,hr2,er, T<:Union{CompositeMPOTensor{<:Number, 2,6},CompositeMPSTensor{<:Number, 2,4}}}
     localto = TimerOutput()
     @timeit localto "_action2_2_$(el)_$(hl1)$(hl2)_$(hr1)$(hr2)_$(er)" tmp = _action2_contract(obj,El,hl,hr,Er)
     return T(tmp), localto

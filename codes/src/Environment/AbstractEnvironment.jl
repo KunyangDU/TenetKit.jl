@@ -1,90 +1,101 @@
 
 
 
-mutable struct LocalEnvironmentTensor{R} <: AbstractEnvironmentTensor
-    A::AbstractTensorMap
+mutable struct LocalEnvironmentTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractEnvironmentTensor
+    A::T
 
-    function LocalEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+    function LocalEnvironmentTensor(t::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), rank(t), TM}(t)
     end
-    function LocalEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(t)
+    function LocalEnvironmentTensor{S}(t::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, rank(t), TM}(t)
     end
-end
-
-mutable struct RightEnvironmentTensor{R} <: AbstractEnvironmentTensor
-    A::AbstractTensorMap
-
-    function RightEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
-    end
-    function RightEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(t)
+    function LocalEnvironmentTensor{S, R, TM}(t::TM) where {S<:Number, R, TM<:AbstractTensorMap}
+        return new{S, R, TM}(t)
     end
 end
 
-mutable struct LeftEnvironmentTensor{R} <: AbstractEnvironmentTensor
-    A::AbstractTensorMap
+mutable struct RightEnvironmentTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractEnvironmentTensor
+    A::T
 
-    function LeftEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+    function RightEnvironmentTensor(t::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), rank(t), TM}(t)
     end
-    function LeftEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(t)
+    function RightEnvironmentTensor{S}(t::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, rank(t), TM}(t)
+    end
+    function RightEnvironmentTensor{S, R, TM}(t::TM) where {S<:Number, R, TM<:AbstractTensorMap}
+        return new{S, R, TM}(t)
     end
 end
 
-Base.adjoint(A::LeftEnvironmentTensor{2}) = LeftEnvironmentTensor{2}(A.A')
-Base.adjoint(A::RightEnvironmentTensor{2}) = RightEnvironmentTensor{2}(A.A')
+mutable struct LeftEnvironmentTensor{S<:Number, R, T<:AbstractTensorMap} <: AbstractEnvironmentTensor
+    A::T
 
-# function Base.adjoint(A::LeftEnvironmentTensor{3})
+    function LeftEnvironmentTensor(t::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), rank(t), TM}(t)
+    end
+    function LeftEnvironmentTensor{S}(t::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, rank(t), TM}(t)
+    end
+    function LeftEnvironmentTensor{S, R, TM}(t::TM) where {S<:Number, R, TM<:AbstractTensorMap}
+        return new{S, R, TM}(t)
+    end
+end
+
+Base.adjoint(A::LeftEnvironmentTensor{<:Number, 2})  = LeftEnvironmentTensor(A.A')
+Base.adjoint(A::RightEnvironmentTensor{<:Number, 2}) = RightEnvironmentTensor(A.A')
+
+# function Base.adjoint(A::LeftEnvironmentTensor{<:Number, 3})
 #     tmp = A.A'
-#     LeftEnvironmentTensor{3}(permute(tmp,(2,),(1,3)))
+#     LeftEnvironmentTensor{<:Number, 3}(permute(tmp,(2,),(1,3)))
 # end
 
-# function Base.adjoint(A::RightEnvironmentTensor{3})
+# function Base.adjoint(A::RightEnvironmentTensor{<:Number, 3})
 #     tmp = A.A'
-#     RightEnvironmentTensor{3}(permute(tmp,(1,),(3,2)))
+#     RightEnvironmentTensor{<:Number, 3}(permute(tmp,(1,),(3,2)))
 # end
 
 """
 
 """
-mutable struct LeftCompositeEnvironmentTensor{Rcd,Rt,N,I} <: AbstractEnvironmentTensor
-    A::AbstractTensorMap
+mutable struct LeftCompositeEnvironmentTensor{S<:Number, Rcd,Rt,N,I, T<:AbstractTensorMap} <: AbstractEnvironmentTensor
+    A::T
 
-    function LeftCompositeEnvironmentTensor(t::AbstractTensorMap)
-        return new{length(codomain(t)),rank(t),3,3}(t)
+    function LeftCompositeEnvironmentTensor(t::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), length(codomain(t)), rank(t), 3, 3, TM}(t)
     end
 
-    function LeftCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
-        return new{length(codomain(t)),rank(t),3,3}(t)
+    function LeftCompositeEnvironmentTensor{S}(t::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, length(codomain(t)), rank(t), 3, 3, TM}(t)
     end
 
-    function LeftCompositeEnvironmentTensor(t::AbstractTensorMap,n::Int64,i::Int64)
-        return new{length(codomain(t)),rank(t),n,i}(t)
+    function LeftCompositeEnvironmentTensor(t::TM, n::Int64, i::Int64) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), length(codomain(t)), rank(t), n, i, TM}(t)
     end
 
-    function LeftCompositeEnvironmentTensor{rcd,rt,n,i}(t::AbstractTensorMap) where {rcd,rt,n,i}
-        return new{rcd,rt,n,i}(t)
+    function LeftCompositeEnvironmentTensor{S, Rcd, Rt, N, I, TM}(t::TM) where {S<:Number, Rcd, Rt, N, I, TM<:AbstractTensorMap}
+        return new{S, Rcd, Rt, N, I, TM}(t)
     end
 end
 
-mutable struct RightCompositeEnvironmentTensor{Rcd,Rt,N,I} <: AbstractEnvironmentTensor
-    A::AbstractTensorMap
+mutable struct RightCompositeEnvironmentTensor{S<:Number, Rcd,Rt,N,I, T<:AbstractTensorMap} <: AbstractEnvironmentTensor
+    A::T
 
-    function RightCompositeEnvironmentTensor(t::AbstractTensorMap)
-        return new{length(domain(t)),rank(t),3,3}(t)
+    function RightCompositeEnvironmentTensor(t::TM) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), length(domain(t)), rank(t), 3, 3, TM}(t)
     end
 
-    function RightCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
-        return new{length(domain(t)),rank(t),3,3}(t)
+    function RightCompositeEnvironmentTensor{S}(t::TM) where {S<:Number, TM<:AbstractTensorMap}
+        return new{S, length(domain(t)), rank(t), 3, 3, TM}(t)
     end
-    function RightCompositeEnvironmentTensor(t::AbstractTensorMap,n::Int64,i::Int64)
-        return new{length(domain(t)),rank(t),n,i}(t)
+
+    function RightCompositeEnvironmentTensor(t::TM, n::Int64, i::Int64) where {TM<:AbstractTensorMap}
+        return new{scalartype(t), length(domain(t)), rank(t), n, i, TM}(t)
     end
-    function RightCompositeEnvironmentTensor{rcd,rt,n,i}(t::AbstractTensorMap) where {rcd,rt,n,i}
-        return new{rcd,rt,n,i}(t)
+
+    function RightCompositeEnvironmentTensor{S, Rcd, Rt, N, I, TM}(t::TM) where {S<:Number, Rcd, Rt, N, I, TM<:AbstractTensorMap}
+        return new{S, Rcd, Rt, N, I, TM}(t)
     end
 end
 
@@ -158,60 +169,78 @@ mutable struct SparseRightEnvironmentTensor{N} <: AbstractRightEnvironmentTensor
 end
 
 
-mutable struct DenseLeftEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
-    A::LeftEnvironmentTensor
+mutable struct DenseLeftEnvironmentTensor{R, ET<:LeftEnvironmentTensor} <: AbstractLeftEnvironmentTensor
+    A::ET
 
     function DenseLeftEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(LeftEnvironmentTensor(t))
+        et = LeftEnvironmentTensor(t)
+        return new{rank(t), typeof(et)}(et)
     end
 
     function DenseLeftEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(LeftEnvironmentTensor(t))
+        et = LeftEnvironmentTensor(t)
+        return new{rank(t), typeof(et)}(et)
     end
 
-    function DenseLeftEnvironmentTensor(t::LeftEnvironmentTensor)
-        return new{rank(t.A)}(t)
+    function DenseLeftEnvironmentTensor(t::ET) where {ET<:LeftEnvironmentTensor}
+        return new{rank(t.A), ET}(t)
+    end
+
+    function DenseLeftEnvironmentTensor{R,ET}(t::ET) where {R, ET<:LeftEnvironmentTensor}
+        return new{R, ET}(t)
     end
 end
 
-mutable struct DenseRightEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
-    A::RightEnvironmentTensor
+mutable struct DenseRightEnvironmentTensor{R, ET<:RightEnvironmentTensor} <: AbstractLeftEnvironmentTensor
+    A::ET
 
     function DenseRightEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(RightEnvironmentTensor(t))
+        et = RightEnvironmentTensor(t)
+        return new{rank(t), typeof(et)}(et)
     end
 
     function DenseRightEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(RightEnvironmentTensor(t))
+        et = RightEnvironmentTensor(t)
+        return new{rank(t), typeof(et)}(et)
     end
 
-    function DenseRightEnvironmentTensor(t::RightEnvironmentTensor)
-        return new{rank(t.A)}(t)
+    function DenseRightEnvironmentTensor(t::ET) where {ET<:RightEnvironmentTensor}
+        return new{rank(t.A), ET}(t)
+    end
+
+    function DenseRightEnvironmentTensor{R,ET}(t::ET) where {R, ET<:RightEnvironmentTensor}
+        return new{R, ET}(t)
     end
 end
 
-Base.adjoint(A::DenseLeftEnvironmentTensor{2}) = DenseLeftEnvironmentTensor(A.A')
+Base.adjoint(A::DenseLeftEnvironmentTensor{2})  = DenseLeftEnvironmentTensor(A.A')
 Base.adjoint(A::DenseRightEnvironmentTensor{2}) = DenseRightEnvironmentTensor(A.A')
 
 """
 Monolayer Environment, i.e., only one layer MPO is considered.
 """
-mutable struct Environment{N,L} <: AbstractEnvironment
-    layer::Vector
+mutable struct Environment{N, L, LayerT<:Tuple} <: AbstractEnvironment
+    layer::LayerT                                        # typed Tuple → concrete element types
     envs::Union{Nothing,Array{AbstractEnvironmentTensor}}
     center::Vector{Int64}
     L::Int64
 
-    function Environment(layer::Vector,
+    # Constructor from a Vector (user-facing API unchanged): convert → Tuple for type stability
+    function Environment(layer_vec::AbstractVector,
         envs::Array{AbstractEnvironmentTensor},
         center::Union{Nothing,Vector{Int64}},
         L::Union{Nothing,Int64})
-        return new{length(layer),length(layer[1])}(layer,envs,center,L)
+        lt = Tuple(layer_vec)
+        N  = length(lt)
+        Lv = something(L, length(lt[1]))
+        return new{N, Lv, typeof(lt)}(lt, envs, center, Lv)
     end
 
-    function Environment(layer::Vector)
-        L = length(layer[1])
-        return new{length(layer),length(layer[1])}(layer,nothing,[1,L],L)
+    function Environment(layer_vec::AbstractVector)
+        lt = Tuple(layer_vec)
+        N  = length(lt)
+        Lv = length(lt[1])
+        return new{N, Lv, typeof(lt)}(lt, nothing, [1,Lv], Lv)
     end
 
 end

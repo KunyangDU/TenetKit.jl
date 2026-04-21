@@ -80,7 +80,7 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
     return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
 end
 
-# function pushright!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
+# function pushright!(env::Environment{N}, tl::DenseMPOTensor{<:Number, 4}, tr::DenseMPOTensor{<:Number, 4}) where N
 #     @show "test"
 #     @assert (site = env.center[1] ) == env.center[2]
 #     env.layer[end].ts[site:site+1] = map(adjoint,[tl,tr])
@@ -89,7 +89,7 @@ end
 #     pushright!(env)
 # end
 
-# function pushleft!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
+# function pushleft!(env::Environment{N}, tl::DenseMPOTensor{<:Number, 4}, tr::DenseMPOTensor{<:Number, 4}) where N
 #     @assert (site = env.center[1] ) == env.center[2]
 #     env.layer[end].ts[site-1:site] = map(adjoint,[tl,tr])
 #     env.layer[end].center = env.center
@@ -171,50 +171,50 @@ function pushleft(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::Adjoint
     return SparseRightEnvironmentTensor(convert(Array{RightEnvironmentTensor}, tmpEnvR))
 end
 
-pushright(::Nothing, A::DenseMPOTensor{4}, h::AbstractLocalOperator, A′::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2}) = contract(A,h,A′,EnvL)
-function pushright(h::LocalOperator{1, 1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+pushright(::Nothing, A::DenseMPOTensor{<:Number, 4}, h::AbstractLocalOperator, A′::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2}) = contract(A,h,A′,EnvL)
+function pushright(h::LocalOperator{1, 1}, A::DenseMPOTensor{<:Number, 4}, ::Nothing, A′::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ h.A[1,5] * A.A[4,2,-2,1] * A′.A[-1,5,4,3] * EnvL.A[3,2]
     return LeftEnvironmentTensor(tmp)
 end
-function pushright(::IdentityOperator{1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
+function pushright(::IdentityOperator{1}, A::DenseMPOTensor{<:Number, 4}, ::Nothing, A′::AdjointMPOTensor{<:Number, 4}, EnvL::LeftEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[4,1,-2,3] * A′.A[-1,3,4,2] * EnvL.A[2,1]
     return LeftEnvironmentTensor(tmp)
 end
-pushleft(::Nothing, A::DenseMPOTensor{4}, h::AbstractLocalOperator, A′::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2}) = contract(A,h,A′,EnvR)
-function pushleft(h::LocalOperator{1, 1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+pushleft(::Nothing, A::DenseMPOTensor{<:Number, 4}, h::AbstractLocalOperator, A′::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2}) = contract(A,h,A′,EnvR)
+function pushleft(h::LocalOperator{1, 1}, A::DenseMPOTensor{<:Number, 4}, ::Nothing, A′::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ h.A[1,4] * A.A[5,-1,2,1] * A′.A[3,4,5,-2] * EnvR.A[2,3]
     return RightEnvironmentTensor(tmp)
 end
-function pushleft(::IdentityOperator{1}, A::DenseMPOTensor{4}, ::Nothing, A′::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+function pushleft(::IdentityOperator{1}, A::DenseMPOTensor{<:Number, 4}, ::Nothing, A′::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor tmp[-1;-2] ≔ A.A[4,-1,1,3] * A′.A[2,3,4,-2] * EnvR.A[1,2]
     return RightEnvironmentTensor(tmp)
 end
 ##
-function pushleft(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+function pushleft(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{<:Number, 4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor x[-1;-2] ≔ ht.A[1,6] * objt.A[2,-1,3,1] * hb.A[5,2] * objb.A[4,6,5,-2] * EnvR.A[3,4]
     return RightEnvironmentTensor(x)
 end
 
-function pushleft(::IdentityOperator{1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+function pushleft(::IdentityOperator{1}, objt::DenseMPOTensor{<:Number, 4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
     # @tensor x[-1;-2] ≔ objt.A[2,-1,3,1] * hb.A[5,2] * objb.A[4,1,5,-2] * EnvR.A[3,4]
     @tensor x[-1;-2] ≔ objt.A[1,-1,2,4] * hb.A[5,1] * objb.A[3,4,5,-2] * EnvR.A[2,3]
     return RightEnvironmentTensor(x)
 end
 
-function pushleft(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+function pushleft(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
     # @tensor x[-1;-2] ≔ ht.A[1,5] * objt.A[2,-1,3,1] * objb.A[4,5,2,-2] * EnvR.A[3,4]
     @tensor x[-1;-2] ≔ ht.A[1,5] * objt.A[4,-1,2,1] * objb.A[3,5,4,-2] * EnvR.A[2,3]
     return RightEnvironmentTensor(x)
 end
 
-function pushleft(::IdentityOperator{1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+function pushleft(::IdentityOperator{1}, objt::DenseMPOTensor{<:Number, 4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{<:Number, 4}, EnvR::RightEnvironmentTensor{<:Number, 2})
     @tensor x[-1;-2] ≔ objt.A[3,-1,1,4] * objb.A[2,4,3,-2] * EnvR.A[1,2]
     return RightEnvironmentTensor(x)
 end
 
 #= TDVP =#
 
-# function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{2}, DenseMPOTensor{2}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
+# function pushright!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, tr::Union{MPSTensor{<:Number, 2}, DenseMPOTensor{<:Number, 2}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
 #     Env.layer[1].ts[site] = tl
 #     Env.layer[3].ts[site] = tl'
@@ -229,7 +229,7 @@ end
 #     return to,K
 # end
 
-# function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{2}, DenseMPOTensor{2}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
+# function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 2}, DenseMPOTensor{<:Number, 2}}, tr::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
 #     Env.layer[1].ts[site] = tr
 #     Env.layer[3].ts[site] = tr'
@@ -245,7 +245,7 @@ end
 # end
 
 
-# function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
+# function pushright!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, tr::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
 #     to = TimerOutput()
 #     Env.layer[1].ts[site] = tl
@@ -259,7 +259,7 @@ end
 #     return to,K
 # end
 
-# function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
+# function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, tr::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
 #     to = TimerOutput()
 #     Env.layer[1].ts[site] = tr
@@ -275,7 +275,7 @@ end
 
 #= -------- =#
 
-function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{2}, DenseMPOTensor{2}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
+function pushright!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, tr::Union{MPSTensor{<:Number, 2}, DenseMPOTensor{<:Number, 2}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
     @assert (site = Env.center[1] ) == Env.center[2]
     Env.layer[1].ts[site] = tl
     Env.layer[3].ts[site] = tl'
@@ -291,7 +291,7 @@ function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{
     return to,K
 end
 
-function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{2}, DenseMPOTensor{2}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{R2L})
+function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 2}, DenseMPOTensor{<:Number, 2}}, tr::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, Alg::TDVPalgo,info::TDVPsweepinfo{R2L})
     @assert (site = Env.center[1] ) == Env.center[2]
     Env.layer[1].ts[site] = tr
     Env.layer[3].ts[site] = tr'
@@ -308,7 +308,7 @@ function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{2}, DenseMPOTensor{2
 end
 
 
-function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
+function pushright!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, tr::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
     @assert (site = Env.center[1] ) == Env.center[2]
     to = TimerOutput()
     Env.layer[1].ts[site] = tl
@@ -323,7 +323,7 @@ function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{
     return to,K
 end
 
-function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{R2L})
+function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, tr::Union{MPSTensor{<:Number, 3}, DenseMPOTensor{<:Number, 4}}, Alg::TDVPalgo,info::TDVPsweepinfo{R2L})
     @assert (site = Env.center[1] ) == Env.center[2]
     to = TimerOutput()
     Env.layer[1].ts[site] = tr

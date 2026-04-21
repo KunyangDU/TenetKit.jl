@@ -3,10 +3,13 @@ function TensorKit.scalartype(A::AbstractTensorWrapper)
     return TensorKit.scalartype(A.A)
 end
 
+# Infer scalar type from a vector space: complex spaces → ComplexF64, real → Float64.
+TensorKit.scalartype(V::VectorSpace) = field(V) == ℂ ? ComplexF64 : Float64
+
 Base.similar(A::AbstractTensorWrapper, ::Type{S}) where {S<:Number} = zerovector(A, S)
-function TensorKit.zerovector(A::T, ::Type{S}) where {S<:Number, T<:AbstractTensorWrapper}
-    return convert(T, TensorKit.zerovector(A.A, S))
-end  
+function TensorKit.zerovector(A::AbstractTensorWrapper, ::Type{S}) where {S<:Number}
+    return typeof(A)(TensorKit.zerovector(A.A, S))
+end
 function TensorKit.zerovector!(A::AbstractTensorWrapper) 
     TensorKit.zerovector!(A.A)
     return A
@@ -38,8 +41,7 @@ function add!!(A::AbstractTensorWrapper,
     end
 end
 
-function axpy!(α::Number, A::T, B::T) where {T<:AbstractTensorWrapper}
-    # axpy!(α, A.A, B.A)
+function axpy!(α::Number, A::AbstractTensorWrapper, B::AbstractTensorWrapper)
     B.A = α * A.A + B.A
     return B
 end
@@ -102,7 +104,7 @@ TensorKit.dims(A::AbstractTensorWrapper) = dims(A.A)
 
 issparse(::T) where T <: Union{DenseMPS,AdjointMPS,DenseMPO,AdjointMPO} = false
 issparse(::SparseMPO) = true
-Base.size(t::DenseMPOTensor{4}) = map(dim,t.A |> x -> (codomain(x)[2],domain(x)[1]))
+Base.size(t::DenseMPOTensor{<:Number, 4}) = map(dim,t.A |> x -> (codomain(x)[2],domain(x)[1]))
 Base.length(::DenseMPO{L}) where L = L
 Base.length(::AdjointMPO{L}) where L = L
 Base.length(::SparseMPO{L}) where L = L
@@ -120,16 +122,17 @@ end
 
 function normalize!(obj::AbstractTensorWrapper)
     tmp = norm(obj.A)
-    obj.A = obj.A / tmp
+    rmul!(obj.A, inv(tmp))   # in-place scaling, zero extra allocation
     return tmp
 end
 
 Base.:+(A::T, B::T) where T <: AbstractTensorWrapper = T(A.A + B.A)
+Base.:+(A::TA, B::TB) where {TA<:AbstractTensorWrapper, TB<:AbstractTensorWrapper} = TA(A.A + B.A)
 Base.:+(::Nothing, B::AbstractTensorWrapper) = B
 Base.:+(A::AbstractTensorWrapper, ::Nothing) = A
 Base.:-(A::T, B::T) where T <: AbstractTensorWrapper = T(A.A - B.A)
-Base.:*(A::T,B::T) where T <: AbstractTensorWrapper = T(A.A * B.A)
-Base.:*(A::Number,B::T) where T <: AbstractTensorWrapper = T(A * B.A)
+Base.:*(A::T, B::T) where T <: AbstractTensorWrapper = T(A.A * B.A)
+Base.:*(A::Number, B::AbstractTensorWrapper) = typeof(B)(A * B.A)
 Base.:/(A::T,B::Number) where T <: AbstractTensorWrapper = (1/B) * A
 function Base.:*(A::Number,B::AbstractLocalOperator)
     B.strength *= A
@@ -146,9 +149,9 @@ add!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: Abs
 TensorKit.codomain(A::AbstractTensorWrapper) = codomain(A.A)
 TensorKit.domain(A::AbstractTensorWrapper) = domain(A.A)
 Base.eltype(A::AbstractTensorWrapper) = eltype(A.A)
-Base.randn(A::T) where T <: AbstractTensorWrapper = T(TensorMap(randn, eltype(A), codomain(A), domain(A)))
+Base.randn(A::AbstractTensorWrapper) = typeof(A)(TensorMap(randn, eltype(A), codomain(A), domain(A)))
 
-Base.copy(A::T) where T <: AbstractTensorWrapper = T(copy(A.A))
+Base.copy(A::AbstractTensorWrapper) = typeof(A)(copy(A.A))
 
 rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
@@ -159,7 +162,7 @@ rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
 #     return A + (-1)*B
 # end
 
-# function Base.:-(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
+# function Base.:-(A::CompositeMPSTensor{<:Number, 2, 4}, B::CompositeMPSTensor{<:Number, 2, 4})
 #     return A + (-1)*B
 # end
 
@@ -208,7 +211,7 @@ rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
 #     @assert R₁ == R₂
 #     return MPSTensor(A.A + B.A)
 # end
-# function Base.:+(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
+# function Base.:+(A::CompositeMPSTensor{<:Number, 2, 4}, B::CompositeMPSTensor{<:Number, 2, 4})
 #     return CompositeMPSTensor(A.A + B.A)
 # end
 
@@ -261,18 +264,18 @@ rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
 #     return tmp
 # end
 
-#= function Base.:*(A::CompositeMPSTensor{2, 4}, B::AdjointCompositeMPSTensor{2, 4})
+#= function Base.:*(A::CompositeMPSTensor{<:Number, 2, 4}, B::AdjointCompositeMPSTensor{<:Number, 2, 4})
     return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
 end
 
-function Base.:*(A::MPSTensor{3}, Ad::AdjointMPSTensor{3})
+function Base.:*(A::MPSTensor{<:Number, 3}, Ad::AdjointMPSTensor{<:Number, 3})
     return @tensor A.A[1,2,3] * Ad.A[3,1,2]
 end
 
-function Base.:*(A::CompositeMPOTensor{2,6}, B::AdjointCompositeMPOTensor{2,6})
+function Base.:*(A::CompositeMPOTensor{<:Number, 2,6}, B::AdjointCompositeMPOTensor{<:Number, 2,6})
     return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
 end
 
-function Base.:*(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4})
+function Base.:*(A::DenseMPOTensor{<:Number, 4}, B::AdjointMPOTensor{<:Number, 4})
     return  @tensor A.A[1,2,3,4] * B.A[3,4,1,2]
 end =#

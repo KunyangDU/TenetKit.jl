@@ -1,4 +1,4 @@
-function orthogonalize!(env::Environment{3},B::Union{DenseMPOTensor{4},MPSTensor{3}},EnvR::SparseRightEnvironmentTensor,osite::Int64)
+function orthogonalize!(env::Environment{3},B::Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}},EnvR::SparseRightEnvironmentTensor,osite::Int64)
     w,w2 = env.layer[2].D[osite]
     EnvRorth = Vector(undef,w)
     EnvRorth .= nothing
@@ -19,7 +19,7 @@ function orthogonalize!(env::Environment{3},B::Union{DenseMPOTensor{4},MPSTensor
     return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
 end
 
-function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor{3}},EnvL::SparseLeftEnvironmentTensor,osite::Int64)
+function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}},EnvL::SparseLeftEnvironmentTensor,osite::Int64)
     w1,w = env.layer[2].D[osite]
     EnvLorth = Vector(undef,w)
     EnvLorth .= nothing
@@ -39,7 +39,7 @@ function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor
     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
 end
 
-# function orthogonalize!(H::SparseMPOTensor,B::Union{DenseMPOTensor{4},MPSTensor{3}},EnvR::SparseRightEnvironmentTensor)
+# function orthogonalize!(H::SparseMPOTensor,B::Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}},EnvR::SparseRightEnvironmentTensor)
 #     w,w2 = size(H)
 #     EnvRorth = Vector(undef,w)
 #     EnvRorth .= nothing
@@ -58,7 +58,7 @@ end
 #     return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
 # end
 
-# function orthogonalize!(H::SparseMPOTensor,A::Union{DenseMPOTensor{4},MPSTensor{3}},EnvL::SparseLeftEnvironmentTensor)
+# function orthogonalize!(H::SparseMPOTensor,A::Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}},EnvL::SparseLeftEnvironmentTensor)
 #     w1,w = size(H.m)
 #     EnvLorth = Vector(undef,w)
 #     EnvLorth .= nothing
@@ -77,7 +77,7 @@ end
 #     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
 # end
 
-function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}}
     w,w2 = size(H)
     EnvRorth = Vector(undef,w)
     EnvRorth .= nothing
@@ -111,7 +111,7 @@ function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnviron
     return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
 end
 
-function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironmentTensor) where T <: Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}}
     w1,w = size(H.m)
     EnvLorth = Vector(undef,w)
     EnvLorth .= nothing
@@ -145,23 +145,23 @@ function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironm
     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
 end
 
-# function _orthogonalize!(Hij::AbstractLocalOperator,A::T,A′::T,EnvL::LeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+# function _orthogonalize!(Hij::AbstractLocalOperator,A::T,A′::T,EnvL::LeftEnvironmentTensor) where T <: Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}}
 #     x = contract(EnvL,A,Hij) 
 #     return x - contract(x,A′)
 # end
-# function _orthogonalize!(Hij::AbstractLocalOperator,B::T,B′::T,EnvR::RightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
+# function _orthogonalize!(Hij::AbstractLocalOperator,B::T,B′::T,EnvR::RightEnvironmentTensor) where T <: Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}}
 #     x = contract(B,Hij,EnvR)
 #     return x - contract(x,B′)
 # end
 
 
-function orthogonalize!(A::Union{DenseMPOTensor{4},MPSTensor{3}},A′::Union{DenseMPOTensor{4},MPSTensor{3}},Env::Union{DenseLeftEnvironmentTensor,DenseRightEnvironmentTensor})
+function orthogonalize!(A::Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}},A′::Union{DenseMPOTensor{<:Number, 4},MPSTensor{<:Number, 3}},Env::Union{DenseLeftEnvironmentTensor,DenseRightEnvironmentTensor})
     tmp = contract(Env.A,A)
     Envorth = tmp - contract(tmp,A′)
     return Envorth
 end
 
-function orthogonalize!(Q::T,A::T,direction::AbstractDirection;tol::Number=1e-4) where T <: Union{MPSTensor{3},DenseMPOTensor{4},AdjointMPOTensor{4}}
+function orthogonalize!(Q::T,A::T,direction::AbstractDirection;tol::Number=1e-4) where T <: Union{MPSTensor{<:Number, 3},DenseMPOTensor{<:Number, 4},AdjointMPOTensor{<:Number, 4}}
     ϵ = norm(_cbeinner(Q,A,direction))
     ϵ > tol && (ϵ = _cbeorth!(Q,A,direction))
     @assert ϵ < tol ϵ
