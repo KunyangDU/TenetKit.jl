@@ -3,10 +3,10 @@ include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 2^6
-Lx = 10
-Ly = 1
-params = (J=1, H = 1)
+D = 100
+Lx = 4
+Ly = 4
+params = (J=1, Δ = 1)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 @load "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg

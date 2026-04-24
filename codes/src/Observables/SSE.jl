@@ -164,3 +164,29 @@ function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, ::IdentityO
     @tensor x[-1;-2] ≔ ht.A[2,5] * objt.A[1,3,-2,2] * objb.A[-1,5,1,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
+
+function SSE1(H::InteractionTreeNode)
+    @time "SSE tree built spending" lsroot = let
+        lsroot = CompositeObservableTreeNode[]
+        
+        node_replace!(x,obj) = let 
+            x.A = x.A*obj.A - obj.A*x.A 
+            x.name = "[$(x.name),$(obj.name)]"
+        end
+
+        for i in 1:size(Latt)
+            rootup = InteractionTreeNode()
+            addIntr!(rootup,TrivialSpinOneHalf.S₊,i,"S₊",false,1,nothing)
+            S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
+            rootdown = commutate(Hroot,S₋)
+            tmpr = CompositeObservableTreeNode((rootup,rootdown))
+            buildtree!(tmpr)
+            push!(lsroot,cutparent!(tmpr))
+        end
+        lsroot
+    end 
+    map(lsroot[2:end]) do root 
+        merge!!(lsroot[1],(root))
+    end
+    return Observable(lsroot[1])
+end

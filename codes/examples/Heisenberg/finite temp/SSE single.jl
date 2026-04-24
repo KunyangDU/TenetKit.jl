@@ -33,34 +33,8 @@ Ly = 1
 Latt = YCSqua(Lx,Ly)
 for Hz in 1.0
 params = (J=1.0, Δ = 1.0, Hz = Hz)
-Ops = Vector{InteractionTreeNode}(undef,size(Latt))
 
 H = TrivialHamiltonian(Latt;params...,returnnode = true)
-
-@time lsroot = let
-    lsroot = CompositeObservableTreeNode[]
-    
-    node_replace!(x,obj) = let 
-        x.A = x.A*obj.A - obj.A*x.A 
-        x.name = "[$(x.name),$(obj.name)]"
-    end
-
-    for i in 1:size(Latt)
-        rootup = InteractionTreeNode()
-        addIntr!(rootup,TrivialSpinOneHalf.S₊,i,"S₊",false,1,nothing)
-        S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
-        rootdown = commutate(H,S₋)
-        tmpr = CompositeObservableTreeNode((rootup,rootdown))
-        buildtree!(tmpr)
-        push!(lsroot,cutparent!(tmpr))
-    end
-    lsroot
-end
-
-map(lsroot[2:end]) do root 
-    merge!!(lsroot[1],(root))
-end
-Obs = Observable(lsroot[1])
 
 # @load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 # @load "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2

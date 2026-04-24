@@ -12,7 +12,9 @@
 #     [(a+b)/2,(b+c)/2,(a+c)/2]
 # end
 
-function getxyzbonds(Latt::AbstractLattice;shift = [0,1],direction = [[1/2,sqrt(3)/2],[1/2,-sqrt(3)/2],[1,0]],projection = sqrt(3)/3)
+function getxyzbonds(Latt::AbstractLattice;
+    shift = [0,1],
+    direction = [[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]],tol=1e-8)
     nb = neighbor(Latt)
     _,Ly = get_cellsize(Latt)
     return map(direction) do v
@@ -22,12 +24,12 @@ function getxyzbonds(Latt::AbstractLattice;shift = [0,1],direction = [[1/2,sqrt(
                 u = u .- sign(u[2])*shift*Ly
             end
             u
-        end,v)) ≈ projection ,nb)
+        end,v)) < tol ,nb)
     end
 end
 
 function YCRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0),θ::Real = 0.0)
-    @assert L ≥ W
+    # @assert L ≥ W
     e = ((a, 0.0), (0.0, b))
     sites = [(x, y) for x in 1:L for y in 1:W]
     if iszero(θ)
@@ -38,32 +40,72 @@ function YCRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0),θ::Rea
     return SquareLattice(e, sites, BC)
 end
 
+function PCTria(L::Int64, W::Int64;
+     scale::Real = 1.0)
+     @assert L ≥ W
+     # generic zigzag! implementation can work if using the following convention
+     e = ((1.,0.).*scale, (1/2,sqrt(3)/2).*scale)
+     sites = [(x, y) for x in 1:L for y in 1:W]
+     BC = PeriodicBoundaryCondition((0, W))
+     return TriangularLattice(e, sites, BC)
+end
+
+
+function PCHoneyComb(Lx::Int64, Ly::Int64)
+    shift = ((0.0,0.0),(1/2,sqrt(3)/6))
+    return CompositeLattice([PCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake! 
+end
+
 function ZZHoneyComb(L::Int64,W::Int64)
     shift = ((-1/2sqrt(3),1/2),(0.0,0.0),(1/sqrt(3),0.0),(sqrt(3)/2,1/2))
     return CompositeLattice([YCRect(L,W,(sqrt(3),1.0)) for _ in 1:4]..., shift) |> Snake!    
 end
 
-function TrivialHamiltonian(Latt::AbstractLattice;Jx::Number = 1,Jy::Number = 1, Jz::Number = 1, ϵ::Number = 1e-5)
+function ACHoneyComb(L::Int64,W::Int64)
+    shift = ((1/2,-1/2sqrt(3)),(0.0,0.0),(0.0,1/sqrt(3)),(1/2,sqrt(3)/2))
+    return CompositeLattice([YCRect(L,W,(1.0,sqrt(3))) for _ in 1:4]..., shift) |> Snake!    
+end
+
+function YCHoneyComb(Lx::Int64, Ly::Int64)
+    shift = ((0.0,0.0),(sqrt(3)/6,1/2))
+    return CompositeLattice([YCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake! 
+end
+
+function XCHoneyComb(Lx::Int64, Ly::Int64)
+    shift = ((0.0,0.0),(1/2, sqrt(3)/6))
+    return CompositeLattice([XCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake!   
+end
+
+function TrivialHamiltonian(Latt::AbstractLattice;
+    K::Number = 1, ϵ::Number = 0.0,
+    Hx::Number = 0.0, Hy::Number = 0.0, Hz::Number = 0.0,
+    root::Bool = false,
+    kwargs...)
 
     LocalSpace = TrivialSpinOneHalf
 
     Root = InteractionTreeNode()
+    
+    shift = get(kwargs,:shift,[0,1])
+    direction = get(kwargs,:direction,[[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]])
 
-    xbonds,ybonds,zbonds = getxyzbonds(Latt)
-    # @show length.([xbonds,ybonds,zbonds])
+    xbonds,ybonds,zbonds = getxyzbonds(Latt;shift = shift,direction = direction)
     
     for pair in xbonds
-        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),Jx + ϵ,nothing)
+        addIntr!(Root,LocalSpace.SxSx,pair,("Sx","Sx"),(false,false),K + ϵ,nothing)
     end
     for pair in ybonds
-        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),Jy + ϵ,nothing)
+        addIntr!(Root,LocalSpace.SySy,pair,("Sy","Sy"),(false,false),K + ϵ,nothing)
     end
     for pair in zbonds
-        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),Jz + ϵ,nothing)
+        addIntr!(Root,LocalSpace.SzSz,pair,("Sz","Sz"),(false,false),K + ϵ,nothing)
     end
 
-    # addIntr!(Root,LocalSpace.Sz,div(size(Latt),2),"Sz",h,nothing)
+    for i in 1:size(Latt)
+        addIntr!(Root,LocalSpace.Sx,i,"Sx",false,-Hx,nothing)
+        addIntr!(Root,LocalSpace.Sy,i,"Sy",false,-Hy,nothing)
+        addIntr!(Root,LocalSpace.Sz,i,"Sz",false,-Hz,nothing)
+    end
 
-    return AutomataSparseMPO(InteractionTree(Root),size(Latt))  
-        
+    return root ? Root : AutomataSparseMPO(Root,size(Latt))
 end
