@@ -14,7 +14,7 @@ Ds = 16
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
-for Hz in vcat(0:0.2:0.8,1.2:0.2:3)
+for Hz in [1.0,2.0]
 params = (J = 1.0, Δ = 1.0, Hz = Hz)
 Latt = YCSqua(Lx,Ly)
 

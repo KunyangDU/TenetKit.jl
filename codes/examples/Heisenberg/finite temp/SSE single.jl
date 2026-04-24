@@ -31,7 +31,7 @@ Lx = 64
 Ly = 1
 
 Latt = YCSqua(Lx,Ly)
-for Hz in 1.0
+for Hz in [1.0,2.0]
 params = (J=1.0, Δ = 1.0, Hz = Hz)
 
 H = TrivialHamiltonian(Latt;params...,returnnode = true)
@@ -50,5 +50,4 @@ for (i,ρ) in enumerate(lsρ)
 end
 
 @save "$(dataname)/lsI_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsI
-@show lsI
 end

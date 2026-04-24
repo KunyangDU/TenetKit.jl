@@ -146,22 +146,31 @@ function buildtree!(A::CompositeObservableTreeNode)
 end
 
 function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
-    @tensor x[-1;-2] ≔ ht.A[2,6] * objt.A[1,3,-2,2] * hb.A[5,1] * objb.A[-1,6,5,4] * EnvL.A[4,3]
+    # opt=true: greedy optimizer contracts small (d²) local operators and EnvL (D²) before
+    # ever pairing objt with objb.  Without it the default left-to-right order reaches
+    # objt×objb — which share only d-sized bonds — producing a D⁴ intermediate
+    # (~1.6 GB at D=100).  opt=true keeps every intermediate at O(d²D²).
+    # @tensor opt=true x[-1;-2] ≔ ht.A[2,6] * objt.A[1,3,-2,2] * hb.A[5,1] * objb.A[-1,6,5,4] * EnvL.A[4,3]
+    @tensor x[-1;-2] ≔ ht.A[1,5] * objt.A[2,3,-2,1] * hb.A[6,2] * objb.A[-1,5,6,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
 
 function pushright(::IdentityOperator{1}, objt::DenseMPOTensor{4}, hb::LocalOperator{1, 1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
-    @tensor x[-1;-2] ≔ objt.A[1,3,-2,2] * hb.A[5,1] * objb.A[-1,2,5,4] * EnvL.A[4,3]
+    # @tensor opt=true x[-1;-2] ≔ objt.A[1,3,-2,2] * hb.A[5,1] * objb.A[-1,2,5,4] * EnvL.A[4,3]
+    @tensor x[-1;-2] ≔ objt.A[2,3,-2,5] * hb.A[6,2] * objb.A[-1,5,6,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
 
 function pushright(::IdentityOperator{1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
-    @tensor x[-1;-2] ≔ objt.A[1,3,-2,2] * objb.A[-1,2,1,4] * EnvL.A[4,3]
+    # Even with only 3 tensors, the default order contracts objt×objb first (D⁴).
+    # @tensor opt=true x[-1;-2] ≔ objt.A[1,3,-2,2] * objb.A[-1,2,1,4] * EnvL.A[4,3]
+    @tensor x[-1;-2] ≔  objt.A[6,3,-2,5] * objb.A[-1,5,6,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
 
 function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, ::IdentityOperator{1}, objb::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{2})
-    @tensor x[-1;-2] ≔ ht.A[2,5] * objt.A[1,3,-2,2] * objb.A[-1,5,1,4] * EnvL.A[4,3]
+    # @tensor opt=true x[-1;-2] ≔ ht.A[2,5] * objt.A[1,3,-2,2] * objb.A[-1,5,1,4] * EnvL.A[4,3]
+    @tensor x[-1;-2] ≔ ht.A[1,5] * objt.A[6,3,-2,1] * objb.A[-1,5,6,4] * EnvL.A[4,3]
     return LeftEnvironmentTensor(x)
 end
 

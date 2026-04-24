@@ -8,7 +8,7 @@ Ly = 4
 Latt = ZZHoneyComb(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 50
+D = 100
 DS = 2^4
 τ = 1.0
 Nhot = -20
