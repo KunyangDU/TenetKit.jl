@@ -25,16 +25,17 @@ dataname = "examples/Heisenberg/data/trivial"
 #     return A
 # end
 
-D = 2^6
+D = 256
 # for Ly in 4:2:20,Lx in Ly:2:20 
-Lx = 64
-Ly = 1
+Lx = 2
+Ly = 4
 
-Latt = YCSqua(Lx,Ly)
-for Hz in [1.0,2.0]
+Latt = YCRect(Lx,Ly)
+for Hz in [1.0,]
 params = (J=1.0, Δ = 1.0, Hz = Hz)
 
 H = TrivialHamiltonian(Latt;params...,returnnode = true)
+Obs = SSE1(H)
 
 # @load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 # @load "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2

@@ -4,39 +4,34 @@ include("model.jl")
 
 dataname = "examples/Kitaev/data"
 
-Lx = 6
-Ly = 2
+Lx = 4
+Ly = 4
 Latt = ZZHoneyComb(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 100
+D = 200
 DS = 2^4
-τ = 1.0
-Nhot = -20
-βmax = 50
+βstart = 20
+βend = 100
+indexstart = 40
 
-params = (K = -1.0, Ha = 0.0, Hb = 0.0, Hc = 0.01)
-Hx,Hy,Hz = params.Ha * [1,1,-2] / sqrt(6) + params.Hb * [1,-1,0] / sqrt(2) + params.Hc * [1,1,1] / sqrt(3)
+params = (K = 1.0, Ha = 0.0, Hb = 0.0, Hc = 0.1)
+Hx,Hy,Hz = params.Ha * [1,-1,0] / sqrt(2) + params.Hb * [1,1,-2] / sqrt(6) + params.Hc * [1,1,1] / sqrt(3)
 Hroot = TrivialHamiltonian(Latt;root = true,params...,Hx = Hx,Hy = Hy,Hz = Hz)
 H = AutomataSparseMPO(Hroot,size(Latt))
 
 Obs = SSE1(Hroot)
 
-ρ = let 
-    AuxSpaces = repeat([ℂ^1,], size(Latt)+1)
-    ρ = IdDenseMPO(TrivialSpinOneHalf.PhySpace, AuxSpaces)
-    canonicalize!(ρ,1)
-    ρ
-end
 
-lsβ = vcat((1.0 + τ) .^ (Nhot:1:-1), 1:τ:βmax)
-
+lsβ = βstart:τ:βend
 lsβ2 = lsβ[2:end]*2
-@save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
-@save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
+@save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params)_continue.jld2" lsβ
+@save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params)_continue.jld2" lsβ2
 
-SETTN1!(lsβ[1], H, ρ;trunc = truncdim(DS))
-Z = normalize!(ρ) ^ 2 
+@load "$(dataname)/ρ_$(Lx)x$(Ly)_$(D)_$(params)_HEAD.jld2" ρ
+@load "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params)_$(indexstart).jld2" data
+
+Z = exp(data["info"].lnZ)
 
 info = TDVPinfo(log(Z))
 lsinfo = []
@@ -52,7 +47,7 @@ lsdata = Dict[]
 end
 flush(stdout)
 
-for i in 2:length(lsβ)
+for i in (2:length(lsβ2))
     τ = (lsβ[i]-lsβ[i-1])/2
     println("t = $(lsβ[i])")
     flush(stdout)
@@ -73,7 +68,7 @@ for i in 2:length(lsβ)
     push!(lsdata, data)
 
     info.err > alg.tol && break
-    @save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params)_$(i).jld2" data
+    @save "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params)_$(indexstart + i - 1).jld2" data
     @save "$(dataname)/ρ_$(Lx)x$(Ly)_$(D)_$(params)_HEAD.jld2" ρ
 
     @time GC.gc()

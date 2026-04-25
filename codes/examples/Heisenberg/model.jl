@@ -7,6 +7,18 @@ function PINVEC120(Latt,h)
     return vcat(repeat([A0,R^2*A0],div(Ly,2)),repeat([R^(mod(Lx-1,3))*A0,R^(mod(Lx+1,3))*A0],div(Ly,2)))
 end
 
+function YCRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0),θ::Real = 0.0)
+    # @assert L ≥ W
+    e = ((a, 0.0), (0.0, b))
+    sites = [(x, y) for x in 1:L for y in 1:W]
+    if iszero(θ)
+         BC = PeriodicBoundaryCondition((0, W))
+    else
+         BC = TwistBoundaryCondition((0, W), θ)
+    end
+    return SquareLattice(e, sites, BC)
+end
+
 function TrivialHamiltonian(Latt::AbstractLattice;
     J::Number=1, Hx::Number = 0, Hy::Number = 0, Hz::Number = 0, Δ::Number = 1, hxd::Number = 0.0,
     hx::Number = 0,

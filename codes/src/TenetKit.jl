@@ -73,7 +73,7 @@ include("Algebra/contract.jl")
 include("utils/benchmarktools.jl")
 include("utils/KrylovKit.jl")
 include("utils/lattice.jl")
-include("utils/LKAN.jl")
+# include("utils/LKAN.jl")
 
 include("Algorithm/DMRG.jl")
 include("Algorithm/TDVP.jl")
