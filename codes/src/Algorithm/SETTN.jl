@@ -4,9 +4,9 @@ function SETTN1!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     
     trunc = get(kwargs,:trunc,notrunc())
     N = get(kwargs,:max_order,10)
-    tol = get(kwargs,:tol,1e-8)
+    tol = get(kwargs,:tol,1e-12)
     # algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),NoStruc(),0,_getdim(trunc),isnothing(_getcutoff(trunc)) ? tol : _getcutoff(trunc)))
-    algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),NoStruc(),0,_getdim(trunc)))
+    algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),DSA(),3,_getdim(trunc)))
     multol = get(kwargs,:tol,1e-12)
     Alg = SETTNalgo(SingleSite(),Algebraalgo(SingleSite(),algo,trunc,3,multol),trunc,N,tol)
     return SETTN!(β, H, ρ, Alg)
@@ -16,7 +16,7 @@ function SETTN2!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     
     trunc = get(kwargs,:trunc,notrunc())
     N = get(kwargs,:max_order,10)
-    tol = get(kwargs,:tol,1e-8)
+    tol = get(kwargs,:tol,1e-12)
     multol = get(kwargs,:tol,1e-12)
     alg = SETTNalgo(DoubleSite(),Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,3,multol),trunc,N,tol)
     return SETTN!(β, H, ρ, alg)

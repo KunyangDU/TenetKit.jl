@@ -293,3 +293,39 @@ function Base.show(io::IO,info::BondInfo)
 end
 
 
+mutable struct XTRGinfo <: AlgorithmInfo
+    bond::BondInfo
+    n::Int64
+    err::Number
+    truncerr::Number
+    lnZ::Number
+    E::Number
+    XTRGinfo(lnZ::Number) = new(BondInfo(),1,0,0,lnZ,0)
+end
+
+mutable struct XTRGsweepinfo <: AlgorithmInfo
+    bond::BondInfo
+    err::Number
+    truncerr::Number
+    lnZ::Number
+    E::Number
+    XTRGsweepinfo() = new(BondInfo(),0,0,0,0)
+end
+
+function TimerOutputs.merge!(info1::XTRGsweepinfo, info2::Algebrainfo)
+    merge!(info1.bond , info2.bond)
+    info1.err = max(info1.err, info2.err)
+    info1.truncerr = max(info1.truncerr, info2.truncerr)
+end
+function TimerOutputs.merge!(info1::XTRGinfo, info2::XTRGsweepinfo)
+    merge!(info1.bond , info2.bond)
+    info1.err = max(info1.err, info2.err)
+    info1.truncerr = max(info1.truncerr, info2.truncerr)
+    info1.E = info2.E
+    info1.lnZ = info2.lnZ
+end
+
+function Base.show(io::IO,info::XTRGsweepinfo)
+    println(io,info.bond,", ProjErr = $(info.err), TruncErr = $(info.truncerr), lnZ = $(info.lnZ), E = $(info.E)")
+end
+

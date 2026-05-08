@@ -7,11 +7,13 @@ Fermion complexity
 =#
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 256
-Lx = 2
-Ly = 4
+D = 64
+Lx = 96
+Ly = 1
 Ds = 32
-Latt = YCRect(Lx,Ly)
+τ = 1.0
+
+Latt = YCSqua(Lx,Ly)
 L = size(Latt)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 for Hz in [1.0,]
@@ -25,7 +27,7 @@ H = TrivialHamiltonian(Latt; params...)
     ρ
 end
 
-lsβ = vcat((1.0 + 0.5) .^ (-20:1:-1), 1:0.5:10)
+lsβ = vcat((1.0 + τ) .^ (-20:1:-1), 1:τ:100)
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 
 SETTN1!(lsβ[1], H, ρ;trunc = truncdim(Ds))

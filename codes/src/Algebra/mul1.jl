@@ -1,5 +1,7 @@
 function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},DenseMPS{L₁}}, B::Union{DenseMPO{L₂},SparseMPO{L₂}}, α::Number, Alg::Algebraalgo; kwargs...) where {L₁,L₂}
 
+    verbose = get(kwargs,:verbose,true)
+
     @assert L₁ == L₂
     to = TimerOutput()
     C′ = C'
@@ -7,8 +9,10 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},D
         EnvAB = Environment([A,B,C′])
         initialize!(EnvAB)
     end
+
     info = Algebrainfo()
     while info.n ≤ Alg.N
+        info.err = 0
         localto = TimerOutput()
 
         l2rinfo = Algebrasweepinfo(L2R())
@@ -20,10 +24,12 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},D
         mto = mul!(EnvAB,α,Alg,r2linfo)
         merge!(localto,mto)
         merge!(info,r2linfo)
-
-        show(localto;title = "mul!")
-        print("\n")
-        show(info)
+        if verbose
+            show(localto;title = "mul! - $(info.n) / $(Alg.N)")
+            print("\n")
+            show(info)
+            flush(stdout)
+        end
         merge!(to,localto)
         info.err < Alg.tol && break
     end
@@ -90,7 +96,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(L2R())
-            @timeit localto "CBE_AB" cbetoAB = CBE!(EnvAB, CBEalgo(Alg.alg,DSA(),3), cbeinfo)
+            @timeit localto "CBE_AB" cbetoAB = CBE!(EnvAB, Alg.alg, cbeinfo)
             merge!(localinfo,cbeinfo)
             merge!(localto,cbetoAB,tree_point = ["CBE_AB"])
         end
@@ -127,7 +133,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(R2L())
-            @timeit localto "CBE_AB" cbetoAB = CBE!(EnvAB, CBEalgo(Alg.alg,DSA(),3), cbeinfo)
+            @timeit localto "CBE_AB" cbetoAB = CBE!(EnvAB, Alg.alg, cbeinfo)
             merge!(localinfo,cbeinfo)
             merge!(localto,cbetoAB,tree_point = ["CBE_AB"])
         end

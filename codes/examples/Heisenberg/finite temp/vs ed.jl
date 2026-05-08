@@ -37,6 +37,7 @@ end .* lsβ2
 
 @load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
 @load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
+@load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 
 
 finddata(dicts::Vector,name::String) = map(x -> x[name],dicts)
@@ -50,5 +51,6 @@ lsEed .- lsE
 # ),norm(lsFed .- lsF)
 
 (lsI2 .- lsIed) ./ lsIed
+tr.(lsρ)
 
 # lsIed

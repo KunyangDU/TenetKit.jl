@@ -1,5 +1,5 @@
 using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees
-import LinearAlgebra: BLAS 
+import LinearAlgebra: BLAS, cross
 
 include("Globals.jl")
 include("init.jl")
@@ -67,7 +67,7 @@ include("Algebra/mul1.jl")
 include("Algebra/mul2.jl")
 include("Algebra/axpby.jl")
 include("Algebra/operations.jl")
-include("Algebra/densify.jl")
+# include("Algebra/densify.jl")
 include("Algebra/contract.jl")
 
 include("utils/benchmarktools.jl")
@@ -80,7 +80,9 @@ include("Algorithm/TDVP.jl")
 include("Algorithm/SETTN.jl")
 include("Algorithm/CBE.jl")
 include("Algorithm/CBE2.jl")
-include("Algorithm/CBE3.jl")
+include("Algorithm/CBE3-1.jl")
+include("Algorithm/CBE3-3.jl")
+
 include("Algorithm/CBE-SVD.jl")
 include("Algorithm/orthogonalize.jl")
 include("Algorithm/splice.jl")
@@ -88,6 +90,7 @@ include("Algorithm/utils.jl")
 include("Algorithm/CBE_contract.jl")
 include("Algorithm/DMRG_contract.jl")
 include("Algorithm/TDVP_contract.jl")
+include("Algorithm/XTRG.jl")
 
 include("LocalSpace/Fermion.jl")
 include("LocalSpace/Spin.jl")

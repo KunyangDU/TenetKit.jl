@@ -21,8 +21,8 @@ function YCRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0),θ::Rea
     return SquareLattice(e, sites, BC)
 end
 
-Lx = 2
-Ly = 4
+Lx = 8
+Ly = 1
 Latt = YCRect(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
@@ -65,10 +65,11 @@ function addIntr1(O1::Matrix,i::Int64,L::Int64,d::Int64)
     return H
 end
 
-τ = 0.5
+τ = 1.0
 Nhot = -20
-βmax = 10
-params = (J = 1.0, Δ = 1.0, Hz = 1.0)
+Nxup = 10
+βmax = 0
+params = (J = 1.0, Δ = 1.0, Hz = 0.0)
 
 H = let H = zeros(d^size(Latt),d^size(Latt)), J = params.J, Δ = params.Δ, Hz = params.Hz
     for pair in neighbor(Latt)
@@ -84,7 +85,7 @@ end
 S₊s = map(x -> addIntr1(S₊,x,L,d), 1:L)
 HS₋s = map(x -> addIntr1(S₋,x,L,d) |> y -> H*y - y*H, 1:L)
 
-lsβ = vcat((1.0 + τ) .^ (Nhot:1:-1), 1:τ:βmax)
+lsβ = vcat((1.0 + τ) .^ (Nhot:1:Nxup), 1:τ:βmax)
 
 lsβ2 = lsβ[2:end]*2
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(params).jld2" lsβ

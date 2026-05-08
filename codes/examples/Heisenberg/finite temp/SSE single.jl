@@ -25,10 +25,10 @@ dataname = "examples/Heisenberg/data/trivial"
 #     return A
 # end
 
-D = 256
+D = 64
 # for Ly in 4:2:20,Lx in Ly:2:20 
-Lx = 2
-Ly = 4
+Lx = 96
+Ly = 1
 
 Latt = YCRect(Lx,Ly)
 for Hz in [1.0,]

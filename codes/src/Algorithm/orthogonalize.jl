@@ -170,4 +170,8 @@ end
 
 
 
+orthogonalize!(H::DenseMPOTensor,A::DenseMPOTensor{4},A′::DenseMPOTensor{4},EnvL::DenseLeftEnvironmentTensor) = contract(EnvL.A,A,H) |> x -> x - contract(x,A′)
+orthogonalize!(H::DenseMPOTensor,B::DenseMPOTensor{4},B′::DenseMPOTensor{4},EnvR::DenseRightEnvironmentTensor)= contract(B,H,EnvR.A) |> x -> x - contract(x,B′)
+
+
 

@@ -13,16 +13,9 @@ end
 
 module TrivialSpinfulFermion
 using TensorKit
+import LinearAlgebra: diagm
 const PhySpace = ℂ^4
-function diagm(A::Pair{Int64, Vector{T}}) where T
-    L = abs(A.first) + length(A.second)
-    B = zeros(T,L,L)
-    for i in 1:length(A.second)
-        B[(A.first > 0 ? (i,abs(A.first) + i) : (abs(A.first) + i,i))...] = A.second[i]
-    end
-    return B
-end
-diagm(A::Vector) = diagm(0 => A)
+
 const Z = TensorMap(diagm([1,-1,-1,1]),PhySpace,PhySpace)
 const F₊⁺ = TensorMap(diagm(-2 => [1,1]),PhySpace,PhySpace)
 const F₋⁺ = TensorMap(diagm(-1 => [1,0,-1]),PhySpace,PhySpace)
@@ -37,35 +30,12 @@ const n₊ = F₊⁺*F₊
 const n₋ = F₋⁺*F₋
 const n = F₊⁺*F₊ + F₋⁺*F₋
 const nn = n, n
-# function diagm(dg::Vector{T}) where T
-#     L = length(dg)
-#     mat = zeros(T,L,L)
-#     for (dgi,dge) in enumerate(dg)
-#         mat[dgi,dgi] = dge
-#     end
-#     return mat
-# end
-# function diagm(pair::Pair{Int64, Vector{T}}) where T
-#     L = length(pair[2]) + abs(pair[1])
-#     mat = zeros(T,L,L)
-#     if pair[1] > 0
-#         for (ii,ie) in enumerate(pair[2])
-#             mat[ii,ii+pair[1]] = ie
-#         end
-#     elseif pair[1] < 0
-#         for (ii,ie) in enumerate(pair[2])
-#             mat[ii-pair[1],ii] = ie
-#         end
-#     else
-#         mat = diagm(pair[2])
-#     end
-    
-#     return mat
-# end
 end
 
 module TrivialSpinOneHalf
 using TensorKit
+import LinearAlgebra: cross
+
 const PhySpace = ℂ^2
 const Sx = let 
     MatOp = [0 1;1 0] / 2
@@ -97,19 +67,29 @@ const SzSy = Sz,Sy
 const SxSz = Sx,Sz
 const SzSx = Sz,Sx
 
+function _local_axis(h::Vector)
+    ŵ = h / norm(h)
+    if abs(ŵ[1]) < 0.6 && abs(ŵ[2]) < 0.6
+        û = [ŵ[3], 0.0, -ŵ[1]]
+    else
+        û = [-ŵ[2], ŵ[1], 0.0]
+    end
+    û /= norm(û)
+    v̂ = cross(ŵ,û)
+    return û,v̂,ŵ
+end
+
+function Sud(h::Vector) 
+    x̂,ŷ,_ = _local_axis(h)
+    return transpose(x̂ + 1im * ŷ) * [Sx,Sy,Sz] |> x -> (x,x')
+end
+
 end
 
 module TrivialSpinOne
 using TensorKit
-function diagm(A::Pair{Int64, Vector{T}}) where T
-    L = abs(A.first) + length(A.second)
-    B = zeros(T,L,L)
-    for i in 1:length(A.second)
-        B[(A.first > 0 ? (i,abs(A.first) + i) : (abs(A.first) + i,i))...] = A.second[i]
-    end
-    return B
-end
-diagm(A::Vector) = diagm(0 => A)
+import LinearAlgebra: diagm
+
 const PhySpace = ℂ^3
 const Sz = let 
     MatOp = diagm([1,0,-1])

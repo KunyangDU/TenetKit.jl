@@ -47,6 +47,11 @@ function setdefault!(env::Environment{2};kwargs...)
         rds = get(kwargs,:right_default_space, getAuxSpace(env.layer[2].ts[end])[2] |> y -> (y,trivial(y)))
         env.envs[1] = SparseLeftEnvironmentTensor(isometry(lds...))
         env.envs[end] = SparseRightEnvironmentTensor(isometry(rds...))
+    elseif !issparse(env.layer[1]) && issparse(env.layer[2])
+        lds = get(kwargs,:left_default_space, repeat([getAuxSpace(env.layer[1].ts[1])[1],],2))
+        rds = get(kwargs,:right_default_space, repeat([getAuxSpace(env.layer[1].ts[end])[2],],2))
+        env.envs[1] = SparseLeftEnvironmentTensor(isometry(lds...))
+        env.envs[end] = SparseRightEnvironmentTensor(isometry(rds...))
     end
 end
 

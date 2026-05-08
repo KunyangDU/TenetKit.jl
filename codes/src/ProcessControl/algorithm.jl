@@ -103,4 +103,13 @@ end
 # end
 
 
+mutable struct XTRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
+    scheme::AbstractScheme
+    alg::AbstractAlgorithm
+    N::Int64
+    H::Union{SparseMPO,Nothing}
+    function XTRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, N::Int64, H::Union{SparseMPO,Nothing} = nothing)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,N,H)
+    end
+end
 

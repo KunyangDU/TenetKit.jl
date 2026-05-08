@@ -66,7 +66,7 @@ function commutate_node(root::InteractionTreeNode, obj::LocalOperator, commute::
         i = findfirst(x -> x == obj.site, l.Leave.site)
         cA = commute(l.Leave.A[i])
         norm(cA) ≈ 0 && continue
-        tA = collect(l.Leave.A)
+        tA = collect(l.Leave.A) .* (1.0 + 0.0im)
         tname = collect(l.Leave.name)
         tA[i] = cA
         tname[i] = "[$(l.Leave.name[i]),$(obj.name)]"
@@ -174,7 +174,7 @@ function pushright(ht::LocalOperator{1, 1}, objt::DenseMPOTensor{4}, ::IdentityO
     return LeftEnvironmentTensor(x)
 end
 
-function SSE1(H::InteractionTreeNode)
+function SSE1(Latt::AbstractLattice, H::InteractionTreeNode, S₊::AbstractTensorMap, S₋::AbstractTensorMap)
     @time "SSE tree built spending" lsroot = let
         lsroot = CompositeObservableTreeNode[]
         
@@ -185,9 +185,9 @@ function SSE1(H::InteractionTreeNode)
 
         for i in 1:size(Latt)
             rootup = InteractionTreeNode()
-            addIntr!(rootup,TrivialSpinOneHalf.S₊,i,"S₊",false,1,nothing)
-            S₋ = LocalOperator(TrivialSpinOneHalf.S₋,"S₋",i,1)
-            rootdown = commutate(H,S₋)
+            addIntr!(rootup,S₊,i,"S₊",false,1,nothing)
+            S₋op = LocalOperator(S₋,"S₋",i,1)
+            rootdown = commutate(H,S₋op)
             tmpr = CompositeObservableTreeNode((rootup,rootdown))
             buildtree!(tmpr)
             push!(lsroot,cutparent!(tmpr))
@@ -199,3 +199,4 @@ function SSE1(H::InteractionTreeNode)
     end
     return Observable(lsroot[1])
 end
+
