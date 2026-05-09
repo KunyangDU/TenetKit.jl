@@ -1,4 +1,4 @@
-function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},DenseMPS{L₁}}, B::Union{DenseMPO{L₂},SparseMPO{L₂}}, α::Number, Alg::Algebraalgo; kwargs...) where {L₁,L₂}
+function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},DenseMPS{L₁}}, B::Union{DenseMPO{L₂},SparseMPO{L₂},AdjointMPO{L₂},RefMPO{L₂}}, α::Number, Alg::Algebraalgo; kwargs...) where {L₁,L₂}
 
     verbose = get(kwargs,:verbose,true)
 
@@ -44,7 +44,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(EnvAB.layer[3].ts[site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite" t = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u].ts[site:site+1],1:2)...)..., EnvAB.envs[site+2])
+        @timeit localto "composite" t = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u][site:site+1],1:2)...)..., EnvAB.envs[site+2])
         @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpy!(α,t,nothing); direction=:center,trunc = Alg.trunc)
         localinfo.truncerr = truncerr
         localinfo.bond = BondInfo(tc)
@@ -69,7 +69,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(EnvAB.layer[3].ts[site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite" t = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u].ts[site-1:site],1:2)...)..., EnvAB.envs[site+1])
+        @timeit localto "composite" t = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u][site-1:site],1:2)...)..., EnvAB.envs[site+1])
         @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpy!(α, t, nothing); direction=:center,trunc = Alg.trunc)
         localinfo.truncerr = truncerr
         localinfo.bond = BondInfo(tc)

@@ -6,12 +6,14 @@ dataname = "examples/Heisenberg/data/XTRG"
 
 Lx = 4
 Ly = 4
-for D in [150,200,250]
-
+D = 300
 DS = 32
-algetol = 1e-6
+algetol = 1e-4
 SETTNtol = 1e-12
+
 νs = [convert(Float64,i//4) for i in 0]
+
+
 
 Latt = YCSqua(Lx,Ly)
 L = size(Latt)
@@ -37,8 +39,6 @@ Obs = let LocalSpace = TrivialSpinOneHalf, Sops = (LocalSpace.Sx,LocalSpace.Sy,L
 end
 
 H = TrivialHamiltonian(Latt; params...)
-
-
 
 N = 15
 for ν in νs
@@ -81,5 +81,4 @@ while info.n ≤ algo.N
     info.n += 1
 end
 
-end
 end

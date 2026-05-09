@@ -29,3 +29,4 @@ function canonicalize!(obj::Union{AdjointMPO{L},AdjointMPS{L}},si::Int64) where 
     return adjoint(canonicalize!(obj',si,si))
 end
 
+canonicalize!(obj::RefMPO, i::Int64) = canonicalize!(obj.pointer,i)

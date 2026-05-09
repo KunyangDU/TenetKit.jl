@@ -151,6 +151,12 @@ Base.randn(A::T) where T <: AbstractTensorWrapper = T(TensorMap(randn, eltype(A)
 Base.copy(A::T) where T <: AbstractTensorWrapper = T(copy(A.A))
 
 rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
+
+Base.getindex(obj::T, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = obj.ts[i]
+Base.getindex(obj::RefMPO, i::Int64) = obj.mapping(obj.ts[i])
+Base.getindex(obj::T, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = obj.ts[stp]
+Base.getindex(obj::RefMPO, stp::UnitRange) = obj.mapping.(obj.ts[stp])
+
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B
 # end

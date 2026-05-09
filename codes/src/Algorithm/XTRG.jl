@@ -3,11 +3,11 @@ function XTRG!(obj::DenseMPO{L}, Alg::XTRGalgo, info::XTRGinfo) where L
     sweepinfo = XTRGsweepinfo()
     to = TimerOutput()
 
-    @timeit to "mul!" _,multo,mulinfo = mul!(obj,obj,obj,1,Alg.alg;verbose = true)
+    @timeit to "mul!" _,multo,mulinfo = mul!(obj,obj,RefMPO(obj,adjoint),1,Alg.alg;verbose = true)
     merge!(to,multo,tree_point=["mul!"])
     merge!(sweepinfo,mulinfo)
-    sweepinfo.lnZ = 2log(normalize!(obj)) + 2 * info.lnZ
-    !isnothing(Alg.H) && (sweepinfo.E = real(_scalar(Environment([obj,Alg.H]))))
+    @timeit to "normalize!" sweepinfo.lnZ = 2log(normalize!(obj)) + 2 * info.lnZ
+    @timeit to "measure E" !isnothing(Alg.H) && (sweepinfo.E = real(_scalar(Environment([obj,Alg.H]))))
 
     @timeit to "GC" GC.gc()
     show(to;title = "XTRG - $(info.n) / $(Alg.N)")

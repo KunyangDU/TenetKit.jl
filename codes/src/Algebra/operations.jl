@@ -50,7 +50,7 @@ function _scalar(env::Environment{2})
         setdefault!(env)
         envL,envR = env.envs[1],env.envs[end]
         for i in env.L:-1:1
-            envR = SparseRightEnvironmentTensor(contract(env.layer[1].ts[i],H.ts[i],env.layer[1].ts[i]',envR))
+            envR = SparseRightEnvironmentTensor(contract(env.layer[1].ts[i],env.layer[2].ts[i],env.layer[1].ts[i]',envR))
         end
         for i in eachindex(envL.A)
             ans += @tensor envL.A[i].A[1,2] * envR.A[i].A[2,1]

@@ -119,3 +119,12 @@ function contract(EnvL::LeftCompositeEnvironmentTensor{3, 7}, EnvR::RightEnviron
     @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ EnvL.A[-3,-2,-1,2,1,-5,-6] * EnvR.A[1,2,-4]
     return CompositeMPOTensor(tmp)
 end
+
+
+
+
+function contract(EnvL::DenseLeftEnvironmentTensor{3}, tL::DenseMPOTensor{4}, tR::DenseMPOTensor{4}, hl::AdjointMPOTensor{4}, hr::AdjointMPOTensor{4}, EnvR::DenseRightEnvironmentTensor{3})
+    @tensor tmp[-1,-2,-3,-4,-5,-6,-7] ≔ EnvL.A.A[-1,1,2] * tL.A[3,2,5,-7] * tR.A[6,5,-5,-6] * hl.A[4,-2,3,1] * hr.A[-4,-3,6,4]
+    @tensor ft[-1,-2,-3;-4,-5,-6] ≔ tmp[-3,-2,-1,1,2,-5,-6] * EnvR.A.A[2,1,-4]
+    return CompositeMPOTensor(ft)
+end

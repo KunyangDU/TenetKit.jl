@@ -220,3 +220,15 @@ function contract(EnvL::LeftEnvironmentTensor{2}, A::MPSTensor{3}, A′::Adjoint
     return @tensor EnvL.A[1,2] * A.A[2,3,4] * A′.A[5,1,3] * EnvR.A[4,5]
 end
 
+
+
+function contract(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4}, C::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{3})
+    @tensor tmp[-1 -2;-3] ≔ A.A[3,-1,1,5] * B.A[2,6,3,-2] * C.A[4,5,6,-3] * EnvR.A[1,2,4]
+    return RightEnvironmentTensor(tmp)
+end
+
+function contract(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4}, C::AdjointMPOTensor{4}, EnvL::LeftEnvironmentTensor{3})
+    @tensor tmp[-1 ;-2 -3] ≔ A.A[6,4,-3,5] * B.A[-2,3,6,2] * C.A[-1,5,3,1] * EnvL.A[1,2,4]
+    return LeftEnvironmentTensor(tmp)
+end
+
