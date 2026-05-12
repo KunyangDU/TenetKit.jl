@@ -6,7 +6,7 @@ dataname = "examples/Heisenberg/data/XTRG"
 
 Lx = 4
 Ly = 4
-D = 300
+D = 128
 DS = 32
 algetol = 1e-4
 SETTNtol = 1e-12

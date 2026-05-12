@@ -277,13 +277,6 @@ function contract(EnvL::LeftEnvironmentTensor{3}, EnvR::RightCompositeEnvironmen
 end
 
 
-
-
-function contract(EnvL::DenseLeftEnvironmentTensor{3}, tL::DenseMPOTensor{4}, tR::DenseMPOTensor{4}, hl::DenseMPOTensor{4}, hr::DenseMPOTensor{4}, EnvR::DenseRightEnvironmentTensor{3})
-    @tensor tmp[-1,-2,-3,-6,-7;-5,-4] ≔ EnvL.A.A[-1,1,2] * tL.A[3,2,5,-7] * tR.A[6,5,-5,-6] * hl.A[-2,1,4,3] * hr.A[-3,4,-4,6]
-    return CompositeMPOTensor(permute(tmp * EnvR.A.A,(3,2,1),(6,4,5)))
-end
-
 function contract(El::LeftEnvironmentTensor{3},A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
     @tensor tmp[-1 -2;-3 -4 -5] ≔ El.A[-1,2,1] * A.A[3,1,-4,-5] * B.A[-2,2,-3,3]
     return LeftCompositeEnvironmentTensor(tmp)
