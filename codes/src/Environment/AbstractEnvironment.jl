@@ -198,12 +198,12 @@ Monolayer Environment, i.e., only one layer MPO is considered.
 """
 mutable struct Environment{N,L} <: AbstractEnvironment
     layer::Vector
-    envs::Union{Nothing,Array{AbstractEnvironmentTensor}}
+    envs::Union{Nothing,CachedVector{AbstractEnvironmentTensor}}
     center::Vector{Int64}
     L::Int64
 
     function Environment(layer::Vector,
-        envs::Array{AbstractEnvironmentTensor},
+        envs::CachedVector{AbstractEnvironmentTensor},
         center::Union{Nothing,Vector{Int64}},
         L::Union{Nothing,Int64})
         return new{length(layer),length(layer[1])}(layer,envs,center,L)
@@ -249,6 +249,12 @@ end
 # function _fullCBEenv(tL₀::AbstractTensorWrapper,tR₀::AbstractTensorWrapper,D_i::Int64,D_f::Int64)
 #     return CBEenvironment(tL₀,tR₀,nothing,nothing,D_i,D_f,nothing,nothing,nothing)
 # end
+
+# ───────────────────────────────────────────────────────────────
+# Per-type cache memory limit for Environment tensors
+# ───────────────────────────────────────────────────────────────
+
+_cache_memory_limit(::Type{<:AbstractEnvironmentTensor}) = round(Int, CACHE_MEMORY_LIMIT[] * ENV_CACHE_RATIO[])
 
 # function _randCBEenv(
 #     tL₀::AbstractTensorWrapper,tR₀::AbstractTensorWrapper,

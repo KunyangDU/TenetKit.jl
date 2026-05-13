@@ -1,10 +1,12 @@
 using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees
 import LinearAlgebra: BLAS, cross
+using LRUCache
 
 include("Globals.jl")
 include("init.jl")
 
 include("TensorWrapper/AbstractType.jl")
+include("TensorWrapper/CachedVector.jl")
 include("TensorWrapper/AbstractTensor.jl")
 include("MPS/AbstractMPS.jl")
 include("MPO/AbstractMPO.jl")

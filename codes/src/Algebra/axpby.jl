@@ -225,7 +225,10 @@ function xpy!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO}
 end
 
 function xp!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS}
-    y.ts[:] = x.ts[:]
+    # Per-element copy to avoid materializing all tensors at once (OOM risk).
+    for i in 1:length(x.ts)
+        y.ts[i] = x.ts[i]
+    end
     y.center = x.center
     return y
 end

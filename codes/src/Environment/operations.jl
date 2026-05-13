@@ -1,6 +1,7 @@
 
-function initialize!(env::Environment;kwargs...)
-    env.envs = Vector{AbstractEnvironmentTensor}(undef, env.L + 1)
+function initialize!(env::Environment; cache_limit::Union{Int,Nothing}=nothing, kwargs...)
+    limit = something(cache_limit, _cache_memory_limit(AbstractEnvironmentTensor))
+    env.envs = CachedVector{AbstractEnvironmentTensor}(env.L + 1, limit)
     setdefault!(env;kwargs...)
     canonicalize!(env,1)
 end

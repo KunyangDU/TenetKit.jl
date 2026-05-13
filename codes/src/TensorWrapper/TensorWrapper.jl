@@ -141,7 +141,7 @@ scale(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} 
 scale!!(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale!!((t[1].A,t[2]))
 scale!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = scale!!((t[1].A,t[2].A,t[3]))
 zerovector(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = zerovector((t[1].A,t[2]))
-add!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = add!!((t[1].A,t[2].A,t[3],t[4]))
+add!!(t::Tuple{T₁,T₂,T₃,T₄}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number,T₄} = add!!((t[1].A,t[2].A,t[3],t[4]))
 
 TensorKit.codomain(A::AbstractTensorWrapper) = codomain(A.A)
 TensorKit.domain(A::AbstractTensorWrapper) = domain(A.A)

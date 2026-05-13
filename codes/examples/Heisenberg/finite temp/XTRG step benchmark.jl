@@ -4,9 +4,9 @@ include("../model.jl")
 
 dataname = "examples/Heisenberg/data/XTRG"
 
-Lx = 4
-Ly = 4
-D = 128
+Lx = 6
+Ly = 1
+D = 32
 DS = 32
 algetol = 1e-4
 SETTNtol = 1e-12

@@ -5,20 +5,20 @@ include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
 Lx = 8
-Ly = 4
+Ly = 1
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 100
+D = 64
 DS = 2^4
 τ = 0.5
 Nhot = -20
-βmax = 100
+βmax = 10
 params = (J = 1.0, Δ = 1.0, Hz = 0.1)
 Hroot = TrivialHamiltonian(Latt;returnnode = true,params...)
 H = AutomataSparseMPO(Hroot,size(Latt))
-
-Obs = SSE1(Hroot)
+Hx,Hy,Hz = 0.,0.,params.Hz
+ObsI = SSE1(Latt,Hroot,TrivialSpinOneHalf.Sud([Hx,Hy,Hz])...)
 
 ρ = let 
     AuxSpaces = repeat([ℂ^1,], size(Latt)+1)
@@ -58,7 +58,7 @@ for i in 2:length(lsβ)
     
     TDVP!(Env, alg, info)
     data = Dict(
-        "I" => calObs!(Obs,Env.layer[1];destroy = false,showtimes = 4),
+        "I" => calObs!(ObsI,Env.layer[1];destroy = false,showtimes = 4),
         # "obs" => calObs!(Obs,Env.layer[1];destroy = false,showtimes = 4),
         "E" => info.E,
         "F" => - info.lnZ / lsβ[i] / 2,

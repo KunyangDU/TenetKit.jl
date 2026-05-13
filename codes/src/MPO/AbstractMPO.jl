@@ -23,62 +23,70 @@ mutable struct SparseMPO{L} <: AbstractMPO
 end
 
 mutable struct DenseMPO{L} <: AbstractMPO
-    ts::Vector{DenseMPOTensor}
+    ts::CachedVector{DenseMPOTensor}
     center::Vector{Int64}
-    
-    function DenseMPO(A::Vector{DenseMPOTensor},center::Vector{Int64})
+
+    function DenseMPO(A::CachedVector{DenseMPOTensor},center::Vector{Int64})
         return new{length(A)}(A,center)
     end
 
-    function DenseMPO(A::Vector{DenseMPOTensor{R}}) where R
-        return new{length(A)}(A,[1,length(A)])
+    function DenseMPO(A::Vector{DenseMPOTensor{R}}, cache_limit::Union{Int,Nothing}=nothing) where R
+        limit = something(cache_limit, _cache_memory_limit(DenseMPOTensor))
+        return new{length(A)}(CachedVector{DenseMPOTensor}(A, limit),[1,length(A)])
     end
 
-    function DenseMPO(t::DenseMPOTensor)
-        A = convert(Vector{DenseMPOTensor},[t])
-        return new{1}(A,[1,1])        
+    function DenseMPO(t::DenseMPOTensor, cache_limit::Union{Int,Nothing}=nothing)
+        limit = something(cache_limit, _cache_memory_limit(DenseMPOTensor))
+        A = CachedVector{DenseMPOTensor}([t], limit)
+        return new{1}(A,[1,1])
     end
 
-    function DenseMPO(t::Vector)
+    function DenseMPO(t::Vector, cache_limit::Union{Int,Nothing}=nothing)
+        limit = something(cache_limit, _cache_memory_limit(DenseMPOTensor))
         tmp = map(DenseMPOTensor,t)
-        A = convert(Vector{DenseMPOTensor},tmp)
-        return new{length(A)}(A,[1,length(A)])        
+        A = CachedVector{DenseMPOTensor}(tmp, limit)
+        return new{length(A)}(A,[1,length(A)])
     end
 end
 const DenseMPQ = Union{DenseMPO,DenseMPS}
 
 mutable struct AdjointMPO{L} <: AbstractMPO
-    ts::Vector{AdjointMPOTensor}
+    ts::CachedVector{AdjointMPOTensor}
     center::Vector{Int64}
-    
-    function AdjointMPO(A::Vector{AdjointMPOTensor},center::Vector{Int64})
+
+    function AdjointMPO(A::CachedVector{AdjointMPOTensor},center::Vector{Int64})
         return new{length(A)}(A,center)
     end
 
-    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}) where R
-        return new{length(A)}(A,[1,length(A)])
+    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}, cache_limit::Union{Int,Nothing}=nothing) where R
+        limit = something(cache_limit, _cache_memory_limit(AdjointMPOTensor))
+        return new{length(A)}(CachedVector{AdjointMPOTensor}(A, limit),[1,length(A)])
     end
 
-    function AdjointMPO(t::AdjointMPOTensor)
-        A = convert(Vector{AdjointMPOTensor},[t])
-        return new{1}(A,[1,1])        
+    function AdjointMPO(t::AdjointMPOTensor, cache_limit::Union{Int,Nothing}=nothing)
+        limit = something(cache_limit, _cache_memory_limit(AdjointMPOTensor))
+        A = CachedVector{AdjointMPOTensor}([t], limit)
+        return new{1}(A,[1,1])
     end
 
-    function AdjointMPO(t::Vector{AbstractTensorMap})
+    function AdjointMPO(t::Vector{AbstractTensorMap}, cache_limit::Union{Int,Nothing}=nothing)
+        limit = something(cache_limit, _cache_memory_limit(AdjointMPOTensor))
         tmp = map(AdjointMPOTensor,t)
-        A = convert(Vector{AdjointMPOTensor},tmp)
-        return new{length(A)}(A,[1,length(A)])        
+        A = CachedVector{AdjointMPOTensor}(tmp, limit)
+        return new{length(A)}(A,[1,length(A)])
     end
 end
 
-Base.adjoint(A::DenseMPO{L}) where {L} = AdjointMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
-Base.adjoint(A::AdjointMPO{L}) where {L} = DenseMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center))
+Base.adjoint(A::DenseMPO{L}) where {L} = AdjointMPO(adjoint(A.ts), deepcopy(A.center))
+Base.adjoint(A::AdjointMPO{L}) where {L} = DenseMPO(adjoint(A.ts), deepcopy(A.center))
 
 isadjoint(::DenseMPO) = false
 isadjoint(::AdjointMPO) = true
+isref(::DenseMPO) = false
+isref(::AdjointMPO) = false
 
 mutable struct RefMPO{L} <: AbstractMPO
-    ts::Vector{DenseMPOTensor}
+    ts::CachedVector{DenseMPOTensor}
     center::Vector{Int64}
     mapping::Function
     pointer::DenseMPO
@@ -88,3 +96,4 @@ end
 issparse(::RefMPO) = false
 isadjoint(::RefMPO) = false
 isref(::RefMPO) = true
+

@@ -46,7 +46,7 @@ end
 function _scalar(env::Environment{2})
     ans = 0.0
     if env.center[1] ≠ env.center[2]
-        env.envs = Vector{AbstractEnvironmentTensor}(undef, env.L + 1)
+        env.envs = CachedVector{AbstractEnvironmentTensor}(env.L + 1, _cache_memory_limit(AbstractEnvironmentTensor))
         setdefault!(env)
         envL,envR = env.envs[1],env.envs[end]
         for i in env.L:-1:1
