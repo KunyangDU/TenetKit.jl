@@ -10,7 +10,7 @@ Ly = 1
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 L = size(Latt)
 
-D = 65
+D = 66
 DS = 2^4
 τ = 0.5
 Nhot = -20

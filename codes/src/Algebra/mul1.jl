@@ -42,7 +42,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
     L = length(EnvAB.layer[1])
     for site in 1:L-1
         localinfo = Algebrasiteinfo()
-        x₀ = deepcopy(composite(EnvAB.layer[3].ts[site:site+1]...))
+        x₀ = deepcopy(composite(EnvAB.layer[3][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" t = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u][site:site+1],1:2)...)..., EnvAB.envs[site+2])
         @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpy!(α,t,nothing); direction=:center,trunc = Alg.trunc)
@@ -50,11 +50,11 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "push right" begin
-            EnvAB.layer[3].ts[site:site+1] = adjoint.([tl, tr])
+            EnvAB.layer[3][site:site+1] = adjoint.([tl, tr])
             map(v -> canonicalize!(EnvAB.layer[v],site + 1),1:3)
             pushright!(EnvAB)
         end
-        x = composite(EnvAB.layer[3].ts[site:site+1]...)
+        x = composite(EnvAB.layer[3][site:site+1]...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
     end
@@ -67,7 +67,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
     L = length(EnvAB.layer[1])
     for site in L:-1:2
         localinfo = Algebrasiteinfo()
-        x₀ = deepcopy(composite(EnvAB.layer[3].ts[site-1:site]...))
+        x₀ = deepcopy(composite(EnvAB.layer[3][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" t = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u][site-1:site],1:2)...)..., EnvAB.envs[site+1])
         @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpy!(α, t, nothing); direction=:center,trunc = Alg.trunc)
@@ -75,11 +75,11 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "push left" begin
-            EnvAB.layer[3].ts[site-1:site] = adjoint.([tl, tr])
+            EnvAB.layer[3][site-1:site] = adjoint.([tl, tr])
             map(v -> canonicalize!(EnvAB.layer[v],site - 1),1:3)
             pushleft!(EnvAB)
         end
-        x = composite(EnvAB.layer[3].ts[site-1:site]...)
+        x = composite(EnvAB.layer[3][site-1:site]...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
     end
@@ -92,7 +92,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
     L = length(EnvAB.layer[1])
     for site in 1:L-1
         localinfo = Algebrasiteinfo()
-        x₀ = deepcopy(composite((EnvAB.layer[3].ts[site:site+1])...))
+        x₀ = deepcopy(composite((EnvAB.layer[3][site:site+1])...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(L2R())
@@ -101,21 +101,21 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
             merge!(localto,cbetoAB,tree_point = ["CBE_AB"])
         end
         @timeit localto "projection" projH = proj1(EnvAB,site)
-        @timeit localto "action" t = action(projH,EnvAB.layer[1].ts[site])
+        @timeit localto "action" t = action(projH,EnvAB.layer[1][site])
         @timeit localto "orthogonalize" begin
             # tl,tr = leftorth(axpy!(α, t, nothing))
             tl,tr,truncerr = tsvd(axpy!(α, t, nothing); direction=:right,trunc = Alg.trunc)
             localinfo.truncerr = truncerr
             localinfo.bond = BondInfo(tr)
-            tr = contract(tr,EnvAB.layer[3].ts[site+1]')
-            EnvAB.layer[3].ts[site:site+1] = adjoint.([tl, tr])
+            tr = contract(tr,EnvAB.layer[3][site+1]')
+            EnvAB.layer[3][site:site+1] = adjoint.([tl, tr])
         end
         @timeit localto "push right" begin
             map(v -> canonicalize!(EnvAB.layer[v],site + 1),1:3)
             pushright!(EnvAB)
         end
 
-        x = composite((EnvAB.layer[3].ts[site:site+1])...)
+        x = composite((EnvAB.layer[3][site:site+1])...)
         localinfo.err = norm(x-x₀)^2/x2
 
         merge!(sweepinfo,localinfo)
@@ -129,7 +129,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
     L = length(EnvAB.layer[1])
     for site in L:-1:2
         localinfo = Algebrasiteinfo()
-        x₀ = deepcopy(composite((EnvAB.layer[3].ts[site-1:site])...))
+        x₀ = deepcopy(composite((EnvAB.layer[3][site-1:site])...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(R2L())
@@ -138,20 +138,20 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
             merge!(localto,cbetoAB,tree_point = ["CBE_AB"])
         end
         @timeit localto "projection" projH = proj1(EnvAB,site)
-        @timeit localto "action" t = action(projH,EnvAB.layer[1].ts[site])
+        @timeit localto "action" t = action(projH,EnvAB.layer[1][site])
         @timeit localto "orthogonalize" begin
             # tl,tr = rightorth(axpy!(α, t, nothing))
             tl,tr,truncerr = tsvd(axpy!(α, t, nothing); direction=:left,trunc = Alg.trunc)
             localinfo.truncerr = truncerr
             localinfo.bond = BondInfo(tl)
-            tl = contract(EnvAB.layer[3].ts[site-1]',tl)
-            EnvAB.layer[3].ts[site-1:site] = adjoint.([tl, tr])
+            tl = contract(EnvAB.layer[3][site-1]',tl)
+            EnvAB.layer[3][site-1:site] = adjoint.([tl, tr])
         end
         @timeit localto "push left" begin
             map(v -> canonicalize!(EnvAB.layer[v],site - 1),1:3)
             pushleft!(EnvAB)
         end
-        x = composite((EnvAB.layer[3].ts[site-1:site])...)
+        x = composite((EnvAB.layer[3][site-1:site])...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
     end

@@ -19,7 +19,7 @@ TensorKit.inner(A::T) where T <: Union{AdjointMPO,AdjointMPS} = inner(A',A)
 TensorKit.inner(A::T,O::SparseMPO) where T <: Union{DenseMPO,DenseMPS} = inner(A,O,A')
 TensorKit.inner(A::T,O::SparseMPO) where T <: Union{AdjointMPO,AdjointMPS} = inner(A',O,A)
 
-inner1(A::DenseMPO) = A.center[1] == A.center[2] ? norm(A.ts[A.center[1]]) : (@assert A.center[1] == A.center[2])
+inner1(A::DenseMPO) = A.center[1] == A.center[2] ? norm(A[A.center[1]]) : (@assert A.center[1] == A.center[2])
 inner1(A::AdjointMPO) = inner1(A')'
 
 

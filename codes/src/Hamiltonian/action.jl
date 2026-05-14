@@ -63,21 +63,21 @@ end
 
 function _action(O::SparseProjectiveHamiltonian{1}, obj::T, ind::Tuple) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
     i,j = ind
-    tmp,localto = _action1(obj,O.EnvL.A[i],O.H.ts[1].m[i,j],O.EnvR.A[j])
+    tmp,localto = _action1(obj,O.EnvL.A[i],O.H[1].m[i,j],O.EnvR.A[j])
     return tmp, localto
 end
 
 function _action(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple) where T <: Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
     i,j,k = ind
-    tmp,localto = _action2(obj,O.EnvL.A[i],O.H.ts[1].m[i,j],O.H.ts[2].m[j,k],O.EnvR.A[k])
+    tmp,localto = _action2(obj,O.EnvL.A[i],O.H[1].m[i,j],O.H[2].m[j,k],O.EnvR.A[k])
     return tmp, localto
 end
 
 function _action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2}, ind::Tuple)
     i,j,k = ind
     localto = TimerOutput()
-    @timeit localto "_action2_EL1=El_H1" EL1 = contract(O.EnvL.A[i], obj.ts[1].m[i,j])
-    @timeit localto "_action2_EL2=EL1_H2" EL2 = contract(EL1, obj.ts[2].m[j,k])
+    @timeit localto "_action2_EL1=El_H1" EL1 = contract(O.EnvL.A[i], obj[1].m[i,j])
+    @timeit localto "_action2_EL2=EL1_H2" EL2 = contract(EL1, obj[2].m[j,k])
     @timeit localto "_action2_C=EL2_Er" C = contract(EL2, O.EnvR.A[k])
     return C, localto
 end

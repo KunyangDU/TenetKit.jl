@@ -49,21 +49,21 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
     L = length(EnvC.layer[1])
     for site in 1:L-1
         localinfo = Algebrasiteinfo()
-        x₀ = composite(EnvC.layer[2].ts[site:site+1]...)
+        x₀ = composite(EnvC.layer[2][site:site+1]...)
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite_AB" tAB = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u].ts[site:site+1],1:2)...)..., EnvAB.envs[site+2])
-        @timeit localto "composite_C" tC = contract(EnvC.envs[site], EnvC.layer[1].ts[site:site+1]..., EnvC.envs[site+2])
+        @timeit localto "composite_AB" tAB = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u][site:site+1],1:2)...)..., EnvAB.envs[site+2])
+        @timeit localto "composite_C" tC = contract(EnvC.envs[site], EnvC.layer[1][site:site+1]..., EnvC.envs[site+2])
         @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpby!(α, tC, β, tAB); direction=:center,trunc = Alg.trunc)
         localinfo.truncerr = truncerr
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "push right" map([EnvAB,EnvC]) do Env
             N = length(Env.layer)
-            Env.layer[N].ts[site:site+1] = adjoint.([tl, tr])
+            Env.layer[N][site:site+1] = adjoint.([tl, tr])
             map(v -> canonicalize!(Env.layer[v],site + 1),1:N)
             pushright!(Env)
         end
-        x = composite(EnvC.layer[2].ts[site:site+1]...)
+        x = composite(EnvC.layer[2][site:site+1]...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
     end
@@ -76,21 +76,21 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
     L = length(EnvC.layer[1])
     for site in L:-1:2
         localinfo = Algebrasiteinfo()
-        x₀ = composite(EnvC.layer[2].ts[site-1:site]...)
+        x₀ = composite(EnvC.layer[2][site-1:site]...)
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite_AB" tAB = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u].ts[site-1:site],1:2)...)..., EnvAB.envs[site+1])
-        @timeit localto "composite_C" tC = contract(EnvC.envs[site-1], EnvC.layer[1].ts[site-1:site]..., EnvC.envs[site+1])
+        @timeit localto "composite_AB" tAB = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u][site-1:site],1:2)...)..., EnvAB.envs[site+1])
+        @timeit localto "composite_C" tC = contract(EnvC.envs[site-1], EnvC.layer[1][site-1:site]..., EnvC.envs[site+1])
         @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpby!(α, tC, β, tAB); direction=:center,trunc = Alg.trunc)
         localinfo.truncerr = truncerr
         localinfo.bond = BondInfo(tc)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "push left" map([EnvAB,EnvC]) do Env
             N = length(Env.layer)
-            Env.layer[N].ts[site-1:site] = adjoint.([tl, tr])
+            Env.layer[N][site-1:site] = adjoint.([tl, tr])
             map(v -> canonicalize!(Env.layer[v],site - 1),1:N)
             pushleft!(Env)
         end
-        x = composite(EnvC.layer[2].ts[site-1:site]...)
+        x = composite(EnvC.layer[2][site-1:site]...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
     end
@@ -103,20 +103,20 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
     L = length(EnvC.layer[1])
     for site in 1:L-1
         localinfo = Algebrasiteinfo()
-        x₀ = composite((EnvC.layer[2].ts[site:site+1])...)
+        x₀ = composite((EnvC.layer[2][site:site+1])...)
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(L2R())
             @timeit localto "CBE_C" cbetoC = CBE!(EnvC, CBEalgo(Alg.alg,DA(),2), cbeinfo)
             @timeit localto "CBE_AB" cbetoAB = CBE!(EnvAB, CBEalgo(Alg.alg,DDA(),3), cbeinfo)
-            tLC₀,tRC₀ = EnvC.layer[2].ts[site:site+1]
-            tLAB₀,tRAB₀ = EnvAB.layer[3].ts[site:site+1]
+            tLC₀,tRC₀ = EnvC.layer[2][site:site+1]
+            tLAB₀,tRAB₀ = EnvAB.layer[3][site:site+1]
             @timeit localto "after-orthogonalize" orthogonalize!(tRAB₀,tRC₀,L2R())
             @timeit localto "direct-sum" tR = _cbedsum(tRAB₀,tRC₀,L2R())
             @timeit localto "splice" tLAB = splice(tLAB₀,tRAB₀,tR,L2R())
             @timeit localto "splice" tLC = splice(tLC₀,tRC₀,tR,L2R())
-            EnvC.layer[2].ts[site:site+1] .= tLC,tR 
-            EnvAB.layer[3].ts[site:site+1] .= tLAB,tR 
+            EnvC.layer[2][site:site+1] .= tLC,tR 
+            EnvAB.layer[3][site:site+1] .= tLAB,tR 
             map([EnvAB,EnvC]) do env
                 env.envs[site+1] = pushleft(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site+2],site+1)
             end
@@ -127,21 +127,21 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
 
         ts = map([EnvC,EnvAB]) do Env 
             @timeit localto "projection" projH = proj1(Env,site)
-            action(projH,Env.layer[1].ts[site])
+            action(projH,Env.layer[1][site])
         end
 
         @timeit localto "orthogonalize" begin
             tl,tr = leftorth(axpby!(α, ts[1], β, ts[2]))
             localinfo.bond = BondInfo(tr)
-            tr = contract(tr,EnvC.layer[2].ts[site+1]')
+            tr = contract(tr,EnvC.layer[2][site+1]')
         end
         @timeit localto "push right" map([EnvAB,EnvC]) do Env
             N = length(Env.layer)
-            Env.layer[N].ts[site:site+1] = adjoint.([tl, tr])
+            Env.layer[N][site:site+1] = adjoint.([tl, tr])
             map(v -> canonicalize!(Env.layer[v],site + 1),1:N)
             pushright!(Env)
         end
-        x = composite((EnvC.layer[2].ts[site:site+1])...)
+        x = composite((EnvC.layer[2][site:site+1])...)
         localinfo.err = norm(x-x₀)^2/x2
 
         merge!(sweepinfo,localinfo)
@@ -155,20 +155,20 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
     L = length(EnvC.layer[1])
     for site in L:-1:2
         localinfo = Algebrasiteinfo()
-        x₀ = composite((EnvC.layer[2].ts[site-1:site])...)
+        x₀ = composite((EnvC.layer[2][site-1:site])...)
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(R2L())
             @timeit localto "CBE_C" cbetoC = CBE!(EnvC, CBEalgo(Alg.alg,DA(),2), cbeinfo)
             @timeit localto "CBE_AB" cbetoAB = CBE!(EnvAB, CBEalgo(Alg.alg,DDA(),3), cbeinfo)
-            tLC₀,tRC₀ = EnvC.layer[2].ts[site-1:site]
-            tLAB₀,tRAB₀ = EnvAB.layer[3].ts[site-1:site]
+            tLC₀,tRC₀ = EnvC.layer[2][site-1:site]
+            tLAB₀,tRAB₀ = EnvAB.layer[3][site-1:site]
             @timeit localto "after-orthogonalize" orthogonalize!(tLAB₀,tLC₀,R2L())
             @timeit localto "direct-sum" tL = _cbedsum(tLAB₀,tLC₀,R2L())
             @timeit localto "splice" tRAB = splice(tLAB₀,tRAB₀,tL,R2L())
             @timeit localto "splice" tRC = splice(tLC₀,tRC₀,tL,R2L())
-            EnvC.layer[2].ts[site-1:site] .= tL,tRAB 
-            EnvAB.layer[3].ts[site-1:site] .= tL,tRC 
+            EnvC.layer[2][site-1:site] .= tL,tRAB 
+            EnvAB.layer[3][site-1:site] .= tL,tRC 
             map([EnvAB,EnvC]) do env
                 env.envs[site] = pushright(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site-1],site-1)
             end
@@ -178,20 +178,20 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
         end
         ts = map([EnvC,EnvAB]) do Env 
             @timeit localto "projection" projH = proj1(Env,site)
-            action(projH,Env.layer[1].ts[site])
+            action(projH,Env.layer[1][site])
         end
         @timeit localto "orthogonalize" begin
             tl,tr = rightorth(axpby!(α, ts[1], β, ts[2]))
             localinfo.bond = BondInfo(tl)
-            tl = contract(EnvC.layer[2].ts[site-1]',tl)
+            tl = contract(EnvC.layer[2][site-1]',tl)
         end
         @timeit localto "push left" map([EnvAB,EnvC]) do Env
             N = length(Env.layer)
-            Env.layer[N].ts[site-1:site] = adjoint.([tl, tr])
+            Env.layer[N][site-1:site] = adjoint.([tl, tr])
             map(v -> canonicalize!(Env.layer[v],site - 1),1:N)
             pushleft!(Env)
         end
-        x = composite((EnvC.layer[2].ts[site-1:site])...)
+        x = composite((EnvC.layer[2][site-1:site])...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
     end

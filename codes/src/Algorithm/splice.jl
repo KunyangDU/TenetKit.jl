@@ -124,11 +124,11 @@ end
 # function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
 #     site = obj.center[1]
 #     if csite == site + 1
-#         @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,-2,4,-4] * A.A[2,4,1,3] * obj.ts[csite]'.A[1,3,2,-3]
-#         obj.ts[site] = DenseMPOTensor(tmp)
+#         @tensor tmp[-1,-2;-3,-4] ≔ obj[site].A[-1,-2,4,-4] * A.A[2,4,1,3] * obj[csite]'.A[1,3,2,-3]
+#         obj[site] = DenseMPOTensor(tmp)
 #     elseif csite == site - 1
-#         @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,4,-3,-4] * A.A[2,1,4,3] * obj.ts[csite]'.A[-2,3,2,1]
-#         obj.ts[site] = DenseMPOTensor(tmp)
+#         @tensor tmp[-1,-2;-3,-4] ≔ obj[site].A[-1,4,-3,-4] * A.A[2,1,4,3] * obj[csite]'.A[-2,3,2,1]
+#         obj[site] = DenseMPOTensor(tmp)
 #     else
 #         @error "index out of range"
 #     end
@@ -136,16 +136,16 @@ end
 
 function splice!(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
     site = obj.center[1]
-    obj.ts[site] = splice(obj,A,csite)
+    obj[site] = splice(obj,A,csite)
 end
 
 function splice(obj::DenseMPO{L}, A::DenseMPOTensor{4}, csite::Int64) where L
     site = obj.center[1]
     if csite == site + 1
-        @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,-2,4,-4] * A.A[2,4,1,3] * obj.ts[csite]'.A[1,3,2,-3]
+        @tensor tmp[-1,-2;-3,-4] ≔ obj[site].A[-1,-2,4,-4] * A.A[2,4,1,3] * obj[csite]'.A[1,3,2,-3]
         return DenseMPOTensor(tmp)
     elseif csite == site - 1
-        @tensor tmp[-1,-2;-3,-4] ≔ obj.ts[site].A[-1,4,-3,-4] * A.A[2,1,4,3] * obj.ts[csite]'.A[-2,3,2,1]
+        @tensor tmp[-1,-2;-3,-4] ≔ obj[site].A[-1,4,-3,-4] * A.A[2,1,4,3] * obj[csite]'.A[-2,3,2,1]
         return DenseMPOTensor(tmp)
     else
         @error "index out of range"
@@ -167,11 +167,11 @@ end
 # function splice!(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
 #     site = obj.center[1]
 #     if csite == site + 1
-#         @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[-1,-2,1] * A.A[1,3,2] * obj.ts[csite]'.A[2,-3,3]
-#         obj.ts[site] = MPSTensor(tmp)
+#         @tensor tmp[-1,-2;-3] ≔ obj[site].A[-1,-2,1] * A.A[1,3,2] * obj[csite]'.A[2,-3,3]
+#         obj[site] = MPSTensor(tmp)
 #     elseif csite == site - 1
-#         @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[1,-2,-3] * A.A[2,3,1] * obj.ts[csite]'.A[-1,2,3]
-#         obj.ts[site] = MPSTensor(tmp)
+#         @tensor tmp[-1,-2;-3] ≔ obj[site].A[1,-2,-3] * A.A[2,3,1] * obj[csite]'.A[-1,2,3]
+#         obj[site] = MPSTensor(tmp)
 #     else
 #         @error "index out of range"
 #     end
@@ -181,10 +181,10 @@ end
 function splice(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
     site = obj.center[1]
     if csite == site + 1
-        @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[-1,-2,1] * A.A[1,3,2] * obj.ts[csite]'.A[2,-3,3]
+        @tensor tmp[-1,-2;-3] ≔ obj[site].A[-1,-2,1] * A.A[1,3,2] * obj[csite]'.A[2,-3,3]
         return MPSTensor(tmp)
     elseif csite == site - 1
-        @tensor tmp[-1,-2;-3] ≔ obj.ts[site].A[1,-2,-3] * A.A[2,3,1] * obj.ts[csite]'.A[-1,2,3]
+        @tensor tmp[-1,-2;-3] ≔ obj[site].A[1,-2,-3] * A.A[2,3,1] * obj[csite]'.A[-1,2,3]
         return MPSTensor(tmp)
     else
         @error "index out of range"
@@ -193,7 +193,7 @@ end
 
 function splice!(obj::DenseMPS{L}, A::MPSTensor{3}, csite::Int64) where L
     site = obj.center[1]
-    obj.ts[site] = splice(obj,A,csite)
+    obj[site] = splice(obj,A,csite)
 end
 
 function splice(tl::MPSTensor{3}, tr::MPSTensor{3}, A::MPSTensor{3}, ::L2R)

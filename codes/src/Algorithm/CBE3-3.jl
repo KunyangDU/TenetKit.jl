@@ -4,11 +4,11 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,3}, info::CBEinfo{
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = (env.layer[1].ts[site:site+1])
-    tL′,tR′ = adjoint.(env.layer[3].ts[site:site+1])
+    tL₀,tR₀ = (env.layer[1][site:site+1])
+    tL′,tR′ = adjoint.(env.layer[3][site:site+1])
     EnvL = env.envs[site]
     EnvR = env.envs[site + 2]
-    hl,hr = env.layer[2].ts[site:site+1]
+    hl,hr = env.layer[2][site:site+1]
 
     D_i = dims(tL₀)[2][1]
     D_f = ceil(Int64,alg.D*alg.scheme.λ)
@@ -23,8 +23,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,3}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
     
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[3].ts[site] = CBEenv.tL'
-    env.layer[3].ts[site+1] = CBEenv.tR'
+    env.layer[3][site] = CBEenv.tL'
+    env.layer[3][site+1] = CBEenv.tR'
 
     @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
@@ -35,11 +35,11 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,3}, info::CBEinfo{
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = env.layer[1].ts[site-1:site]
-    tL′,tR′ = adjoint.(env.layer[3].ts[site-1:site])
+    tL₀,tR₀ = env.layer[1][site-1:site]
+    tL′,tR′ = adjoint.(env.layer[3][site-1:site])
     EnvL = env.envs[site - 1]
     EnvR = env.envs[site + 1]
-    hl,hr = env.layer[2].ts[site-1:site]
+    hl,hr = env.layer[2][site-1:site]
 
     D_i = dims(tL₀)[2][1]
     D_f = ceil(Int64,alg.D*alg.scheme.λ)
@@ -54,8 +54,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,3}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[3].ts[site-1] = CBEenv.tL'
-    env.layer[3].ts[site] = CBEenv.tR'
+    env.layer[3][site-1] = CBEenv.tL'
+    env.layer[3][site] = CBEenv.tR'
 
     @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
     return to
@@ -66,10 +66,10 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,3}, info::CBEinfo{
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = (env.layer[1].ts[site:site+1])
+    tL₀,tR₀ = (env.layer[1][site:site+1])
     EnvL = env.envs[site]
     EnvR = env.envs[site + 2]
-    hl,hr = env.layer[2].ts[site:site+1]
+    hl,hr = env.layer[2][site:site+1]
 
     D_i = dims(tL₀)[2][1]
     D_f = alg.D
@@ -80,8 +80,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,3}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
     
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[3].ts[site] = CBEenv.tL'
-    env.layer[3].ts[site+1] = CBEenv.tR'
+    env.layer[3][site] = CBEenv.tL'
+    env.layer[3][site+1] = CBEenv.tR'
 
     @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
@@ -93,10 +93,10 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,3}, info::CBEinfo{
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = env.layer[1].ts[site-1:site]
+    tL₀,tR₀ = env.layer[1][site-1:site]
     EnvL = env.envs[site - 1]
     EnvR = env.envs[site + 1]
-    hl,hr = env.layer[2].ts[site-1:site]
+    hl,hr = env.layer[2][site-1:site]
 
     D_i = dims(tL₀)[2][1]
     D_f = alg.D
@@ -107,8 +107,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,3}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[3].ts[site-1] = CBEenv.tL'
-    env.layer[3].ts[site] = CBEenv.tR'
+    env.layer[3][site-1] = CBEenv.tL'
+    env.layer[3][site] = CBEenv.tR'
 
     @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
     return to

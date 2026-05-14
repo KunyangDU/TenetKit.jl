@@ -88,7 +88,7 @@ end
     AuxSpace = vcat(Rep[U₁](size(Latt)//2 => 1),repeat([Rep[U₁](i => 1 for i in -2size(Latt):1//2:2size(Latt) ),], Lx*Ly-1))
     randMPS(repeat([U₁Spin.PhySpace,],size(Latt)) ,AuxSpace)
 end
-@show ψ′.ts[1],ψ′.ts[end]
+@show ψ′[1],ψ′[end]
 # ψ′ = let 
 #     AuxSpace = vcat(Rep[U₁](size(Latt)//2 => 1),repeat([Rep[U₁](i => 1 for i in -size(Latt)//2 :1//2:size(Latt)//2 ),], Lx*Ly-1))
 #     randMPS(U₁Spin.PhySpace ,AuxSpace)
@@ -104,7 +104,7 @@ hat = LocalSpace.S₊S₋[2]
 #     @tensor tmp1[-1,-2;-3] ≔ pL[-1,1,2] * tmp[1,2,-2,3,4] * pR[3,4,-3]
 #     ψ′.ts[i] = MPSTensor(tmp1)
 # end
-@show ψ′.ts[1],ψ′.ts[end]
+@show ψ′[1],ψ′[end]
 # canonicalize!(ψ',size(Latt))
 # canonicalize!(ψ',1)
 

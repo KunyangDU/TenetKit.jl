@@ -19,7 +19,7 @@ end
 function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRightEnvironmentTensor{1}, site::Int64)
     @assert mpo.D[site][2] == EnvR.D[1]
     tmpEnvR = Vector{Any}(nothing,mpo.D[site][1])
-    validinds = filter(x -> !isnothing(mpo.ts[site].m[x[1],x[2]]), [(i,j) for i in eachindex(tmpEnvR),j in 1:EnvR.D[1]][:])
+    validinds = filter(x -> !isnothing(mpo[site].m[x[1],x[2]]), [(i,j) for i in eachindex(tmpEnvR),j in 1:EnvR.D[1]][:])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -29,7 +29,7 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(validinds) && break
                 i,j = validinds[ct]
-                x = contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j])
+                x = contract(A[site], mpo[site].m[i,j], B[site], EnvR.A[j])
                 lock(Lock)
                 try
                     tmpEnvR[i] = axpy!(1,x,tmpEnvR[i])
@@ -42,7 +42,7 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
         end
     else
         for (i,j) in validinds
-            tmpEnvR[i] = axpy!(1,contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j]),tmpEnvR[i])
+            tmpEnvR[i] = axpy!(1,contract(A[site], mpo[site].m[i,j], B[site], EnvR.A[j]),tmpEnvR[i])
         end
     end
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
@@ -51,7 +51,7 @@ end
 function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseLeftEnvironmentTensor{1}, site::Int64)
     @assert mpo.D[site][1] == EnvL.D[1]
     tmpEnvL = Vector{Any}(nothing,mpo.D[site][2])
-    validinds = filter(x -> !isnothing(mpo.ts[site].m[x[1],x[2]]), [(i,j) for i in 1:EnvL.D[1],j in eachindex(tmpEnvL)][:])
+    validinds = filter(x -> !isnothing(mpo[site].m[x[1],x[2]]), [(i,j) for i in 1:EnvL.D[1],j in eachindex(tmpEnvL)][:])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -61,7 +61,7 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(validinds) && break
                 j,i = validinds[ct]
-                x = contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j])
+                x = contract(A[site], mpo[site].m[j,i], B[site],EnvL.A[j])
                 lock(Lock)
                 try
                     tmpEnvL[i] = axpy!(1,x,tmpEnvL[i])
@@ -74,7 +74,7 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
         end
     else
         for (j,i) in validinds
-            tmpEnvL[i] = axpy!(1,contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j]),tmpEnvL[i])
+            tmpEnvL[i] = axpy!(1,contract(A[site], mpo[site].m[j,i], B[site],EnvL.A[j]),tmpEnvL[i])
         end
     end
     return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
@@ -83,7 +83,7 @@ end
 # function pushright!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
 #     @show "test"
 #     @assert (site = env.center[1] ) == env.center[2]
-#     env.layer[end].ts[site:site+1] = map(adjoint,[tl,tr])
+#     env.layer[end][site:site+1] = map(adjoint,[tl,tr])
 #     env.layer[end].center = env.center
 #     map(v -> canonicalize!(env.layer[v],site + 1),1:N-1)
 #     pushright!(env)
@@ -91,25 +91,25 @@ end
 
 # function pushleft!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
 #     @assert (site = env.center[1] ) == env.center[2]
-#     env.layer[end].ts[site-1:site] = map(adjoint,[tl,tr])
+#     env.layer[end][site-1:site] = map(adjoint,[tl,tr])
 #     env.layer[end].center = env.center
 #     map(v -> canonicalize!(env.layer[v],site - 1),1:N-1)
 #     pushleft!(env)
 # end
 
-pushleft(A::DenseMPO, B::AdjointMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvR.A))
-pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR.A))
-pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvL.A))
-pushright(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL.A))
-pushleft(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64) = SparseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR))
-pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64) = SparseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL))
-pushleft(A::DenseMPS, B::AdjointMPS, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvR.A))
+pushleft(A::DenseMPO, B::AdjointMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvR.A))
+pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR.A))
+pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvL.A))
+pushright(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL.A))
+pushleft(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64) = SparseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR))
+pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64) = SparseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL))
+pushleft(A::DenseMPS, B::AdjointMPS, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvR.A))
 
 #= Env4 =#
 
 function pushright(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::AdjointMPO, EnvL::SparseLeftEnvironmentTensor{2}, site::Int64)
     tmpEnvL = Array{Any}(nothing, Hup.D[site][2], Hdown.D[site][2])
-    validinds = filter(x -> !isnothing(Hup.ts[site].m[x[1],x[3]]) && !isnothing(Hdown.ts[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:EnvL.D[1], j in 1:EnvL.D[2], k in 1:Hup.D[site][2], l in 1:Hdown.D[site][2]][:])
+    validinds = filter(x -> !isnothing(Hup[site].m[x[1],x[3]]) && !isnothing(Hdown[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:EnvL.D[1], j in 1:EnvL.D[2], k in 1:Hup.D[site][2], l in 1:Hdown.D[site][2]][:])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -119,7 +119,7 @@ function pushright(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::Adjoin
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(validinds) && break
                 i,j,k,l = validinds[ct]
-                C = pushright(Hup.ts[site].m[i,k],ρ.ts[site],Hdown.ts[site].m[j,l],ρ′.ts[site],EnvL.A[i,j])
+                C = pushright(Hup[site].m[i,k],ρ[site],Hdown[site].m[j,l],ρ′[site],EnvL.A[i,j])
                 lock(Lock)
                 try
                     tmpEnvL[k,l] = axpy!(1,C,tmpEnvL[k,l])
@@ -133,7 +133,7 @@ function pushright(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::Adjoin
         end
     else
         for (i,j,k,l) in validinds
-            tmpEnvL[k,l] = axpy!(1,pushright(Hup.ts[site].m[i,k], ρ.ts[site], Hdown.ts[site].m[j,l], ρ′.ts[site], EnvL.A[i,j]),tmpEnvL[k,l])
+            tmpEnvL[k,l] = axpy!(1,pushright(Hup[site].m[i,k], ρ[site], Hdown[site].m[j,l], ρ′[site], EnvL.A[i,j]),tmpEnvL[k,l])
         end
     end
     return SparseLeftEnvironmentTensor(convert(Array{LeftEnvironmentTensor}, tmpEnvL))
@@ -141,7 +141,7 @@ end
 
 function pushleft(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::AdjointMPO, EnvR::SparseRightEnvironmentTensor{2}, site::Int64)
     tmpEnvR = Array{Any}(nothing, Hup.D[site][1], Hdown.D[site][1])
-    validinds = filter(x -> !isnothing(Hup.ts[site].m[x[1],x[3]]) && !isnothing(Hdown.ts[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:Hup.D[site][1], j in 1:Hdown.D[site][1], k in 1:EnvR.D[1], l in 1:EnvR.D[2]][:])
+    validinds = filter(x -> !isnothing(Hup[site].m[x[1],x[3]]) && !isnothing(Hdown[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:Hup.D[site][1], j in 1:Hdown.D[site][1], k in 1:EnvR.D[1], l in 1:EnvR.D[2]][:])
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -151,7 +151,7 @@ function pushleft(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::Adjoint
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(validinds) && break
                 i,j,k,l = validinds[ct]
-                C = pushleft(Hup.ts[site].m[i,k],ρ.ts[site],Hdown.ts[site].m[j,l],ρ′.ts[site],EnvR.A[k,l])
+                C = pushleft(Hup[site].m[i,k],ρ[site],Hdown[site].m[j,l],ρ′[site],EnvR.A[k,l])
                 lock(Lock)
                 try
                     tmpEnvR[i,j] = axpy!(1,C,tmpEnvR[i,j])
@@ -165,7 +165,7 @@ function pushleft(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::Adjoint
         end
     else
         for (i,j,k,l) in validinds
-            tmpEnvR[i,j] = axpy!(1,pushleft(Hup.ts[site].m[i,k],ρ.ts[site],Hdown.ts[site].m[j,l],ρ′.ts[site],EnvR.A[k,l]),tmpEnvR[i,j])
+            tmpEnvR[i,j] = axpy!(1,pushleft(Hup[site].m[i,k],ρ[site],Hdown[site].m[j,l],ρ′[site],EnvR.A[k,l]),tmpEnvR[i,j])
         end
     end
     return SparseRightEnvironmentTensor(convert(Array{RightEnvironmentTensor}, tmpEnvR))
@@ -216,14 +216,14 @@ end
 
 # function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{2}, DenseMPOTensor{2}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
-#     Env.layer[1].ts[site] = tl
-#     Env.layer[3].ts[site] = tl'
+#     Env.layer[1][site] = tl
+#     Env.layer[3][site] = tl'
 #     to = TimerOutput()
 #     @timeit to "pushright" pushright!(Env)
 #     @timeit to "back evolve" ~, K = evolve!(tr, projleft0(Env), -Alg.τ)
-#     tr = contract(tr,Env.layer[1].ts[site+1])
-#     Env.layer[1].ts[site+1] = tr
-#     Env.layer[3].ts[site+1] = tr'
+#     tr = contract(tr,Env.layer[1][site+1])
+#     Env.layer[1][site+1] = tr
+#     Env.layer[3][site+1] = tr'
 
 #     map(x -> Env.layer[x].center .+= 1,[1,3])
 #     return to,K
@@ -231,14 +231,14 @@ end
 
 # function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{2}, DenseMPOTensor{2}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
-#     Env.layer[1].ts[site] = tr
-#     Env.layer[3].ts[site] = tr'
+#     Env.layer[1][site] = tr
+#     Env.layer[3][site] = tr'
 #     to = TimerOutput()
 #     @timeit to "pushleft" pushleft!(Env)
 #     @timeit to "back evolve" ~, K = evolve!(tl, projright0(Env), -Alg.τ)
-#     tl = contract(Env.layer[1].ts[site-1],tl)
-#     Env.layer[1].ts[site-1] = tl
-#     Env.layer[3].ts[site-1] = tl'
+#     tl = contract(Env.layer[1][site-1],tl)
+#     Env.layer[1][site-1] = tl
+#     Env.layer[3][site-1] = tl'
 
 #     map(x -> Env.layer[x].center .-= 1,[1,3])
 #     return to,K
@@ -248,12 +248,12 @@ end
 # function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
 #     to = TimerOutput()
-#     Env.layer[1].ts[site] = tl
-#     Env.layer[3].ts[site] = adjoint(tl)
+#     Env.layer[1][site] = tl
+#     Env.layer[3][site] = adjoint(tl)
 #     @timeit to "pushright!" pushright!(Env)
 #     @timeit to "back evolve" tr, K = evolve!(tr, proj1(Env,site+1), -Alg.τ)
-#     Env.layer[1].ts[site+1] = tr
-#     Env.layer[3].ts[site+1] = adjoint(tr)
+#     Env.layer[1][site+1] = tr
+#     Env.layer[3][site+1] = adjoint(tr)
 
 #     map(x -> Env.layer[x].center .+= 1,[1,3])
 #     return to,K
@@ -262,12 +262,12 @@ end
 # function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
 #     @assert (site = Env.center[1] ) == Env.center[2]
 #     to = TimerOutput()
-#     Env.layer[1].ts[site] = tr
-#     Env.layer[3].ts[site] = adjoint(Env.layer[1].ts[site])
+#     Env.layer[1][site] = tr
+#     Env.layer[3][site] = adjoint(Env.layer[1][site])
 #     @timeit to "pushleft!" pushleft!(Env)
 #     @timeit to "back evolve" tl, K = evolve!(tl, proj1(Env,site-1), -Alg.τ)
-#     Env.layer[1].ts[site-1] = tl
-#     Env.layer[3].ts[site-1] = adjoint(Env.layer[1].ts[site-1])
+#     Env.layer[1][site-1] = tl
+#     Env.layer[3][site-1] = adjoint(Env.layer[1][site-1])
 
 #     map(x -> Env.layer[x].center .-= 1,[1,3])
 #     return to,K
@@ -277,15 +277,15 @@ end
 
 function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{2}, DenseMPOTensor{2}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
     @assert (site = Env.center[1] ) == Env.center[2]
-    Env.layer[1].ts[site] = tl
-    Env.layer[3].ts[site] = tl'
+    Env.layer[1][site] = tl
+    Env.layer[3][site] = tl'
     to = TimerOutput()
     @timeit to "pushright" pushright!(Env)
     @timeit to "back evolve" ~, K = evolve!(tr, projleft0(Env;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tr,exp(Alg.τ * info.E))
-    tr = contract(tr,Env.layer[1].ts[site+1])
-    Env.layer[1].ts[site+1] = tr
-    Env.layer[3].ts[site+1] = tr'
+    tr = contract(tr,Env.layer[1][site+1])
+    Env.layer[1][site+1] = tr
+    Env.layer[3][site+1] = tr'
 
     map(x -> Env.layer[x].center .+= 1,[1,3])
     return to,K
@@ -293,15 +293,15 @@ end
 
 function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{2}, DenseMPOTensor{2}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{R2L})
     @assert (site = Env.center[1] ) == Env.center[2]
-    Env.layer[1].ts[site] = tr
-    Env.layer[3].ts[site] = tr'
+    Env.layer[1][site] = tr
+    Env.layer[3][site] = tr'
     to = TimerOutput()
     @timeit to "pushleft" pushleft!(Env)
     @timeit to "back evolve" ~, K = evolve!(tl, projright0(Env;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tl,exp(Alg.τ * info.E))
-    tl = contract(Env.layer[1].ts[site-1],tl)
-    Env.layer[1].ts[site-1] = tl
-    Env.layer[3].ts[site-1] = tl'
+    tl = contract(Env.layer[1][site-1],tl)
+    Env.layer[1][site-1] = tl
+    Env.layer[3][site-1] = tl'
 
     map(x -> Env.layer[x].center .-= 1,[1,3])
     return to,K
@@ -311,13 +311,13 @@ end
 function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{L2R})
     @assert (site = Env.center[1] ) == Env.center[2]
     to = TimerOutput()
-    Env.layer[1].ts[site] = tl
-    Env.layer[3].ts[site] = tl'
+    Env.layer[1][site] = tl
+    Env.layer[3][site] = tl'
     @timeit to "pushright!" pushright!(Env)
     @timeit to "back evolve" tr, K = evolve!(tr, proj1(Env,site+1;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tr,exp(Alg.τ * info.E))
-    Env.layer[1].ts[site+1] = tr
-    Env.layer[3].ts[site+1] = tr'
+    Env.layer[1][site+1] = tr
+    Env.layer[3][site+1] = tr'
 
     map(x -> Env.layer[x].center .+= 1,[1,3])
     return to,K
@@ -326,13 +326,13 @@ end
 function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{4}}, tr::Union{MPSTensor{3}, DenseMPOTensor{4}}, Alg::TDVPalgo,info::TDVPsweepinfo{R2L})
     @assert (site = Env.center[1] ) == Env.center[2]
     to = TimerOutput()
-    Env.layer[1].ts[site] = tr
-    Env.layer[3].ts[site] = tr'
+    Env.layer[1][site] = tr
+    Env.layer[3][site] = tr'
     @timeit to "pushleft!" pushleft!(Env)
     @timeit to "back evolve" tl, K = evolve!(tl, proj1(Env,site-1;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tl,exp(Alg.τ * info.E))
-    Env.layer[1].ts[site-1] = tl
-    Env.layer[3].ts[site-1] = tl'
+    Env.layer[1][site-1] = tl
+    Env.layer[3][site-1] = tl'
 
     map(x -> Env.layer[x].center .-= 1,[1,3])
     return to,K
@@ -342,16 +342,16 @@ end
 
 function pushright!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     @assert (site = Env.center[1] ) == Env.center[2]
-    Env.layer[1].ts[site:site+1] = [tl,tr]
-    Env.layer[3].ts[site:site+1] = adjoint(Env.layer[1].ts[site:site+1])
+    Env.layer[1][site:site+1] = [tl,tr]
+    Env.layer[3][site:site+1] = adjoint(Env.layer[1][site:site+1])
     pushright!(Env)
     map(x -> Env.layer[x].center .+= 1,[1,3])
 end
 
 function pushleft!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     @assert (site = Env.center[1] ) == Env.center[2]
-    Env.layer[1].ts[site-1:site] = [tl, tr]
-    Env.layer[3].ts[site-1:site] = adjoint(Env.layer[1].ts[site-1:site])
+    Env.layer[1][site-1:site] = [tl, tr]
+    Env.layer[3][site-1:site] = adjoint(Env.layer[1][site-1:site])
     pushleft!(Env)
     map(x -> Env.layer[x].center .-= 1,[1,3])
 end
@@ -362,8 +362,8 @@ function pushleft(A::SparseMPO, B::AdjointMPO, EnvR::SparseRightEnvironmentTenso
     @assert A.D[site][2] == EnvR.D[1]
     tmpEnvR = Vector{Any}(nothing,A.D[site][1])
     for i in eachindex(tmpEnvR), j in 1:EnvR.D[1]
-        isnothing(A.ts[site].m[i,j]) && continue
-        tmpEnvR[i] = axpy!(1, contract(A.ts[site].m[i,j], B.ts[site], EnvR.A[j]), tmpEnvR[i])
+        isnothing(A[site].m[i,j]) && continue
+        tmpEnvR[i] = axpy!(1, contract(A[site].m[i,j], B[site], EnvR.A[j]), tmpEnvR[i])
     end
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
 end
@@ -372,16 +372,16 @@ function pushright(A::SparseMPO, B::AdjointMPO, EnvL::SparseLeftEnvironmentTenso
     @assert A.D[site][1] == EnvL.D[1]
     tmpEnvL = Vector{Any}(nothing,A.D[site][2])
     for i in eachindex(tmpEnvL), j in 1:EnvL.D[1]
-        isnothing(A.ts[site].m[j,i]) && continue
-        tmpEnvL[i] = axpy!(1, contract(A.ts[site].m[j,i], B.ts[site],EnvL.A[j]),tmpEnvL[i])
+        isnothing(A[site].m[j,i]) && continue
+        tmpEnvL[i] = axpy!(1, contract(A[site].m[j,i], B[site],EnvL.A[j]),tmpEnvL[i])
     end
     return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
 end
 
 
-pushleft(A::DenseMPO, B::AdjointMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR.A))
-pushright(A::DenseMPO, B::AdjointMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL.A))
+pushleft(A::DenseMPO, B::AdjointMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR.A))
+pushright(A::DenseMPO, B::AdjointMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL.A))
 
 
-pushleft(A::DenseMPO, B::RefMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(A.ts[site], B.mapping(B.ts[site]), C.ts[site], EnvR.A))
-pushright(A::DenseMPO, B::RefMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(A.ts[site], B.mapping(B.ts[site]), C.ts[site], EnvL.A))
+pushleft(A::DenseMPO, B::RefMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(A[site], B.mapping(B[site]), C[site], EnvR.A))
+pushright(A::DenseMPO, B::RefMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(A[site], B.mapping(B[site]), C[site], EnvL.A))

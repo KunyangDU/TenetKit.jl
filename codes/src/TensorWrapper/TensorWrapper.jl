@@ -106,16 +106,29 @@ Base.size(t::DenseMPOTensor{4}) = map(dim,t.A |> x -> (codomain(x)[2],domain(x)[
 Base.length(::DenseMPO{L}) where L = L
 Base.length(::AdjointMPO{L}) where L = L
 Base.length(::SparseMPO{L}) where L = L
+Base.length(::DenseMPS{L}) where {L} = L
+Base.length(::AdjointMPS{L}) where {L} = L
+Base.length(::RefMPO{L}) where {L} = L
+
+Base.firstindex(obj::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = 1
+Base.lastindex(obj::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = lastindex(obj.ts)
+Base.size(obj::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = (lastindex(obj),)
+Base.axes(obj::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = Base.OneTo(lastindex(obj))
+
+Base.firstindex(obj::RefMPO) = 1
+Base.lastindex(obj::RefMPO) = lastindex(obj.ts)
+Base.size(obj::RefMPO) = (lastindex(obj),)
+Base.axes(obj::RefMPO) = Base.OneTo(lastindex(obj))
 Base.size(::SparseMPOTensor{N,M}) where {N,M} = N,M
 
 function normalize!(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where {L}
     @assert (site = obj.center[1]) == obj.center[2]
-    return normalize!(obj.ts[site])
+    return normalize!(obj[site])
 end
 
 function TensorKit.norm(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where {L}
     @assert (site = obj.center[1]) == obj.center[2]
-    return norm(obj.ts[site])
+    return norm(obj[site])
 end
 
 function normalize!(obj::AbstractTensorWrapper)
@@ -156,6 +169,10 @@ Base.getindex(obj::T, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,Ad
 Base.getindex(obj::RefMPO, i::Int64) = obj.mapping(obj.ts[i])
 Base.getindex(obj::T, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = obj.ts[stp]
 Base.getindex(obj::RefMPO, stp::UnitRange) = obj.mapping.(obj.ts[stp])
+
+Base.setindex!(obj::T, val, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = (obj.ts[i] = val)
+Base.setindex!(obj::T, vals, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = (obj.ts[stp] = vals)
+Base.setindex!(obj::RefMPO, val, i::Int64) = (obj.ts[i] = val)
 
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B

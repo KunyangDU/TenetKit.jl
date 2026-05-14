@@ -4,8 +4,8 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{L2R};kw
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = env.layer[1].ts[site:site+1]
-    tL′,tR′ = adjoint.(env.layer[2].ts[site:site+1])
+    tL₀,tR₀ = env.layer[1][site:site+1]
+    tL′,tR′ = adjoint.(env.layer[2][site:site+1])
     EnvL = env.envs[site]
     EnvR = env.envs[site + 2]
 
@@ -22,8 +22,8 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{L2R};kw
     localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto)
-    env.layer[2].ts[site] = CBEenv.tL'
-    env.layer[2].ts[site+1] = CBEenv.tR'
+    env.layer[2][site] = CBEenv.tL'
+    env.layer[2][site+1] = CBEenv.tR'
 
     env.envs[site+1] = pushleft(map(x -> env.layer[x],1:2)...,env.envs[site+2],site+1)
     return to
@@ -34,8 +34,8 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{R2L};kw
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = env.layer[1].ts[site-1:site]
-    tL′,tR′ = adjoint.(env.layer[2].ts[site-1:site])
+    tL₀,tR₀ = env.layer[1][site-1:site]
+    tL′,tR′ = adjoint.(env.layer[2][site-1:site])
     EnvL = env.envs[site - 1]
     EnvR = env.envs[site + 1]
 
@@ -52,8 +52,8 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{R2L};kw
     localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto)
-    env.layer[2].ts[site-1] = CBEenv.tL'
-    env.layer[2].ts[site] = CBEenv.tR'
+    env.layer[2][site-1] = CBEenv.tL'
+    env.layer[2][site] = CBEenv.tR'
 
     env.envs[site] = pushright(map(x -> env.layer[x],1:2)...,env.envs[site-1],site-1)
     return localto

@@ -5,7 +5,7 @@ function orthogonalize!(env::Environment{3},B::Union{DenseMPOTensor{4},MPSTensor
     @show "here"
 
     for i in 1:w, j in 1:w2
-        Hij = env.layer[2].ts[osite].m[i,j]
+        Hij = env.layer[2][osite].m[i,j]
         isnothing(Hij) && continue
         tmp = contract(B,Hij,EnvR.A[j])
         EnvRorth[i] = axpy!(1, tmp - contract(tmp,B) ,EnvRorth[i])
@@ -25,7 +25,7 @@ function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor
     EnvLorth .= nothing
 
     for i in 1:w1, j in 1:w
-        Hij = env.layer[2].ts[osite].m[i,j]
+        Hij = env.layer[2][osite].m[i,j]
         isnothing(Hij) && continue
         tmp = contract(EnvL.A[i],A,Hij)
         EnvLorth[j] = axpy!(1, tmp - contract(tmp,A) ,EnvLorth[j])

@@ -160,10 +160,10 @@ function _update_node!(node::AbstractObservableTreeNode,obj::Union{DenseMPO,Dens
     env = take!(node.cachedict, node.id)
     site = node.A.site
     if isnothing(env)
-        AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj.ts[1],obj.ts[1]']))
+        AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj[1],obj[1]']))
         return LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
     else
-        return contract(obj.ts[site],node.A,obj.ts[site]',env)
+        return contract(obj[site],node.A,obj[site]',env)
     end
 end
 
@@ -172,10 +172,10 @@ function _update_node!(node::CompositeObservableTreeNode{2},obj::Union{DenseMPO,
     site = node.A[1].site
     env = take!(node.cachedict, node.id)
     if isnothing(env)
-        AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj.ts[1],obj.ts[1]']))
+        AuxSpaces = reverse(map(x -> getAuxSpace(x)[1],[obj[1],obj[1]']))
         return LeftEnvironmentTensor(isometry(AuxSpaces[1],AuxSpaces[2]))
     else
-        return (isnan(node.A[1].strength) ? 1 : node.A[1].strength) * (isnan(node.A[2].strength) ? 1 : node.A[2].strength) * pushright(node.A[1], obj.ts[site],node.A[2], obj.ts[site]',env)
+        return (isnan(node.A[1].strength) ? 1 : node.A[1].strength) * (isnan(node.A[2].strength) ? 1 : node.A[2].strength) * pushright(node.A[1], obj[site],node.A[2], obj[site]',env)
     end
 end
 

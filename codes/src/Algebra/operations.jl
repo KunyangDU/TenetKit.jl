@@ -22,19 +22,19 @@ function tr(ρ::DenseMPO, A::SparseMPO)
     return _scalar(Env)
 end
 
-tr1(obj::DenseMPO) = norm(obj.ts[1])
+tr1(obj::DenseMPO) = norm(obj[1])
 
 """
 compatible for N-layer Environment
 """
 function _scalar(Env::Environment{3})
     @assert Env.center[1] == Env.center[2]
-    return contract(Env.layer[3].ts[Env.center[1]], action(proj1(Env, Env.center[1]), Env.layer[1].ts[Env.center[1]]))
+    return contract(Env.layer[3][Env.center[1]], action(proj1(Env, Env.center[1]), Env.layer[1][Env.center[1]]))
 end
 
 function _scalar(Env::Environment{N}) where N
     @assert (site = Env.center[1]) == Env.center[2]
-    t1 = map(x -> Env.layer[x].ts[site], 1:length(Env.layer))
+    t1 = map(x -> Env.layer[x][site], 1:length(Env.layer))
     tmp = contract(Env.envs[site],t1...,Env.envs[site+1])
     return tmp
 end
@@ -50,14 +50,14 @@ function _scalar(env::Environment{2})
         setdefault!(env)
         envL,envR = env.envs[1],env.envs[end]
         for i in env.L:-1:1
-            envR = SparseRightEnvironmentTensor(contract(env.layer[1].ts[i],env.layer[2].ts[i],env.layer[1].ts[i]',envR))
+            envR = SparseRightEnvironmentTensor(contract(env.layer[1][i],env.layer[2][i],env.layer[1][i]',envR))
         end
         for i in eachindex(envL.A)
             ans += @tensor envL.A[i].A[1,2] * envR.A[i].A[2,1]
         end
     else
         site = env.center[1]
-        ans = contract(env.envs[site],env.layer[1].ts[site],env.layer[2].ts[site],env.envs[site+1])
+        ans = contract(env.envs[site],env.layer[1][site],env.layer[2][site],env.envs[site+1])
     end
     return ans
 end
@@ -65,7 +65,7 @@ end
 
 # function scalar(Env::Environment{3})
 #     @assert Env.center[1] == Env.center[2]
-#     contract(Env.layer[3].ts[Env.center[1]], action(proj1(Env, Env.center[1]), Env.layer[1].ts[Env.center[1]]))
+#     contract(Env.layer[3][Env.center[1]], action(proj1(Env, Env.center[1]), Env.layer[1][Env.center[1]]))
 # end
 
 

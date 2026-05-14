@@ -13,7 +13,7 @@ function TensorKit.leftorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
 end
 
 function TensorKit.leftorth!(obj::DenseMPO,site::Int64)
-    leftorth!(obj.ts[site:site+1]...)
+    leftorth!(obj[site:site+1]...)
 end
 
 function TensorKit.rightorth(A::DenseMPOTensor{4})
@@ -29,7 +29,7 @@ function TensorKit.rightorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
 end
 
 function TensorKit.rightorth!(obj::DenseMPO,site::Int64)
-    rightorth!(obj.ts[site-1:site]...)
+    rightorth!(obj[site-1:site]...)
 end
 
 function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)

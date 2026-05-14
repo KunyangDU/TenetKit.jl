@@ -108,7 +108,7 @@
 # end
 
 function _initialMPS(O::SparseProjectiveHamiltonian{1})
-    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, O.H.ts[1].m[1,1].A])...)
+    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, O.H[1].m[1,1].A])...)
     dom = collect(codomain(O.EnvR.A[1].A))[1]
     tmp = MPSTensor(randn,codom,dom)
     normalize!(tmp)
@@ -116,7 +116,7 @@ function _initialMPS(O::SparseProjectiveHamiltonian{1})
 end
 
 function _initialMPS(O::SparseProjectiveHamiltonian{2})
-    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, [O.H.ts[i].m[1,1].A for i in 1:2]...])...)
+    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.A[1].A, [O.H[i].m[1,1].A for i in 1:2]...])...)
     dom = collect(codomain(O.EnvR.A[1].A))[1]
     tmp = CompositeMPSTensor(randn,codom,dom)
     normalize!(tmp)

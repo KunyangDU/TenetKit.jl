@@ -85,14 +85,14 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(L2R())
             @timeit localto "CBE" cbeto = CBE!(Env, Alg.alg, cbeinfo)
-            normalize!(Env.layer[1].ts[site])
-            normalize!(Env.layer[3].ts[site])
+            normalize!(Env.layer[1][site])
+            normalize!(Env.layer[3][site])
             merge!(localinfo,cbeinfo)
             merge!(localto,cbeto,tree_point = ["CBE"])
         end
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site;E₀ = E₀)
-            Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
+            Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1][site])
             localinfo.E = E₀ + Eg |> real
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
@@ -100,7 +100,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
             # localinfo.bond = BondInfo(tc)
             merge!(localinfo, BondInfo(tc))
-            @timeit localto "contract" tr = contract(contract(tc,tr),Env.layer[1].ts[site+1])
+            @timeit localto "contract" tr = contract(contract(tc,tr),Env.layer[1][site+1])
         end
         @timeit localto "pushright" pushright!(Env,tl, tr)
         # push!(info.E,localinfo.E)
@@ -122,14 +122,14 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         if alg <: CBEalgo 
             cbeinfo = CBEinfo(R2L())
             @timeit localto "CBE" cbeto = CBE!(Env, Alg.alg, cbeinfo)
-            normalize!(Env.layer[1].ts[site])
-            normalize!(Env.layer[3].ts[site])
+            normalize!(Env.layer[1][site])
+            normalize!(Env.layer[3][site])
             merge!(localinfo,cbeinfo)
             merge!(localto,cbeto,tree_point = ["CBE"])
         end
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj1(Env,site;E₀ = E₀)
-            Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1].ts[site])
+            Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1][site])
             localinfo.E = E₀ + Eg |> real
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
@@ -138,7 +138,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             tr = MPSTensor(permute(tr.A,(1,2),(3,)))
             # localinfo.bond = BondInfo(tc)
             merge!(localinfo, BondInfo(tc))
-            @timeit localto "contract" tl = contract(Env.layer[1].ts[site-1],contract(tl,tc))
+            @timeit localto "contract" tl = contract(Env.layer[1][site-1],contract(tl,tc))
         end
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
         # push!(lsE,localinfo.E)
@@ -159,7 +159,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         E₀ = _scalar(Env) |> real
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj2(Env,site,site+1;E₀ = E₀)
-            @timeit localto "composite" x₀ = composite(Env.layer[1].ts[site:site+1]...)
+            @timeit localto "composite" x₀ = composite(Env.layer[1][site:site+1]...)
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
             localinfo.E = E₀ + Eg |> real
         end
@@ -187,7 +187,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         E₀ = _scalar(Env) |> real
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj2(Env,site-1,site;E₀ = E₀)
-            @timeit localto "composite" x₀ = composite(Env.layer[1].ts[site-1:site]...)
+            @timeit localto "composite" x₀ = composite(Env.layer[1][site-1:site]...)
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
             localinfo.E = E₀ + Eg |> real
         end 

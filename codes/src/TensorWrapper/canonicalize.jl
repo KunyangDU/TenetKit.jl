@@ -4,13 +4,13 @@ function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},sl::Int64,sr::Int64) 
 
     for sli in obj.center[1]:sl-1
         leftorth!(obj,sli)
-        # @show space.(obj.ts[sli:sli+1])
+        # @show space.(obj[sli:sli+1])
         obj.center[1] += 1
         ( obj.center[1] > obj.center[2] ) && ( obj.center[2] += 1 )
     end
     for sri in obj.center[2]:-1:sr+1
         rightorth!(obj,sri)
-        # @show space.(obj.ts[sri-1:sri])
+        # @show space.(obj[sri-1:sri])
         obj.center[2] -= 1
         ( obj.center[1] > obj.center[2] ) && ( obj.center[1] -= 1 )
     end

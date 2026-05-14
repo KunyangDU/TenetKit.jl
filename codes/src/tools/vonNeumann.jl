@@ -12,14 +12,14 @@ function vonNeumann!(obj::DenseMPS{L}, sites::Vector{Int64}) where L
             canonicalize!(obj,s)
             swap!(obj,i)
         end
-        _,S,_ = svd(obj.ts[obj.center[1]].A,(1,2),(3,))
+        _,S,_ = svd(obj[obj.center[1]].A,(1,2),(3,))
     else
         sites = reverse(sites)
         for (i,s) in enumerate(sites)
             canonicalize!(obj,s)
             swap!(obj, L - i + 1)
         end
-        _,S,_ = svd(obj.ts[obj.center[1]].A,(1,),(2,3))
+        _,S,_ = svd(obj[obj.center[1]].A,(1,),(2,3))
     end
     
     return vonNeumann(S)

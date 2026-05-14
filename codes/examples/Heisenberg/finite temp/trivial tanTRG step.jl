@@ -9,7 +9,7 @@ Ly = 1
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 65
+D = 66
 DS = 2^4
 τ = 0.5
 Nhot = -20

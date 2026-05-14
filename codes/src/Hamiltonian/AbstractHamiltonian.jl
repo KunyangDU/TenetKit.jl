@@ -18,7 +18,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
 
         viv = []
         for i in 1:N,j in 1:M1, k in 1:R
-            isnothing(H.ts[1].m[i,j]) | isnothing(H.ts[2].m[j,k]) && continue
+            isnothing(H[1].m[i,j]) | isnothing(H[2].m[j,k]) && continue
             push!(viv,(i,j,k))
         end
 
@@ -34,7 +34,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
 
         viv = []
         for i in 1:N, j in 1:R
-            isnothing(H.ts[1].m[i,j]) && continue
+            isnothing(H[1].m[i,j]) && continue
             push!(viv,(i,j))
         end
 
@@ -65,14 +65,14 @@ function projright0(env::Environment{3};E₀::Number = 0.0)
     return issparse(env.layer[2]) ? SparseProjectiveHamiltonian(EnvL,env.envs[site+1],E₀) : DenseProjectiveHamiltonian(EnvL,env.envs[site+1],E₀)
 end
 
-proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site]),E₀) : DenseProjectiveHamiltonian(env.envs[site:site+1]...,[env.layer[2].ts[site],],E₀)
+proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2][site]),E₀) : DenseProjectiveHamiltonian(env.envs[site:site+1]...,[env.layer[2][site],],E₀)
 
 function proj2(env::Environment{3},site1::Int64,site2::Int64;E₀::Number = 0.0)
     # !issparse(env.layer[2]) && return nothing
     return site1 < site2 ? projright2(env,site1,E₀) : projleft2(env,site2,E₀)
 end
-projright2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1]),E₀) : DenseProjectiveHamiltonian(env.envs[[site,site+2]]...,env.layer[2].ts[site:site+1],E₀)
-projleft2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site]),E₀) : DenseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,env.layer[2].ts[site-1:site],E₀)
+projright2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2][site:site+1]),E₀) : DenseProjectiveHamiltonian(env.envs[[site,site+2]]...,env.layer[2][site:site+1],E₀)
+projleft2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2][site-1:site]),E₀) : DenseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,env.layer[2][site-1:site],E₀)
 proj2(EnvL::SparseLeftEnvironmentTensor,hl::SparseMPOTensor,hr::SparseMPOTensor,EnvR::SparseRightEnvironmentTensor;E₀::Number = 0.) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO([hl,hr]),E₀)
 proj2(EnvL::DenseLeftEnvironmentTensor,hl::DenseMPOTensor,hr::DenseMPOTensor,EnvR::DenseRightEnvironmentTensor;E₀::Number = 0.) = DenseProjectiveHamiltonian(EnvL,EnvR,[hl,hr],E₀)
 
@@ -80,8 +80,8 @@ function proj2(env::Environment{2},site1::Int64,site2::Int64;E₀::Number = 0.0)
     !issparse(env.layer[1]) && return nothing
     return site1 < site2 ? projright2(env,site1,E₀) : projleft2(env,site2,E₀)
 end
-projright2(env::Environment{2},site::Int64,E₀::Number = 0.0) = issparse(env.layer[1]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[1].ts[site:site+1]),E₀) : nothing
-projleft2(env::Environment{2},site::Int64,E₀::Number = 0.0) = issparse(env.layer[1]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[1].ts[site-1:site]),E₀) : nothing
+projright2(env::Environment{2},site::Int64,E₀::Number = 0.0) = issparse(env.layer[1]) ? SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[1][site:site+1]),E₀) : nothing
+projleft2(env::Environment{2},site::Int64,E₀::Number = 0.0) = issparse(env.layer[1]) ? SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[1][site-1:site]),E₀) : nothing
 
 mutable struct DenseProjectiveHamiltonian{N,L} <: AbstractProjectiveHamiltonian
     EnvL::DenseLeftEnvironmentTensor

@@ -19,7 +19,7 @@ function TensorKit.leftorth(A::MPSTensor{3}, B::MPSTensor{3})
 end
 
 function TensorKit.leftorth!(obj::DenseMPS,site::Int64)
-    obj.ts[site:site+1] = collect(leftorth(obj.ts[site:site+1]...))
+    obj[site:site+1] = collect(leftorth(obj[site:site+1]...))
 end
 
 # function TensorKit.rightorth(A::MPSTensor{3})
@@ -42,7 +42,7 @@ function TensorKit.rightorth(A::MPSTensor{3}, B::MPSTensor{3})
 end
 
 function TensorKit.rightorth!(obj::DenseMPS,site::Int64)
-    obj.ts[site-1:site] = collect(rightorth(obj.ts[site-1:site]...))
+    obj[site-1:site] = collect(rightorth(obj[site-1:site]...))
 end
 
 
