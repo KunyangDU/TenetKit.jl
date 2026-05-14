@@ -10,7 +10,7 @@ Ly = 1
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 L = size(Latt)
 
-D = 64
+D = 65
 DS = 2^4
 τ = 0.5
 Nhot = -20
@@ -23,21 +23,22 @@ lsdataed = lsdata
 lsIed = map(x -> real(sum(x["I"]) / L ),lsdata)
 
 @load "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
-@load "$(dataname)/lsI_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsI
 lsβ2 = 2lsβ[2:end]
-lsI2 = map(lsI) do I
+lsE = zeros(length(lsβ2))
+lsF = zeros(length(lsβ2))
+lsI = zeros(length(lsβ2))
+
+for i in eachindex(lsβ2)
+    @load "$(dataname)/data_$(Lx)x$(Ly)_$(D)_$(params)_$(i+1).jld2" data
+    lsE[i] = data["E"]
+    lsF[i] = data["F"]
+    I = data["I"]
     # @show keys(I)
-    tmp = 0.0
     ks = keys(I)
     for ky in ks
-        tmp += sum([I[ky][k] for k in keys(I[ky])]) / size(Latt)
+        lsI[i] += sum([I[ky][k] for k in keys(I[ky])]) / size(Latt) * lsβ2[i]
     end
-    tmp
-end .* lsβ2 
-
-@load "$(dataname)/lsF_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsF
-@load "$(dataname)/lsE_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsE
-@load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
+end
 
 
 finddata(dicts::Vector,name::String) = map(x -> x[name],dicts)
@@ -48,9 +49,4 @@ lsFed = real.(finddata(lsdataed,"F"))
 # lsF = finddata(lsdata,"F")
 
 lsEed .- lsE
-# ),norm(lsFed .- lsF)
-
-(lsI2 .- lsIed) ./ lsIed
-tr.(lsρ)
-
-# lsIed
+lsIed .- lsI

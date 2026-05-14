@@ -37,6 +37,7 @@ const CACHE_MEMORY_LIMIT = Ref(_detect_memory_limit())
 const MPS_CACHE_RATIO  = Ref(0.3)
 const MPO_CACHE_RATIO  = Ref(0.3)
 const ENV_CACHE_RATIO  = Ref(0.4)
+const OBS_ENV_CACHE_RATIO = Ref(0.15)
 const DEFAULT_CACHE_RATIO = Ref(1.0)
 
 # Resolve memory limit for a CachedVector{T}. Type-specific methods are

@@ -3,9 +3,9 @@ include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
 
-D = 100
-Lx = 4
-Ly = 4
+D = 32
+Lx = 8
+Ly = 1
 params = (J=1, Δ = 1)
 
 @load "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -35,7 +35,6 @@ end
 gsdata = Obs.values
 
 @save "$(dataname)/gsdata_$(Lx)x$(Ly)_$(D)_$(params).jld2" gsdata
-
 
 
 

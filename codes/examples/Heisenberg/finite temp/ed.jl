@@ -65,11 +65,11 @@ function addIntr1(O1::Matrix,i::Int64,L::Int64,d::Int64)
     return H
 end
 
-τ = 1.0
+τ = 0.5
 Nhot = -20
-Nxup = 10
-βmax = 0
-params = (J = 1.0, Δ = 1.0, Hz = 0.0)
+Nxup = -1
+βmax = 10
+params = (J = 1.0, Δ = 1.0, Hz = 1.0)
 
 H = let H = zeros(d^size(Latt),d^size(Latt)), J = params.J, Δ = params.Δ, Hz = params.Hz
     for pair in neighbor(Latt)

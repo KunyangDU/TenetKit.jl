@@ -9,12 +9,12 @@ Ly = 1
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
-D = 64
+D = 65
 DS = 2^4
 τ = 0.5
 Nhot = -20
 βmax = 10
-params = (J = 1.0, Δ = 1.0, Hz = 0.1)
+params = (J = 1.0, Δ = 1.0, Hz = 1.0)
 Hroot = TrivialHamiltonian(Latt;returnnode = true,params...)
 H = AutomataSparseMPO(Hroot,size(Latt))
 Hx,Hy,Hz = 0.,0.,params.Hz

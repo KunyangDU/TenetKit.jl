@@ -40,7 +40,7 @@ treesize(root)
 # for (iβ,β) in enumerate(lsβ)
 @load "$(dataname)/lsρ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsρ
 ρ = lsρ[end]
-calObs!(Obs,ρ;destroy = false,isdisk = true,showtimes = 100)
+calObs!(Obs,ρ;destroy = false,cache_limit = 0,showtimes = 100)
 
 
 
