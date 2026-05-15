@@ -29,6 +29,22 @@ begin
         addObs!(Obs,LocalSpace.Sz,i,"Sz",false,nothing)
     end
     # @show Obs.node
+    # 在 calObs! 之前加几行
+    using Base: summarysize
+    # trivial calObs.jl 里，calObs! 之前加
+    # import TenetKit.TimerOutputs: get_timer
+    reset_timer!(get_timer("io"))   # 确保从零开始
+    GC.gc()                          # 排除 finalizer 延迟触发
+
+    # 同时在 CachedVector.jl 的 LRUEvictHandler 和 CachedDict.jl 的 EnvEvictHandler 里临时加：
+    # (h::LRUEvictHandler)(k, v) 函数内第一行加：
+    #     
+    # (h::EnvEvictHandler)(k, v) 函数内第一行加：
+    #     
+    # calObs!(Obs, ψ)
+
+
+
     calObs!(Obs, ψ)
 end
 

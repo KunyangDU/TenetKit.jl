@@ -2,6 +2,7 @@
 function XTRG!(obj::DenseMPO{L}, Alg::XTRGalgo, info::XTRGinfo) where L
     sweepinfo = XTRGsweepinfo()
     to = TimerOutput()
+    merge_io!(to)
 
     @timeit to "mul!" _,multo,mulinfo = mul!(obj,obj,RefMPO(obj,adjoint),1,Alg.alg;verbose = true)
     merge!(to,multo,tree_point=["mul!"])
@@ -10,6 +11,7 @@ function XTRG!(obj::DenseMPO{L}, Alg::XTRGalgo, info::XTRGinfo) where L
     @timeit to "measure E" !isnothing(Alg.H) && (sweepinfo.E = real(_scalar(Environment([obj,Alg.H]))))
 
     @timeit to "GC" GC.gc()
+    merge_io!(to)
     show(to;title = "XTRG - $(info.n) / $(Alg.N)")
     print("\n")
     show(sweepinfo)

@@ -23,6 +23,7 @@ function mul!(C::DenseMPO, A::Union{DenseMPO{L₁},SparseMPO{L₁}}, B::Union{De
     while info.n ≤ Alg.N
         localto = TimerOutput()
 
+        reset_io_timer!()
         l2rinfo = Algebrasweepinfo(L2R())
         mto = mul!(EnvC,EnvAB,α,β,Alg,l2rinfo)
         merge!(localto,mto)
@@ -33,6 +34,7 @@ function mul!(C::DenseMPO, A::Union{DenseMPO{L₁},SparseMPO{L₁}}, B::Union{De
         merge!(localto,mto)
         merge!(info,r2linfo)
 
+        merge_io!(localto)
         show(localto;title = "mul!")
         print("\n")
         show(info)

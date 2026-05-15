@@ -1,10 +1,10 @@
 
 function calObs!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
 
-    cache_limit = get(kwargs, :cache_limit,
-                      round(Int, CACHE_MEMORY_LIMIT[] * OBS_ENV_CACHE_RATIO[]))
-    Obs.node.cachedict = CachedDict{UInt64, AbstractEnvironmentTensor}(cache_limit)
+    Obs.node.cachedict = CachedDict{UInt64, AbstractEnvironmentTensor}(
+        round(Int, CACHE_MEMORY_LIMIT[] * OBS_ENV_CACHE_RATIO[]))
 
+    reset_io_timer!()
     if get_num_threads_julia() ≤ 2
         to = _calObs_serial!(Obs,obj;kwargs...)
     else
@@ -12,6 +12,7 @@ function calObs!(Obs::Observable, obj::Union{DenseMPO,DenseMPS};kwargs...)
     end
 
     @timeit to "tree2dict" Obs.values = Dict(Obs)
+    merge_io!(to)
     show(to,title = "Observable")
     print("\n")
     flush(stdout)

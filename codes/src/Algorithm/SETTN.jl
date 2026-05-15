@@ -27,12 +27,14 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo) where 
     to = TimerOutput()
     info = SETTNinfo()
 
+    merge_io!(to)
     @timeit to "I - βH" begin
         Hn = deepcopy(ρ)
         localto,localinfo = SETTN!(β,H,Hn,ρ,1,Alg)
     end
     merge!(to,localto, tree_point = ["I - βH"])
     merge!(info,localinfo)
+    merge_io!(localto)
 
     show(localto;title = "SETTN - (I - βH)")
     print("\n")
@@ -41,11 +43,13 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo) where 
     flush(stdout)
     
     while info.n < Alg.N
+        merge_io!(to)
         @timeit to "Iteration" localto,localinfo = SETTN!(β,H,Hn,ρ,info.n + 1,Alg)
         info.err = abs((localinfo.lnZ - info.lnZ) / localinfo.lnZ)
         info.lnZ = localinfo.lnZ
         merge!(info,localinfo)
-        merge!(to,localto, tree_point = ["Iteration"])   
+        merge!(to,localto, tree_point = ["Iteration"])
+        merge_io!(localto)
 
         show(localto;title = "SETTN - $(info.n) (≤$(Alg.N))")
         println("\n")
@@ -67,6 +71,7 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo) where 
     end
     flush(stdout)
 
+    merge_io!(to)
     show(to;title = "SETTN")
     print("\n")
 

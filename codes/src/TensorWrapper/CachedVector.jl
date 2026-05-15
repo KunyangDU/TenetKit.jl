@@ -27,9 +27,9 @@ struct LRUEvictHandler
     cold::Dict{Int, String}
 end
 function (h::LRUEvictHandler)(k, v)
-    haskey(h.cache_ref[], k) && return  # overwrite — skip
+    haskey(h.cache_ref[], k) && return
     path = joinpath(h.diskdir, "tensor_$(k).bin")
-    serialize(path, v)
+    @timeit get_timer("io") "serialize" serialize(path, v)
     h.cold[k] = path
 end
 
@@ -82,7 +82,7 @@ function Base.getindex(cv::CachedVector{T}, i::Int) where T
         return cv.cache[i]
     elseif haskey(cv.cold, i)
         path = cv.cold[i]
-        val = deserialize(path)
+        val = @timeit get_timer("io") "deserialize" deserialize(path)
         rm(path)
         delete!(cv.cold, i)
         cv.cache[i] = val          # may evict another entry via finalizer
@@ -98,7 +98,17 @@ function Base.setindex!(cv::CachedVector{T}, val, i::Int) where T
         rm(cv.cold[i])
         delete!(cv.cold, i)
     end
-    cv.cache[i] = val              # may evict another entry via finalizer
+    # LRU.setindex! calls finalizer on the old value when replacing an
+    # existing key.  That would serialize a tensor that is about to be
+    # overwritten and never read back.  Delete the old entry without
+    # finalizer first so that the insertion path always sees a new key.
+    if haskey(cv.cache, i)
+        old_fin = cv.cache.finalizer
+        cv.cache.finalizer = nothing
+        delete!(cv.cache, i)
+        cv.cache.finalizer = old_fin
+    end
+    cv.cache[i] = val
     return val
 end
 

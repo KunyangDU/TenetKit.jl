@@ -30,6 +30,7 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Alg
     while info.n ≤ Alg.N
         localto = TimerOutput()
 
+        reset_io_timer!()
         l2rinfo = Algebrasweepinfo(L2R())
         mto = axpby!(α,Envx,β,Envy,Alg,l2rinfo)
         merge!(localto,mto)
@@ -40,6 +41,7 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Alg
         merge!(localto,mto)
         merge!(info,r2linfo)
 
+        merge_io!(localto)
         show(localto;title = "axpby!")
         print("\n")
         show(info)

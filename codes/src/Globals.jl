@@ -37,7 +37,7 @@ const CACHE_MEMORY_LIMIT = Ref(_detect_memory_limit())
 const MPS_CACHE_RATIO  = Ref(0.3)
 const MPO_CACHE_RATIO  = Ref(0.3)
 const ENV_CACHE_RATIO  = Ref(0.4)
-const OBS_ENV_CACHE_RATIO = Ref(0.15)
+const OBS_ENV_CACHE_RATIO = Ref(0.6)
 const DEFAULT_CACHE_RATIO = Ref(1.0)
 
 # Resolve memory limit for a CachedVector{T}. Type-specific methods are
@@ -48,3 +48,9 @@ end
 
 get_num_cpus() = Sys.CPU_THREADS
 get_num_threads_julia() = Threads.nthreads()
+
+reset_io_timer!() = reset_timer!(get_timer("io"))
+merge_io!(to::TimerOutput) = merge!(to, get_timer("io"))
+
+reset_action_timer!() = reset_timer!(get_timer("action"))
+merge_action!(to::TimerOutput; kwargs...) = merge!(to, get_timer("action"); kwargs...)

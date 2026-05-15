@@ -46,16 +46,20 @@ function DMRG!(Env::Environment{3,L}, Alg::DMRGalgo;kwargs...) where L
     Sv = nothing
     for i in 1:Alg.N
         info =  DMRGinfo()
+        reset_io_timer!()
         l2rinfo = DMRGsweepinfo(L2R())
         to = DMRG!(Env,Alg,l2rinfo)
+        merge_io!(to)
         show(to;title=">>> DMRG ($(i)/$(Alg.N)) >>>")
         print("\n")
         show(l2rinfo)
         merge!(info,l2rinfo)
         flush(stdout)
 
+        reset_io_timer!()
         r2linfo = DMRGsweepinfo(R2L())
         to = DMRG!(Env,Alg,r2linfo)
+        merge_io!(to)
         show(to;title="<<< DMRG ($(i)/$(Alg.N)) <<<")
         print("\n")
         show(r2linfo)
@@ -95,7 +99,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1][site])
             localinfo.E = E₀ + Eg |> real
         end
-        merge!(localto,get_timer("action");tree_point = ["Krylov"])
+        merge_action!(localto; tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
             # localinfo.bond = BondInfo(tc)
@@ -132,7 +136,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
             Eg, Egv, localinfo.solver = groundEig(projH;x₀ = Env.layer[1][site])
             localinfo.E = E₀ + Eg |> real
         end
-        merge!(localto,get_timer("action");tree_point = ["Krylov"])
+        merge_action!(localto; tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
             tr = MPSTensor(permute(tr.A,(1,2),(3,)))
@@ -163,7 +167,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
             localinfo.E = E₀ + Eg |> real
         end
-        merge!(localto,get_timer("action");tree_point = ["Krylov"])
+        merge_action!(localto; tree_point = ["Krylov"])
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         # localinfo.bond = BondInfo(tc)
         merge!(localinfo, BondInfo(tc))
@@ -191,7 +195,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             Eg,Egv,localinfo.solver = groundEig(projH;x₀ = x₀)
             localinfo.E = E₀ + Eg |> real
         end 
-        merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
+        merge_action!(localto; tree_point = ["Krylov"]) 
         @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         # localinfo.bond = BondInfo(tc)
         merge!(localinfo, BondInfo(tc))
