@@ -25,3 +25,23 @@ end
 
 __init__()
 
+const _io_timers = TimerOutput[]
+
+function __init_io__()
+    empty!(_io_timers)
+    for _ in 1:Threads.nthreads()
+        push!(_io_timers, TimerOutput())
+    end
+end
+
+_local_io_timer() = _io_timers[Threads.threadid()]
+
+function _merge_io!(to::TimerOutput)
+    for t in _io_timers
+        merge!(to, t)
+        reset_timer!(t)
+    end
+end
+
+__init_io__()
+

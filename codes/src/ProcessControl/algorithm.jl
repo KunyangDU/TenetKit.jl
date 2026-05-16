@@ -34,10 +34,11 @@ struct DMRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     Etol::Number
     Stol::Number
     solver::AbstractAlgorithm
-    GCsweep::Bool 
+    GCsweep::Bool
     GCsite::Bool
-    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, Etol::Number, Stol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool)
-        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,Etol,Stol,solver,GCsweep,GCsite)
+    isdisk::Bool
+    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, Etol::Number, Stol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool,isdisk::Bool=false)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,Etol,Stol,solver,GCsweep,GCsite,isdisk)
     end
 end
 
@@ -45,13 +46,14 @@ mutable struct TDVPalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     scheme::AbstractScheme
     alg::AbstractAlgorithm
     trunc::TruncationScheme
-    τ::Number 
+    τ::Number
     tol::Number
     solver::AbstractAlgorithm
-    GCsweep::Bool 
+    GCsweep::Bool
     GCsite::Bool
-    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, τ::Number, tol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool)
-        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,τ,tol,solver,GCsweep,GCsite)
+    isdisk::Bool
+    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, τ::Number, tol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool,isdisk::Bool=false)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,τ,tol,solver,GCsweep,GCsite,isdisk)
     end
 end
 
@@ -73,8 +75,9 @@ struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     trunc::TruncationScheme
     N::Int64
     tol::Number
-    function Algebraalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme,N::Int64, tol::Number)
-        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol)
+    isdisk::Bool
+    function Algebraalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme,N::Int64, tol::Number,isdisk::Bool=false)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol,isdisk)
     end
 end
 
@@ -108,8 +111,9 @@ mutable struct XTRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     alg::AbstractAlgorithm
     N::Int64
     H::Union{SparseMPO,Nothing}
-    function XTRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, N::Int64, H::Union{SparseMPO,Nothing} = nothing)
-        new{typeof(scheme),typeof(alg)}(scheme,alg,N,H)
+    isdisk::Bool
+    function XTRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, N::Int64, H::Union{SparseMPO,Nothing} = nothing,isdisk::Bool=false)
+        new{typeof(scheme),typeof(alg)}(scheme,alg,N,H,isdisk)
     end
 end
 
