@@ -1,10 +1,9 @@
 
 
-
 mutable struct SparseMPO{L} <: AbstractMPO
     ts::Vector{SparseMPOTensor}
     D::Vector{NTuple{2,Int64}}
-    
+
     function SparseMPO(ts::Vector{SparseMPOTensor},
         D::Vector{NTuple{2,Int64}})
         return new{length(ts)}(ts,D)
@@ -18,75 +17,93 @@ mutable struct SparseMPO{L} <: AbstractMPO
     function SparseMPO(t::SparseMPOTensor{N,M}) where {N,M}
         D = convert(Vector{NTuple{2,Int64}},[(N,M)])
         ts = convert(Vector{SparseMPOTensor},[t])
-        return new{length(ts)}(ts,D)        
+        return new{length(ts)}(ts,D)
     end
 end
 
 mutable struct DenseMPO{L} <: AbstractMPO
-    ts::CachedVector{DenseMPOTensor}
+    ts::AbstractVector{DenseMPOTensor}
     center::Vector{Int64}
+    isdisk::Bool
 
-    function DenseMPO(A::CachedVector{DenseMPOTensor},center::Vector{Int64})
-        return new{length(A)}(A,center)
+    function DenseMPO(A::Vector{DenseMPOTensor},center::Vector{Int64}; isdisk::Bool=false)
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{length(A)}(A,center,isdisk)
     end
 
-    function DenseMPO(A::Vector{DenseMPOTensor{R}}, cache_limit::Union{Int,Nothing}=nothing) where R
-        limit = something(cache_limit, _cache_memory_limit(DenseMPOTensor))
-        return new{length(A)}(CachedVector{DenseMPOTensor}(A, limit),[1,length(A)])
+    function DenseMPO(A::Vector{DenseMPOTensor{R}}; isdisk::Bool=false) where R
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{length(A)}(A,[1,length(A)],isdisk)
     end
 
-    function DenseMPO(t::DenseMPOTensor, cache_limit::Union{Int,Nothing}=nothing)
-        limit = something(cache_limit, _cache_memory_limit(DenseMPOTensor))
-        A = CachedVector{DenseMPOTensor}([t], limit)
-        return new{1}(A,[1,1])
+    function DenseMPO(t::DenseMPOTensor; isdisk::Bool=false)
+        A = convert(Vector{DenseMPOTensor},[t])
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{1}(A,[1,1],isdisk)
     end
 
-    function DenseMPO(t::Vector, cache_limit::Union{Int,Nothing}=nothing)
-        limit = something(cache_limit, _cache_memory_limit(DenseMPOTensor))
+    function DenseMPO(t::Vector; isdisk::Bool=false)
         tmp = map(DenseMPOTensor,t)
-        A = CachedVector{DenseMPOTensor}(tmp, limit)
-        return new{length(A)}(A,[1,length(A)])
+        A = convert(Vector{DenseMPOTensor},tmp)
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{length(A)}(A,[1,length(A)],isdisk)
     end
 end
 const DenseMPQ = Union{DenseMPO,DenseMPS}
 
 mutable struct AdjointMPO{L} <: AbstractMPO
-    ts::CachedVector{AdjointMPOTensor}
+    ts::AbstractVector{AdjointMPOTensor}
     center::Vector{Int64}
+    isdisk::Bool
 
-    function AdjointMPO(A::CachedVector{AdjointMPOTensor},center::Vector{Int64})
-        return new{length(A)}(A,center)
+    function AdjointMPO(A::Vector{AdjointMPOTensor},center::Vector{Int64}; isdisk::Bool=false)
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{length(A)}(A,center,isdisk)
     end
 
-    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}, cache_limit::Union{Int,Nothing}=nothing) where R
-        limit = something(cache_limit, _cache_memory_limit(AdjointMPOTensor))
-        return new{length(A)}(CachedVector{AdjointMPOTensor}(A, limit),[1,length(A)])
+    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}; isdisk::Bool=false) where R
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{length(A)}(A,[1,length(A)],isdisk)
     end
 
-    function AdjointMPO(t::AdjointMPOTensor, cache_limit::Union{Int,Nothing}=nothing)
-        limit = something(cache_limit, _cache_memory_limit(AdjointMPOTensor))
-        A = CachedVector{AdjointMPOTensor}([t], limit)
-        return new{1}(A,[1,1])
+    function AdjointMPO(t::AdjointMPOTensor; isdisk::Bool=false)
+        A = convert(Vector{AdjointMPOTensor},[t])
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{1}(A,[1,1],isdisk)
     end
 
-    function AdjointMPO(t::Vector{AbstractTensorMap}, cache_limit::Union{Int,Nothing}=nothing)
-        limit = something(cache_limit, _cache_memory_limit(AdjointMPOTensor))
+    function AdjointMPO(t::Vector{AbstractTensorMap}; isdisk::Bool=false)
         tmp = map(AdjointMPOTensor,t)
-        A = CachedVector{AdjointMPOTensor}(tmp, limit)
-        return new{length(A)}(A,[1,length(A)])
+        A = convert(Vector{AdjointMPOTensor},tmp)
+        if isdisk
+            A = SerializedElementArrays.disk(A)
+        end
+        return new{length(A)}(A,[1,length(A)],isdisk)
     end
 end
 
-Base.adjoint(A::DenseMPO{L}) where {L} = AdjointMPO(adjoint(A.ts), deepcopy(A.center))
-Base.adjoint(A::AdjointMPO{L}) where {L} = DenseMPO(adjoint(A.ts), deepcopy(A.center))
+Base.adjoint(A::DenseMPO{L}) where {L} = AdjointMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center); isdisk=A.isdisk)
+Base.adjoint(A::AdjointMPO{L}) where {L} = DenseMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center); isdisk=A.isdisk)
 
 isadjoint(::DenseMPO) = false
 isadjoint(::AdjointMPO) = true
-isref(::DenseMPO) = false
-isref(::AdjointMPO) = false
 
 mutable struct RefMPO{L} <: AbstractMPO
-    ts::CachedVector{DenseMPOTensor}
+    ts::AbstractVector{DenseMPOTensor}
     center::Vector{Int64}
     mapping::Function
     pointer::DenseMPO
@@ -97,3 +114,5 @@ issparse(::RefMPO) = false
 isadjoint(::RefMPO) = false
 isref(::RefMPO) = true
 
+# Fallback for non-RefMPO types
+isref(::AbstractMPO) = false

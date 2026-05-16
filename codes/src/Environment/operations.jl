@@ -1,7 +1,11 @@
 
-function initialize!(env::Environment; cache_limit::Union{Int,Nothing}=nothing, kwargs...)
-    limit = something(cache_limit, _cache_memory_limit(AbstractEnvironmentTensor))
-    env.envs = CachedVector{AbstractEnvironmentTensor}(env.L + 1, limit)
+function initialize!(env::Environment;kwargs...)
+    envs_vec = Vector{AbstractEnvironmentTensor}(undef, env.L + 1)
+    if env.disk
+        env.envs = SerializedElementArrays.disk(envs_vec)
+    else
+        env.envs = envs_vec
+    end
     setdefault!(env;kwargs...)
     canonicalize!(env,1)
 end

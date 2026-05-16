@@ -177,7 +177,7 @@ function evolve!(
     obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}}, τ::Number,
     alg::Chebyshev) where N
-    reset_action_timer!()
+    reset_timer!(get_timer("action"))
 
     nm = normalize!(obj)
 
@@ -253,7 +253,7 @@ function evolve!(
     O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}}, τ::Number,
     alg::LKANalgo) where N
     nm = normalize!(obj)
-    reset_action_timer!()
+    reset_timer!(get_timer("action"))
 
     N ≠ 0 && lkan_prepare(obj,O,alg,τ)
 
@@ -265,7 +265,7 @@ function evolve!(
 end
 
 function groundEig(O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}},alg::LKANalgo;x₀ = _initialMPS(O)) where N
-    reset_action_timer!()
+    reset_timer!(get_timer("action"))
     N ≠ 0 && lkan_prepare(x₀,O,alg)
     Eg,Ev,info = eigsolve(x -> action(O,x), x₀, 1, :SR, alg.algo.Alg)
     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)

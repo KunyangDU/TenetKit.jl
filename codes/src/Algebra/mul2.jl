@@ -10,12 +10,13 @@ function mul!(C::DenseMPO, A::Union{DenseMPO{L₁},SparseMPO{L₁}}, B::Union{De
 
     @assert L₁ == L₂
     to = TimerOutput()
+    __init_io__()
 
     C′ = C'
 
     @timeit to "initialize ABC Env" begin
-        EnvAB = Environment([deepcopy(A),deepcopy(B),C′])
-        EnvC = Environment([C,C′])
+        EnvAB = Environment([deepcopy(A),deepcopy(B),C′];disk=Alg.isdisk)
+        EnvC = Environment([C,C′];disk=Alg.isdisk)
         initialize!(EnvAB)
         initialize!(EnvC)
     end
@@ -23,7 +24,6 @@ function mul!(C::DenseMPO, A::Union{DenseMPO{L₁},SparseMPO{L₁}}, B::Union{De
     while info.n ≤ Alg.N
         localto = TimerOutput()
 
-        reset_io_timer!()
         l2rinfo = Algebrasweepinfo(L2R())
         mto = mul!(EnvC,EnvAB,α,β,Alg,l2rinfo)
         merge!(localto,mto)
@@ -34,7 +34,7 @@ function mul!(C::DenseMPO, A::Union{DenseMPO{L₁},SparseMPO{L₁}}, B::Union{De
         merge!(localto,mto)
         merge!(info,r2linfo)
 
-        merge_io!(localto)
+        _merge_io!(localto)
         show(localto;title = "mul!")
         print("\n")
         show(info)

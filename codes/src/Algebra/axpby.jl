@@ -11,17 +11,19 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L};kwargs...
     trunc = get(kwargs,:trunc,notrunc())
     N  = get(kwargs,:N,3)
     tol = get(kwargs,:tol,1e-8)
-    algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol)
+    isdisk = get(kwargs,:isdisk,false)
+    algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol,isdisk)
     return axpby!(α,x,β,y,algo;kwargs...)
 end
 
 function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Algebraalgo;kwargs...) where L
     y′ = y'
-    
+
     to = TimerOutput()
+    __init_io__()
     @timeit to "initialize XY Env" begin
-        Envx = Environment([deepcopy(x),y′])
-        Envy = Environment([y,y′])
+        Envx = Environment([deepcopy(x),y′];disk=Alg.isdisk)
+        Envy = Environment([y,y′];disk=Alg.isdisk)
         initialize!(Envx)
         initialize!(Envy)
     end
@@ -30,7 +32,6 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Alg
     while info.n ≤ Alg.N
         localto = TimerOutput()
 
-        reset_io_timer!()
         l2rinfo = Algebrasweepinfo(L2R())
         mto = axpby!(α,Envx,β,Envy,Alg,l2rinfo)
         merge!(localto,mto)
@@ -41,7 +42,7 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Alg
         merge!(localto,mto)
         merge!(info,r2linfo)
 
-        merge_io!(localto)
+        _merge_io!(localto)
         show(localto;title = "axpby!")
         print("\n")
         show(info)
@@ -227,10 +228,7 @@ function xpy!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO}
 end
 
 function xp!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS}
-    # Per-element copy to avoid materializing all tensors at once (OOM risk).
-    for i in 1:length(x.ts)
-        y[i] = x[i]
-    end
+    y[:] = x[:]
     y.center = x.center
     return y
 end

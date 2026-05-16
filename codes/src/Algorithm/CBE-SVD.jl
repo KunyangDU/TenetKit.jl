@@ -1,9 +1,9 @@
 function fullSVD!(env::CBEenvironment, alg::CBEalgo,info::CBEinfo{L2R})
     localto = TimerOutput()
     @timeit localto "projection" H = proj2(env.Lorth,env.tL,env.tR,env.Rorth)
-    reset_action_timer!()
+    reset_timer!(get_timer("action"))
     obj = action(H,composite(env.tL₀,env.tR₀))
-    merge_action!(localto)
+    merge!(localto,get_timer("action"))
     @timeit localto "SVD" env.tL,env.tR,info.err = tsvd(obj;direction = :left,trunc = truncdim(env.D_f))
     return localto
 end
@@ -11,9 +11,9 @@ end
 function fullSVD!(env::CBEenvironment,alg::CBEalgo,info::CBEinfo{R2L})
     localto = TimerOutput()
     @timeit localto "projection" H = proj2(env.Lorth,env.tL,env.tR,env.Rorth)
-    reset_action_timer!()
+    reset_timer!(get_timer("action"))
     obj = action(H,composite(env.tL₀,env.tR₀))
-    merge_action!(localto)
+    merge!(localto,get_timer("action"))
     @timeit localto "SVD" env.tL,env.tR,info.err = tsvd(obj;direction = :right,trunc = truncdim(env.D_f))
     return localto
 end

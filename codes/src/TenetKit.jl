@@ -1,12 +1,30 @@
-using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees
+using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees, SerializedElementArrays
 import LinearAlgebra: BLAS, cross
-using LRUCache
+
+const _io_timers = TimerOutput[]
+
+function __init_io__()
+    empty!(_io_timers)
+    for _ in 1:Threads.nthreads()
+        push!(_io_timers, TimerOutput())
+    end
+end
+
+_local_io_timer() = _io_timers[Threads.threadid()]
+
+function _merge_io!(to::TimerOutput)
+    for t in _io_timers
+        merge!(to, t)
+        reset_timer!(t)
+    end
+end
+
+__init_io__()
 
 include("Globals.jl")
 include("init.jl")
 
 include("TensorWrapper/AbstractType.jl")
-include("TensorWrapper/CachedVector.jl")
 include("TensorWrapper/AbstractTensor.jl")
 include("MPS/AbstractMPS.jl")
 include("MPO/AbstractMPO.jl")
@@ -14,8 +32,6 @@ include("Environment/AbstractEnvironment.jl")
 include("Hamiltonian/AbstractHamiltonian.jl")
 include("IntrTree/LocalOperator.jl")
 include("IntrTree/Node.jl")
-include("Observables/CachedDict.jl")
-include("Observables/DFS.jl")
 include("Observables/Node.jl")
 include("Observables/ObsTree.jl")
 include("ProcessControl/AbstractType.jl")

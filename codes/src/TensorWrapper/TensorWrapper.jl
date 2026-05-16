@@ -158,7 +158,7 @@ scale(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} 
 scale!!(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale!!((t[1].A,t[2]))
 scale!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = scale!!((t[1].A,t[2].A,t[3]))
 zerovector(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = zerovector((t[1].A,t[2]))
-add!!(t::Tuple{T₁,T₂,T₃,T₄}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number,T₄} = add!!((t[1].A,t[2].A,t[3],t[4]))
+add!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = add!!((t[1].A,t[2].A,t[3],t[4]))
 
 TensorKit.codomain(A::AbstractTensorWrapper) = codomain(A.A)
 TensorKit.domain(A::AbstractTensorWrapper) = domain(A.A)
@@ -173,7 +173,6 @@ Base.getindex(obj::T, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,Ad
 Base.getindex(obj::RefMPO, i::Int64) = obj.mapping(obj.ts[i])
 Base.getindex(obj::T, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "deserialize" [obj.ts[i] for i in stp]) : [obj.ts[i] for i in stp]
 Base.getindex(obj::RefMPO, stp::UnitRange) = obj.mapping.([obj.ts[i] for i in stp])
-
 Base.setindex!(obj::T, val, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "serialize" obj.ts[i] = val) : (obj.ts[i] = val)
 Base.setindex!(obj::T, vals, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "serialize" for (i, v) in zip(stp, vals); obj.ts[i] = v; end) : (for (i, v) in zip(stp, vals); obj.ts[i] = v; end)
 Base.setindex!(obj::RefMPO, val, i::Int64) = (obj.ts[i] = val)
@@ -181,10 +180,6 @@ Base.setindex!(obj::RefMPO, val, i::Int64) = (obj.ts[i] = val)
 Base.getindex(obj::T, ::Colon) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? [obj.ts[i] for i in 1:length(obj.ts)] : obj.ts[:]
 Base.getindex(obj::RefMPO, ::Colon) = obj.mapping.(obj.ts[:])
 Base.setindex!(obj::T, vals, ::Colon) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (for (i, v) in enumerate(vals); obj.ts[i] = v; end) : (obj.ts[:] = vals)
-
-Base.setindex!(obj::T, val, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = (obj.ts[i] = val)
-Base.setindex!(obj::T, vals, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = (obj.ts[stp] = vals)
-Base.setindex!(obj::RefMPO, val, i::Int64) = (obj.ts[i] = val)
 
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B

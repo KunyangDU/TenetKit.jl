@@ -4,9 +4,10 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},D
 
     @assert L₁ == L₂
     to = TimerOutput()
+    __init_io__()
     C′ = C'
     @timeit to "initialize ABC Env" begin
-        EnvAB = Environment([A,B,C′])
+        EnvAB = Environment([A,B,C′];disk=Alg.isdisk)
         initialize!(EnvAB)
     end
 
@@ -15,7 +16,6 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},D
         info.err = 0
         localto = TimerOutput()
 
-        reset_io_timer!()
         l2rinfo = Algebrasweepinfo(L2R())
         mto = mul!(EnvAB,α,Alg,l2rinfo)
         merge!(localto,mto)
@@ -26,7 +26,7 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},D
         merge!(localto,mto)
         merge!(info,r2linfo)
         if verbose
-            merge_io!(localto)
+            _merge_io!(localto)
             show(localto;title = "mul! - $(info.n) / $(Alg.N)")
             print("\n")
             show(info)

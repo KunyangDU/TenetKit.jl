@@ -124,7 +124,7 @@ function _initialMPS(O::SparseProjectiveHamiltonian{2})
 end
 
 function groundEig(O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}},alg::Krylovalgo = DMRGDefaultLanczos;x₀ = _initialMPS(O)) where N
-    reset_action_timer!()
+    reset_timer!(get_timer("action"))
     Eg,Ev,info = eigsolve(x -> action(O,x), x₀, 1, :SR, alg.Alg)
     return isapproxreal(Eg[1]), normalize(Ev[1]), Lanczosinfo(info)
 end
@@ -134,7 +134,7 @@ function evolve!(
     O::Union{SparseProjectiveHamiltonian{N},DenseProjectiveHamiltonian{3,N}}, τ::Number,
     alg::Krylovalgo = TDVPDefaultLanczos) where N
     nm = normalize!(obj)
-    reset_action_timer!()
+    reset_timer!(get_timer("action"))
     tmp,info = exponentiate(x -> action(O,x), -τ, obj, alg.Alg)
     rmul!(tmp,nm)
     obj.A = tmp.A
@@ -148,7 +148,7 @@ end
 #     τ::Number,
 #     alg::Krylovalgo = TDVPDefaultGMRES) where N
 #     nm = normalize!(obj)
-#     reset_action_timer!()
+#     reset_timer!(get_timer("action"))
 #     dt_half = τ / 2.0
 #     # b = obj - dt_half * action(O, obj)
 #     # M = x -> x + dt_half * action(O, x)
