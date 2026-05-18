@@ -28,14 +28,14 @@ mutable struct DenseMPO{L} <: AbstractMPO
 
     function DenseMPO(A::Vector{DenseMPOTensor},center::Vector{Int64}; isdisk::Bool=false)
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{length(A)}(A,center,isdisk)
     end
 
     function DenseMPO(A::Vector{DenseMPOTensor{R}}; isdisk::Bool=false) where R
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{length(A)}(A,[1,length(A)],isdisk)
     end
@@ -43,7 +43,7 @@ mutable struct DenseMPO{L} <: AbstractMPO
     function DenseMPO(t::DenseMPOTensor; isdisk::Bool=false)
         A = convert(Vector{DenseMPOTensor},[t])
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{1}(A,[1,1],isdisk)
     end
@@ -52,7 +52,7 @@ mutable struct DenseMPO{L} <: AbstractMPO
         tmp = map(DenseMPOTensor,t)
         A = convert(Vector{DenseMPOTensor},tmp)
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{length(A)}(A,[1,length(A)],isdisk)
     end
@@ -66,14 +66,14 @@ mutable struct AdjointMPO{L} <: AbstractMPO
 
     function AdjointMPO(A::Vector{AdjointMPOTensor},center::Vector{Int64}; isdisk::Bool=false)
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{length(A)}(A,center,isdisk)
     end
 
     function AdjointMPO(A::Vector{AdjointMPOTensor{R}}; isdisk::Bool=false) where R
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{length(A)}(A,[1,length(A)],isdisk)
     end
@@ -81,7 +81,7 @@ mutable struct AdjointMPO{L} <: AbstractMPO
     function AdjointMPO(t::AdjointMPOTensor; isdisk::Bool=false)
         A = convert(Vector{AdjointMPOTensor},[t])
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{1}(A,[1,1],isdisk)
     end
@@ -90,14 +90,14 @@ mutable struct AdjointMPO{L} <: AbstractMPO
         tmp = map(AdjointMPOTensor,t)
         A = convert(Vector{AdjointMPOTensor},tmp)
         if isdisk
-            A = SerializedElementArrays.disk(A)
+            A = _disk(A)
         end
         return new{length(A)}(A,[1,length(A)],isdisk)
     end
 end
 
-Base.adjoint(A::DenseMPO{L}) where {L} = AdjointMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center); isdisk=A.isdisk)
-Base.adjoint(A::AdjointMPO{L}) where {L} = DenseMPO(deepcopy(adjoint(A.ts)), deepcopy(A.center); isdisk=A.isdisk)
+Base.adjoint(A::DenseMPO{L}) where {L} = AdjointMPO(adjoint(A.ts), deepcopy(A.center); isdisk=A.isdisk)
+Base.adjoint(A::AdjointMPO{L}) where {L} = DenseMPO(adjoint(A.ts), deepcopy(A.center); isdisk=A.isdisk)
 
 isadjoint(::DenseMPO) = false
 isadjoint(::AdjointMPO) = true
@@ -116,3 +116,11 @@ isref(::RefMPO) = true
 
 # Fallback for non-RefMPO types
 isref(::AbstractMPO) = false
+
+function cleanup!(obj::T) where T <: Union{DenseMPO,AdjointMPO}
+    if obj.isdisk && obj.ts isa SerializedElementArrays.SerializedElementArray
+        dir = SerializedElementArrays.pathname(obj.ts)
+        ispath(dir) && rm(dir; recursive=true, force=true)
+    end
+    return obj
+end

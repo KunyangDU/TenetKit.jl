@@ -11,7 +11,7 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L};kwargs...
     trunc = get(kwargs,:trunc,notrunc())
     N  = get(kwargs,:N,3)
     tol = get(kwargs,:tol,1e-8)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(x))
     algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol,isdisk)
     return axpby!(α,x,β,y,algo;kwargs...)
 end
@@ -22,37 +22,42 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Alg
     to = TimerOutput()
     __init_io__()
     @timeit to "initialize XY Env" begin
-        Envx = Environment([deepcopy(x),y′];disk=Alg.isdisk)
-        Envy = Environment([y,y′];disk=Alg.isdisk)
+        Envx = Environment([x,y′];isdisk=Alg.isdisk)
+        Envy = Environment([y,y′];isdisk=Alg.isdisk)
         initialize!(Envx)
         initialize!(Envy)
     end
 
     info = Algebrainfo()
-    while info.n ≤ Alg.N
-        localto = TimerOutput()
+    try
+        while info.n ≤ Alg.N
+            localto = TimerOutput()
 
-        l2rinfo = Algebrasweepinfo(L2R())
-        mto = axpby!(α,Envx,β,Envy,Alg,l2rinfo)
-        merge!(localto,mto)
-        merge!(info,l2rinfo)
+            l2rinfo = Algebrasweepinfo(L2R())
+            mto = axpby!(α,Envx,β,Envy,Alg,l2rinfo)
+            merge!(localto,mto)
+            merge!(info,l2rinfo)
 
-        r2linfo = Algebrasweepinfo(R2L())
-        mto = axpby!(α,Envx,β,Envy,Alg,r2linfo)
-        merge!(localto,mto)
-        merge!(info,r2linfo)
+            r2linfo = Algebrasweepinfo(R2L())
+            mto = axpby!(α,Envx,β,Envy,Alg,r2linfo)
+            merge!(localto,mto)
+            merge!(info,r2linfo)
 
-        _merge_io!(localto)
-        show(localto;title = "axpby!")
-        print("\n")
-        show(info)
-        merge!(to,localto)
+            _merge_io!(localto)
+            show(localto;title = "axpby!")
+            print("\n")
+            show(info)
+            merge!(to,localto)
 
-        info.err < Alg.tol && break
+            info.err < Alg.tol && break
+        end
+        @assert Envx.layer[2] == Envy.layer[2]
+        return xp!(y′, y), to, info
+    finally
+        Alg.isdisk && (cleanup!(Envx); cleanup!(Envy); cleanup!(y′))
     end
 
-    @assert Envx.layer[2] == Envy.layer[2]
-    return xp!(y′',y),to,info
+
 end
 
 function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{2}, Alg::Algebraalgo{DoubleSite}, sweepinfo::Algebrasweepinfo{L2R};kwargs...)
@@ -229,6 +234,14 @@ end
 
 function xp!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS}
     y[:] = x[:]
+    y.center = x.center
+    return y
+end
+
+function xp!(x::T₁,y::T₂) where T₁ <: Union{AdjointMPS{L}, AdjointMPO{L}} where T₂ <: Union{DenseMPS{L},DenseMPO{L}} where L
+    for i in 1:L
+        y[i] = adjoint(x[i])
+    end
     y.center = x.center
     return y
 end

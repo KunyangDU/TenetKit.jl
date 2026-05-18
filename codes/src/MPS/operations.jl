@@ -1,50 +1,3 @@
-# function TensorKit.leftorth(elm::MPSTensor{3})
-#     Q,Rm = leftorth(elm.A,(1,2),(3,))
-#     return map(MPSTensor,(Q,Rm))
-# end
-
-# function TensorKit.leftorth(A::MPSTensor{R}) where R
-#     @assert R > 3
-#     Q,Rm = leftorth(A.A,(1,2),tuple(3:R...))
-#     return Q,Rm
-# end
-TensorKit.leftorth(A::MPSTensor{3}) = map(MPSTensor,leftorth(A.A,(1,2),(3,)))
-TensorKit.leftorth(A::MPSTensor{4}) = map(MPSTensor,leftorth(A.A,(1,2,4),(3,)) |> x -> (permute(x[1],(1,2),(4,3)),x[2]))
-
-
-function TensorKit.leftorth(A::MPSTensor{3}, B::MPSTensor{3})
-    Q, Rm = leftorth(A)
-    @tensor tmp[-1 -2;-3] ≔ Rm.A[-1,1]*B.A[1,-2,-3]
-    return Q,MPSTensor(tmp)
-end
-
-function TensorKit.leftorth!(obj::DenseMPS,site::Int64)
-    obj[site:site+1] = collect(leftorth(obj[site:site+1]...))
-end
-
-# function TensorKit.rightorth(A::MPSTensor{3})
-#     Lm,Q = rightorth(A.A,(1,),(2,3))
-#     return map(MPSTensor,(Lm,permute(Q,(1,2),(3,))))
-# end
-
-# function TensorKit.rightorth(A::MPSTensor{R}) where R
-#     @assert R > 3
-#     Lm,Q = rightorth(A.A,(1,2),tuple(3:R...))
-#     return Lm, Q
-# end
-
-TensorKit.rightorth(A::MPSTensor{3}) = map(MPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[1],permute(x[2],(1,2),(3,)))) 
-TensorKit.rightorth(A::MPSTensor{4}) = map(MPSTensor,rightorth(A.A,(1,),(2,3,4)) |> x -> (x[1],permute(x[2],(1,2),(3,4)))) 
-
-function TensorKit.rightorth(A::MPSTensor{3}, B::MPSTensor{3})
-    Lm,Q = rightorth(B)
-    return MPSTensor(A.A*Lm.A),Q
-end
-
-function TensorKit.rightorth!(obj::DenseMPS,site::Int64)
-    obj[site-1:site] = collect(rightorth(obj[site-1:site]...))
-end
-
 
 
 function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
@@ -80,5 +33,45 @@ function TensorKit.tsvd(A::MPSTensor{3}; direction::Symbol=:center, index_tuple 
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);kwargs...)
         return map(MPSTensor,(U,S*V))...,ϵ^2
     end
+end
+
+TensorKit.leftorth(A::MPSTensor{4}) = map(MPSTensor,leftorth(A.A,(1,2,4),(3,)) |> x -> (permute(x[1],(1,2),(4,3)),x[2]))
+TensorKit.rightorth(A::MPSTensor{4}) = map(MPSTensor,rightorth(A.A,(1,),(2,3,4)) |> x -> (x[1],permute(x[2],(1,2),(3,4)))) 
+
+TensorKit.rightorth(A::MPSTensor{3}) = map(MPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[1],permute(x[2],(1,2),(3,)))) 
+TensorKit.leftorth(A::MPSTensor{3}) = map(MPSTensor,leftorth(A.A,(1,2),(3,)))
+
+function TensorKit.rightorth(A::MPSTensor{3}, B::MPSTensor{3})
+    Lm,Q = rightorth(B)
+    return MPSTensor(A.A*Lm.A),Q
+end
+
+function TensorKit.leftorth(A::MPSTensor{3}, B::MPSTensor{3})
+    Q, Rm = leftorth(A)
+    @tensor tmp[-1 -2;-3] ≔ Rm.A[-1,1]*B.A[1,-2,-3]
+    return Q,MPSTensor(tmp)
+end
+
+function TensorKit.rightorth!(obj::T,site::Int64) where T <: Union{DenseMPS, AdjointMPS}
+    obj[site-1:site] = collect(rightorth(obj[site-1:site]...))
+end
+
+function TensorKit.leftorth!(obj::T,site::Int64) where T <: Union{DenseMPS, AdjointMPS}
+    obj[site:site+1] = collect(leftorth(obj[site:site+1]...))
+end
+
+
+TensorKit.rightorth(A::AdjointMPSTensor{3}) = map(AdjointMPSTensor,leftorth(A.A,(1,3),(2,)) |> x -> (x[2],permute(x[1],(1,),(3,2)))) 
+TensorKit.leftorth(A::AdjointMPSTensor{3}) = map(AdjointMPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[2],x[1]))
+
+function TensorKit.rightorth(A::AdjointMPSTensor{3}, B::AdjointMPSTensor{3})
+    Lm,Q = rightorth(B)
+    return AdjointMPSTensor(Lm.A * A.A),Q
+end
+
+function TensorKit.leftorth(A::AdjointMPSTensor{3}, B::AdjointMPSTensor{3})
+    Q, Rm = leftorth(A)
+    @tensor tmp[-1;-2 -3] ≔ Rm.A[1,-2]*B.A[-1,1,-3]
+    return Q,AdjointMPSTensor(tmp)
 end
 

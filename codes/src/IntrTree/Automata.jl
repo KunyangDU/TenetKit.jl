@@ -100,7 +100,11 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
             "roots" => [],
             "inverse_root" => 0,
         )
-        nextnode = deepcopy(lastnode)
+        nextnode = Dict(
+            "leaves" => [],
+            "roots" => [],
+            "inverse_root" => 0,
+        )
         lastnode["roots"] = [Root,]
         
         for iL in 1:L

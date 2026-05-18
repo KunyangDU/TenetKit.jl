@@ -1,8 +1,8 @@
 
 function initialize!(env::Environment;kwargs...)
     envs_vec = Vector{AbstractEnvironmentTensor}(undef, env.L + 1)
-    if env.disk
-        env.envs = SerializedElementArrays.disk(envs_vec)
+    if env.isdisk
+        env.envs = _disk(envs_vec)
     else
         env.envs = envs_vec
     end

@@ -7,19 +7,23 @@ function Base.replace!(C::DenseMPO,A::DenseMPO)
 end
 
 function tr(ρ::DenseMPO)
-    return tr(ρ,ρ')
+    ρ′ = ρ'
+    result = tr(ρ, ρ′)
+    cleanup!(ρ′)
+    return result
 end
 
 function tr(ρ1::DenseMPO,ρ2::AdjointMPO)
-    Env = Environment([deepcopy(ρ1),deepcopy(ρ2)])
+    Env = Environment([ρ1,ρ2])
     initialize!(Env)
-    return _scalar(Env)
+    try return _scalar(Env) finally cleanup!(Env) end
 end
 
 function tr(ρ::DenseMPO, A::SparseMPO)
-    Env = Environment([deepcopy(ρ), A, ρ'])
+    ρ′ = ρ'
+    Env = Environment([ρ, A, ρ′])
     initialize!(Env)
-    return _scalar(Env)
+    try return _scalar(Env) finally cleanup!(Env); cleanup!(ρ′) end
 end
 
 tr1(obj::DenseMPO) = norm(obj[1])

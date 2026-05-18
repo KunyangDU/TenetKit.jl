@@ -201,23 +201,31 @@ mutable struct Environment{N,L} <: AbstractEnvironment
     envs::Union{Nothing,AbstractArray{AbstractEnvironmentTensor}}
     center::Vector{Int64}
     L::Int64
-    disk::Bool
+    isdisk::Bool
 
     function Environment(layer::Vector,
         envs::AbstractArray{AbstractEnvironmentTensor},
         center::Union{Nothing,Vector{Int64}},
-        L::Union{Nothing,Int64}; disk::Bool=false)
-        if disk && envs isa Vector
-            envs = SerializedElementArrays.disk(envs)
+        L::Union{Nothing,Int64}; isdisk::Bool=false)
+        if isdisk && envs isa Vector
+            envs = _disk(envs)
         end
-        return new{length(layer),length(layer[1])}(layer,envs,center,L,disk)
+        return new{length(layer),length(layer[1])}(layer,envs,center,L,isdisk)
     end
 
-    function Environment(layer::Vector; disk::Bool=false)
+    function Environment(layer::Vector; isdisk::Bool=false)
         L = length(layer[1])
-        return new{length(layer),length(layer[1])}(layer,nothing,[1,L],L,disk)
+        return new{length(layer),length(layer[1])}(layer,nothing,[1,L],L,isdisk)
     end
 
+end
+
+function cleanup!(env::Environment)
+    if env.isdisk && env.envs isa SerializedElementArrays.SerializedElementArray
+        dir = SerializedElementArrays.pathname(env.envs)
+        ispath(dir) && rm(dir; recursive=true, force=true)
+    end
+    return env
 end
 
 mutable struct CBEenvironment <: AbstractEnvironment

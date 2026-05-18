@@ -1,25 +1,6 @@
-using MKL, TensorKit, JLD2, FiniteLattices, BenchmarkTools, TimerOutputs, KrylovKit, AbstractTrees, SerializedElementArrays
+using MKL, TensorKit, JLD2, FiniteLattices, TimerOutputs, KrylovKit, AbstractTrees, SerializedElementArrays
 import LinearAlgebra: BLAS, cross
-
-const _io_timers = TimerOutput[]
-
-function __init_io__()
-    empty!(_io_timers)
-    for _ in 1:Threads.nthreads()
-        push!(_io_timers, TimerOutput())
-    end
-end
-
-_local_io_timer() = _io_timers[Threads.threadid()]
-
-function _merge_io!(to::TimerOutput)
-    for t in _io_timers
-        merge!(to, t)
-        reset_timer!(t)
-    end
-end
-
-__init_io__()
+import Statistics: std
 
 include("Globals.jl")
 include("init.jl")
@@ -90,7 +71,7 @@ include("Algebra/operations.jl")
 # include("Algebra/densify.jl")
 include("Algebra/contract.jl")
 
-include("utils/benchmarktools.jl")
+# include("utils/benchmarktools.jl")
 include("utils/KrylovKit.jl")
 include("utils/lattice.jl")
 # include("utils/LKAN.jl")

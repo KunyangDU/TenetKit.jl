@@ -84,7 +84,9 @@ function TDVP!(Env::Environment{3,L}, Alg::TDVPalgo, info::TDVPinfo;kwargs...) w
     r2linfo.E = info.E
     to = TDVP!(Env,Alg,r2linfo)
     if isreal(Alg.τ)
+        @show norm(Env.layer[1]),norm(Env.layer[3])
         @assert (d = normalize!(Env.layer[1])) ≈ normalize!(Env.layer[3])
+        @show norm(Env.layer[1]),norm(Env.layer[3])
         info.lnZ += 2 * log(d)
     end
     _merge_io!(to)
@@ -234,47 +236,67 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
 end
 
 function TDVP1!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number;kwargs...)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ψ))
+    ψ′ = ψ'
     @time "initialize environment" begin
-        Env = Environment([ψ,H,ψ'];disk=isdisk)
+        Env = Environment([ψ,H,ψ′];isdisk=isdisk)
         initialize!(Env)
     end
     flush(stdout)
     lst = range(0,t,Nt)
-    lsobj,lsinfo = TDVP1!(Env,1im * lst;kwargs...)
-    return lst,lsobj,lsinfo
+    try
+        lsobj,lsinfo = TDVP1!(Env,1im * lst;kwargs...)
+        return lst,lsobj,lsinfo
+    finally
+        cleanup!(Env); cleanup!(ψ′)
+    end
 end
 
 function TDVP2!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number;kwargs...)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ψ))
+    ψ′ = ψ'
     @time "initialize environment" begin
-        Env = Environment([ψ,H,ψ'];disk=isdisk)
+        Env = Environment([ψ,H,ψ′];isdisk=isdisk)
         initialize!(Env)
     end
     flush(stdout)
     lst = range(0,t,Nt)
-    lsobj,lsinfo = TDVP2!(Env,1im * lst;kwargs...)
-    return lst,lsobj,lsinfo
+    try
+        lsobj,lsinfo = TDVP2!(Env,1im * lst;kwargs...)
+        return lst,lsobj,lsinfo
+    finally
+        cleanup!(Env); cleanup!(ψ′)
+    end
 end
 
 
 function tanTRG1!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ρ))
+    ρ′ = ρ'
     @time "initialize environment" begin
-        Env = Environment([ρ,H,ρ'];disk=isdisk)
+        Env = Environment([ρ,H,ρ′];isdisk=isdisk)
         initialize!(Env)
     end
     flush(stdout)
-    return tanTRG1!(Env, lsβ;kwargs...)
+    try
+        return tanTRG1!(Env, lsβ;kwargs...)
+    finally
+        cleanup!(Env); cleanup!(ρ′)
+    end
 end
 function tanTRG2!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ρ))
+    ρ′ = ρ'
     @time "initialize environment" begin
-        Env = Environment([ρ,H,ρ'];disk=isdisk)
+        Env = Environment([ρ,H,ρ′];isdisk=isdisk)
         initialize!(Env)
     end
     flush(stdout)
-    return tanTRG2!(Env, lsβ;kwargs...)
+    try
+        return tanTRG2!(Env, lsβ;kwargs...)
+    finally
+        cleanup!(Env); cleanup!(ρ′)
+    end
 end
 
 function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)

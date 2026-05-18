@@ -1,8 +1,9 @@
 
 function DMRG1!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ψ))
+    ψ′ = ψ'
     @time "initialize environment" begin
-        Env = Environment([ψ,H,ψ'];disk=isdisk)
+        Env = Environment([ψ,H,ψ′];isdisk=isdisk)
         initialize!(Env)
     end
     flush(stdout)
@@ -17,14 +18,19 @@ function DMRG1!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
     alg = DMRGalgo(SingleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite,isdisk)
-    lsE,lsinfo = DMRG!(Env,alg)
-    return lsE,lsinfo
+    try
+        lsE,lsinfo = DMRG!(Env,alg)
+        return lsE,lsinfo
+    finally
+        cleanup!(Env); cleanup!(ψ′)
+    end
 end
 
 function DMRG2!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ψ))
+    ψ′ = ψ'
     @time "initialize environment" begin
-        Env = Environment([ψ,H,ψ'];disk=isdisk)
+        Env = Environment([ψ,H,ψ′];isdisk=isdisk)
         initialize!(Env)
     end
     flush(stdout)
@@ -37,8 +43,12 @@ function DMRG2!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
     alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite,isdisk)
-    lsE,lsinfo = DMRG!(Env,alg)
-    return lsE,lsinfo
+    try
+        lsE,lsinfo = DMRG!(Env,alg)
+        return lsE,lsinfo
+    finally
+        cleanup!(Env); cleanup!(ψ′)
+    end
 end
 
 

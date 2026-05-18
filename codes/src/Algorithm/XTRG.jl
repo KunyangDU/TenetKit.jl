@@ -9,7 +9,11 @@ function XTRG!(obj::DenseMPO{L}, Alg::XTRGalgo, info::XTRGinfo) where L
     merge!(to,multo,tree_point=["mul!"])
     merge!(sweepinfo,mulinfo)
     @timeit to "normalize!" sweepinfo.lnZ = 2log(normalize!(obj)) + 2 * info.lnZ
-    @timeit to "measure E" !isnothing(Alg.H) && (sweepinfo.E = real(_scalar(Environment([obj,Alg.H];disk=Alg.isdisk))))
+    @timeit to "measure E" if !isnothing(Alg.H)
+        Eenv = Environment([obj,Alg.H];isdisk=Alg.isdisk)
+        sweepinfo.E = real(_scalar(Eenv))
+        cleanup!(Eenv)
+    end
 
     @timeit to "GC" GC.gc()
     _merge_io!(to)
@@ -36,7 +40,7 @@ function XTRG1!(obj::DenseMPO{L},H::SparseMPO{L},N::Int64;kwargs...) where L
     truncscheme = get(kwargs,:trunc,notrunc())
     tol = get(kwargs,:tol,1e-12)
     Nsweep = get(kwargs,:Nsweep,20)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(obj))
     cbealgo = CBEalgo(dynamicSVD(1.2,2),DDA(),3,_getdim(truncscheme))
     algo = Algebraalgo(SingleSite(),cbealgo,truncscheme,Nsweep,tol,isdisk)
     Alg = XTRGalgo(SingleSite(),algo,N,H,isdisk)
@@ -48,7 +52,7 @@ function XTRG2!(obj::DenseMPO{L},H::SparseMPO{L},N::Int64;kwargs...) where L
     truncscheme = get(kwargs,:trunc,notrunc())
     tol = get(kwargs,:tol,1e-12)
     Nsweep = get(kwargs,:Nsweep,20)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(obj))
     algo = Algebraalgo(DoubleSite(),NoAlgorithm(),truncscheme,Nsweep,tol,isdisk)
     Alg = XTRGalgo(DoubleSite(),algo,N,H,isdisk)
     lnZ = 2log(normalize!(obj))

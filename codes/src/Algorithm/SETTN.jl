@@ -5,7 +5,7 @@ function SETTN1!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     trunc = get(kwargs,:trunc,notrunc())
     N = get(kwargs,:max_order,10)
     tol = get(kwargs,:tol,1e-12)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ρ))
     # algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),NoStruc(),0,_getdim(trunc),isnothing(_getcutoff(trunc)) ? tol : _getcutoff(trunc)))
     algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),DSA(),3,_getdim(trunc)))
     multol = get(kwargs,:tol,1e-12)
@@ -18,7 +18,7 @@ function SETTN2!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     trunc = get(kwargs,:trunc,notrunc())
     N = get(kwargs,:max_order,10)
     tol = get(kwargs,:tol,1e-12)
-    isdisk = get(kwargs,:isdisk,false)
+    isdisk = get(kwargs,:isdisk,_isdisk(ρ))
     multol = get(kwargs,:tol,1e-12)
     alg = SETTNalgo(DoubleSite(),Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,3,multol,isdisk),trunc,N,tol)
     return SETTN!(β, H, ρ, alg)
@@ -30,53 +30,57 @@ function SETTN!(β::Number,H::SparseMPO{L}, ρ::DenseMPO, Alg::SETTNalgo) where 
     info = SETTNinfo()
     __init_io__()
 
-    @timeit to "I - βH" begin
-        Hn = deepcopy(ρ)
-        localto,localinfo = SETTN!(β,H,Hn,ρ,1,Alg)
-    end
-    merge!(to,localto, tree_point = ["I - βH"])
-    merge!(info,localinfo)
-
-    _merge_io!(localto)
-    show(localto;title = "SETTN - (I - βH)")
-    print("\n")
-    show(localinfo)
-
-    flush(stdout)
-    
-    while info.n < Alg.N
-        @timeit to "Iteration" localto,localinfo = SETTN!(β,H,Hn,ρ,info.n + 1,Alg)
-        info.err = abs((localinfo.lnZ - info.lnZ) / localinfo.lnZ)
-        info.lnZ = localinfo.lnZ
+    Hn = deepcopy(ρ)
+    try
+        @timeit to "I - βH" begin
+            localto,localinfo = SETTN!(β,H,Hn,ρ,1,Alg)
+        end
+        merge!(to,localto, tree_point = ["I - βH"])
         merge!(info,localinfo)
-        merge!(to,localto, tree_point = ["Iteration"])
 
         _merge_io!(localto)
-        show(localto;title = "SETTN - $(info.n) (≤$(Alg.N))")
-        println("\n")
+        show(localto;title = "SETTN - (I - βH)")
+        print("\n")
         show(localinfo)
-        println("dF = $(info.err)")
+
         flush(stdout)
 
-        if info.err < Alg.tol
-            println("SETTN converged at $(info.n)-th order with dF = $(info.err)")
-            break
-        end
-             
-        if info.n == Alg.N
-            println("SETTN not converged at max $(info.n)th order with dF = $(info.err)")
-            break
-        end
+        while info.n < Alg.N
+            @timeit to "Iteration" localto,localinfo = SETTN!(β,H,Hn,ρ,info.n + 1,Alg)
+            info.err = abs((localinfo.lnZ - info.lnZ) / localinfo.lnZ)
+            info.lnZ = localinfo.lnZ
+            merge!(info,localinfo)
+            merge!(to,localto, tree_point = ["Iteration"])
 
-        GC.gc()
+            _merge_io!(localto)
+            show(localto;title = "SETTN - $(info.n) (≤$(Alg.N))")
+            println("\n")
+            show(localinfo)
+            println("dF = $(info.err)")
+            flush(stdout)
+
+            if info.err < Alg.tol
+                println("SETTN converged at $(info.n)-th order with dF = $(info.err)")
+                break
+            end
+
+            if info.n == Alg.N
+                println("SETTN not converged at max $(info.n)th order with dF = $(info.err)")
+                break
+            end
+
+            GC.gc()
+        end
+        flush(stdout)
+
+        _merge_io!(to)
+        show(to;title = "SETTN")
+        print("\n")
+
+        return ρ
+    finally
+        cleanup!(Hn)
     end
-    flush(stdout)
-
-    _merge_io!(to)
-    show(to;title = "SETTN")
-    print("\n")
-
-    return ρ
 end
 
 function SETTN!(β::Number,H::SparseMPO{L},Hn::DenseMPO,ρ::DenseMPO,order::Int64,Alg::SETTNalgo) where L

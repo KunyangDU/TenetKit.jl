@@ -69,7 +69,7 @@ struct CBEalgo{Sch,Struc,Tar} <: AbstractAlgorithm where {Sch,Struc,Tar}
     CBEalgo(alg::CBEalgo,structure::AbstractStructure,target::Int64) = new{typeof(alg.scheme), typeof(structure), target}(alg.scheme, structure, target, alg.D)
 end
 
-struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
+mutable struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     scheme::AbstractScheme
     alg::AbstractAlgorithm
     trunc::TruncationScheme
@@ -113,6 +113,7 @@ mutable struct XTRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     H::Union{SparseMPO,Nothing}
     isdisk::Bool
     function XTRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, N::Int64, H::Union{SparseMPO,Nothing} = nothing,isdisk::Bool=false)
+        alg.isdisk = isdisk
         new{typeof(scheme),typeof(alg)}(scheme,alg,N,H,isdisk)
     end
 end

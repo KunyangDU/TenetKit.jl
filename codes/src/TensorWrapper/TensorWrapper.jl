@@ -110,9 +110,9 @@ Base.size(t::DenseMPOTensor{4}) = map(dim,t.A |> x -> (codomain(x)[2],domain(x)[
 Base.length(::DenseMPO{L}) where L = L
 Base.length(::AdjointMPO{L}) where L = L
 Base.length(::SparseMPO{L}) where L = L
-Base.length(::DenseMPS{L}) where {L} = L
-Base.length(::AdjointMPS{L}) where {L} = L
-Base.length(::RefMPO{L}) where {L} = L
+Base.length(::DenseMPS{L}) where L = L
+Base.length(::AdjointMPS{L}) where L = L
+Base.length(::RefMPO{L}) where L = L
 
 Base.firstindex(obj::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = 1
 Base.lastindex(obj::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = lastindex(obj.ts)
@@ -125,12 +125,15 @@ Base.size(obj::RefMPO) = (lastindex(obj),)
 Base.axes(obj::RefMPO) = Base.OneTo(lastindex(obj))
 Base.size(::SparseMPOTensor{N,M}) where {N,M} = N,M
 
-function normalize!(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where {L}
+function normalize!(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where L
     @assert (site = obj.center[1]) == obj.center[2]
-    return normalize!(obj[site])
+    t = obj[site]         # 磁盘对象: 反序列化; 内存对象: 引用
+    tmp = normalize!(t)   # 就地归一化
+    obj[site] = t         # 磁盘对象: 序列化写回; 内存对象: 无操作
+    return tmp
 end
 
-function TensorKit.norm(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where {L}
+function TensorKit.norm(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where L
     @assert (site = obj.center[1]) == obj.center[2]
     return norm(obj[site])
 end

@@ -23,9 +23,6 @@ function __multithreading_init__()
     println("* BLAS infomation: $(BLAS.get_config())")
 end
 
-__init__()
-
-const _io_timers = TimerOutput[]
 
 function __init_io__()
     empty!(_io_timers)
@@ -43,5 +40,6 @@ function _merge_io!(to::TimerOutput)
     end
 end
 
+__init__()
 __init_io__()
 

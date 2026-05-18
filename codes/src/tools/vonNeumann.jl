@@ -25,7 +25,12 @@ function vonNeumann!(obj::DenseMPS{L}, sites::Vector{Int64}) where L
     return vonNeumann(S)
 end
 
-vonNeumann(obj::DenseMPS, sites::Vector{Int64}) = vonNeumann!(deepcopy(obj), sites)
+function vonNeumann(obj::DenseMPS, sites::Vector{Int64})
+    obj′ = deepcopy(obj)
+    result = vonNeumann!(obj′, sites)
+    cleanup!(obj′)
+    return result
+end
 
 
 function vonNeumann(S::AbstractTensorMap{<:ElementarySpace,1,1})

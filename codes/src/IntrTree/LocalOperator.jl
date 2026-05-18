@@ -104,7 +104,7 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
 
     function IdentityOperator(A::LocalOperator)
         A′ = getIdTensor(A)
-        return new{length(codomain(A′))}(nothing, deepcopy(A.site), NaN ,nothing)
+        return new{length(codomain(A′))}(nothing, A.site, NaN ,nothing)
     end
 
     function IdentityOperator(A::IdentityOperator)
