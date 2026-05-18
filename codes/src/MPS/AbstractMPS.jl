@@ -8,21 +8,21 @@ mutable struct DenseMPS{L, T<:Union{Float64, ComplexF64}} <: AbstractMPS
     isdisk::Bool
 
     function DenseMPS{L,T}(ts::AbstractVector{MPSTensor},
-        ct::Vector{Int64}; isdisk::Bool=false) where {L,T}
+        ct::Vector{Int64}; isdisk::Bool=IS_DISK[]) where {L,T}
         if isdisk && ts isa Vector
             ts = _disk(ts)
         end
         return new{L,T}(ts,ct,isdisk)
     end
 
-    function DenseMPS{L,t}(ts::Vector{T}; isdisk::Bool=false) where T <: Union{MPSTensor,MPSTensor{R}} where {L,t,R}
+    function DenseMPS{L,t}(ts::Vector{T}; isdisk::Bool=IS_DISK[]) where T <: Union{MPSTensor,MPSTensor{R}} where {L,t,R}
         if isdisk
             ts = _disk(ts)
         end
         return new{L,t}(ts,[1,L],isdisk)
     end
 
-    function DenseMPS(ts::Vector{T}; isdisk::Bool=false) where T <: Union{MPSTensor,MPSTensor{R}} where R
+    function DenseMPS(ts::Vector{T}; isdisk::Bool=IS_DISK[]) where T <: Union{MPSTensor,MPSTensor{R}} where R
         L = length(ts)
         t = eltype(ts[1].A)
         if isdisk
@@ -31,7 +31,7 @@ mutable struct DenseMPS{L, T<:Union{Float64, ComplexF64}} <: AbstractMPS
         return new{L,t}(ts,[1,L],isdisk)
     end
 
-    function DenseMPS{L,T}(ts::Vector{AbstractTensorMap}; isdisk::Bool=false) where {L,T}
+    function DenseMPS{L,T}(ts::Vector{AbstractTensorMap}; isdisk::Bool=IS_DISK[]) where {L,T}
         v = [MPSTensor(t) for t in ts]
         if isdisk
             v = _disk(v)
@@ -47,21 +47,21 @@ mutable struct AdjointMPS{L, T<:Union{Float64, ComplexF64}} <: AbstractMPS
     isdisk::Bool
 
     function AdjointMPS{L,T}(ts::AbstractVector{AdjointMPSTensor},
-        ct::Vector{Int64}; isdisk::Bool=false) where {L,T}
+        ct::Vector{Int64}; isdisk::Bool=IS_DISK[]) where {L,T}
         if isdisk && ts isa Vector
             ts = _disk(ts)
         end
         return new{L,T}(ts,ct,isdisk)
     end
 
-    function AdjointMPS{L,T}(ts::Vector{AdjointMPSTensor}; isdisk::Bool=false) where {L,T}
+    function AdjointMPS{L,T}(ts::Vector{AdjointMPSTensor}; isdisk::Bool=IS_DISK[]) where {L,T}
         if isdisk
             ts = _disk(ts)
         end
         return new{L,T}(ts,[1,length(ts)],isdisk)
     end
 
-    function AdjointMPS{L,T}(ts::Vector{AbstractTensorMap}; isdisk::Bool=false) where {L,T}
+    function AdjointMPS{L,T}(ts::Vector{AbstractTensorMap}; isdisk::Bool=IS_DISK[]) where {L,T}
         v = [AdjointMPSTensor(elm) for elm in ts]
         if isdisk
             v = _disk(v)

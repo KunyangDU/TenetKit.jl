@@ -10,6 +10,9 @@ function _disk(A::AbstractArray; kwargs...)
 end
 
 const DISK_BASEDIR = Ref{String}(tempdir())
+const IS_DISK = Ref{Bool}(false)
 diskdir!(path = mktempdir(pwd())) = (DISK_BASEDIR[] = path)
+# diskdir!(path = joinpath(pwd(), "disk_data")) = (DISK_BASEDIR[] = path)
+
 const _io_timers = TimerOutput[]
 

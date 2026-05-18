@@ -1,4 +1,4 @@
-function _funcDenseMPO(func::Function, PhySpaces::AbstractVector, AuxSpaces::AbstractVector; isdisk::Bool=false)
+function _funcDenseMPO(func::Function, PhySpaces::AbstractVector, AuxSpaces::AbstractVector; isdisk::Bool=IS_DISK[])
     length(PhySpaces) == length(AuxSpaces) && push!(AuxSpaces, trivial(PhySpaces[1]))
     @assert length(PhySpaces) + 1 == length(AuxSpaces)
     tmp = [DenseMPOTensor(TensorMap(func,PhySpaces[i] ⊗ AuxSpaces[i], AuxSpaces[i+1] ⊗ PhySpaces[i])) for i in eachindex(PhySpaces)]
@@ -9,7 +9,7 @@ function _funcDenseMPO(func::Function, PhySpace::ElementarySpace, AuxSpaces::Abs
     return _funcDenseMPO(func, repeat([PhySpace,],length(AuxSpaces)), AuxSpaces; kwargs...)
 end
 
-function IdDenseMPO(PhySpace::ElementarySpace, AuxSpaces::AbstractVector; isdisk::Bool=false)
+function IdDenseMPO(PhySpace::ElementarySpace, AuxSpaces::AbstractVector; isdisk::Bool=IS_DISK[])
     tmp = [DenseMPOTensor(isometry(PhySpace ⊗ AuxSpaces[i], AuxSpaces[i+1] ⊗ PhySpace)) for i in eachindex(AuxSpaces)[1:end-1]]
     return DenseMPO(tmp; isdisk=isdisk)
 end

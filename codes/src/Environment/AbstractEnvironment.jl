@@ -206,14 +206,14 @@ mutable struct Environment{N,L} <: AbstractEnvironment
     function Environment(layer::Vector,
         envs::AbstractArray{AbstractEnvironmentTensor},
         center::Union{Nothing,Vector{Int64}},
-        L::Union{Nothing,Int64}; isdisk::Bool=false)
+        L::Union{Nothing,Int64}; isdisk::Bool=IS_DISK[])
         if isdisk && envs isa Vector
             envs = _disk(envs)
         end
         return new{length(layer),length(layer[1])}(layer,envs,center,L,isdisk)
     end
 
-    function Environment(layer::Vector; isdisk::Bool=false)
+    function Environment(layer::Vector; isdisk::Bool=IS_DISK[])
         L = length(layer[1])
         return new{length(layer),length(layer[1])}(layer,nothing,[1,L],L,isdisk)
     end

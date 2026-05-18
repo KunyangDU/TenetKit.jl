@@ -3,8 +3,8 @@ include("../../../src/TenetKit.jl")
 include("../model.jl")
 
 dataname = "examples/Heisenberg/data/trivial"
-DISK_BASEDIR[] = mktempdir(pwd())
-
+IS_DISK[] = true
+diskdir!()
 Lx = 4
 Ly = 4
 Latt = YCSqua(Lx,Ly)

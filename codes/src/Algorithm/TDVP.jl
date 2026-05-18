@@ -236,7 +236,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
 end
 
 function TDVP1!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number;kwargs...)
-    isdisk = get(kwargs,:isdisk,_isdisk(ψ))
+    isdisk = get(kwargs,:isdisk,IS_DISK[])
     ψ′ = ψ'
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ′];isdisk=isdisk)
@@ -253,7 +253,7 @@ function TDVP1!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number;kwargs...)
 end
 
 function TDVP2!(ψ::DenseMPS,H::SparseMPO,t::Number,Nt::Number;kwargs...)
-    isdisk = get(kwargs,:isdisk,_isdisk(ψ))
+    isdisk = get(kwargs,:isdisk,IS_DISK[])
     ψ′ = ψ'
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ′];isdisk=isdisk)
@@ -271,7 +271,7 @@ end
 
 
 function tanTRG1!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
-    isdisk = get(kwargs,:isdisk,_isdisk(ρ))
+    isdisk = get(kwargs,:isdisk,IS_DISK[])
     ρ′ = ρ'
     @time "initialize environment" begin
         Env = Environment([ρ,H,ρ′];isdisk=isdisk)
@@ -285,7 +285,7 @@ function tanTRG1!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
     end
 end
 function tanTRG2!(ρ::DenseMPO,H::SparseMPO,lsβ::Vector;kwargs...)
-    isdisk = get(kwargs,:isdisk,_isdisk(ρ))
+    isdisk = get(kwargs,:isdisk,IS_DISK[])
     ρ′ = ρ'
     @time "initialize environment" begin
         Env = Environment([ρ,H,ρ′];isdisk=isdisk)

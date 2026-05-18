@@ -11,7 +11,7 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L};kwargs...
     trunc = get(kwargs,:trunc,notrunc())
     N  = get(kwargs,:N,3)
     tol = get(kwargs,:tol,1e-8)
-    isdisk = get(kwargs,:isdisk,_isdisk(x))
+    isdisk = get(kwargs,:isdisk,IS_DISK[])
     algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol,isdisk)
     return axpby!(α,x,β,y,algo;kwargs...)
 end

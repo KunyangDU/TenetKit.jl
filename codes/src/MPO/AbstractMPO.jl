@@ -26,21 +26,21 @@ mutable struct DenseMPO{L} <: AbstractMPO
     center::Vector{Int64}
     isdisk::Bool
 
-    function DenseMPO(A::Vector{DenseMPOTensor},center::Vector{Int64}; isdisk::Bool=false)
+    function DenseMPO(A::Vector{DenseMPOTensor},center::Vector{Int64}; isdisk::Bool=IS_DISK[])
         if isdisk
             A = _disk(A)
         end
         return new{length(A)}(A,center,isdisk)
     end
 
-    function DenseMPO(A::Vector{DenseMPOTensor{R}}; isdisk::Bool=false) where R
+    function DenseMPO(A::Vector{DenseMPOTensor{R}}; isdisk::Bool=IS_DISK[]) where R
         if isdisk
             A = _disk(A)
         end
         return new{length(A)}(A,[1,length(A)],isdisk)
     end
 
-    function DenseMPO(t::DenseMPOTensor; isdisk::Bool=false)
+    function DenseMPO(t::DenseMPOTensor; isdisk::Bool=IS_DISK[])
         A = convert(Vector{DenseMPOTensor},[t])
         if isdisk
             A = _disk(A)
@@ -48,7 +48,7 @@ mutable struct DenseMPO{L} <: AbstractMPO
         return new{1}(A,[1,1],isdisk)
     end
 
-    function DenseMPO(t::Vector; isdisk::Bool=false)
+    function DenseMPO(t::Vector; isdisk::Bool=IS_DISK[])
         tmp = map(DenseMPOTensor,t)
         A = convert(Vector{DenseMPOTensor},tmp)
         if isdisk
@@ -64,21 +64,21 @@ mutable struct AdjointMPO{L} <: AbstractMPO
     center::Vector{Int64}
     isdisk::Bool
 
-    function AdjointMPO(A::Vector{AdjointMPOTensor},center::Vector{Int64}; isdisk::Bool=false)
+    function AdjointMPO(A::Vector{AdjointMPOTensor},center::Vector{Int64}; isdisk::Bool=IS_DISK[])
         if isdisk
             A = _disk(A)
         end
         return new{length(A)}(A,center,isdisk)
     end
 
-    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}; isdisk::Bool=false) where R
+    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}; isdisk::Bool=IS_DISK[]) where R
         if isdisk
             A = _disk(A)
         end
         return new{length(A)}(A,[1,length(A)],isdisk)
     end
 
-    function AdjointMPO(t::AdjointMPOTensor; isdisk::Bool=false)
+    function AdjointMPO(t::AdjointMPOTensor; isdisk::Bool=IS_DISK[])
         A = convert(Vector{AdjointMPOTensor},[t])
         if isdisk
             A = _disk(A)
@@ -86,7 +86,7 @@ mutable struct AdjointMPO{L} <: AbstractMPO
         return new{1}(A,[1,1],isdisk)
     end
 
-    function AdjointMPO(t::Vector{AbstractTensorMap}; isdisk::Bool=false)
+    function AdjointMPO(t::Vector{AbstractTensorMap}; isdisk::Bool=IS_DISK[])
         tmp = map(AdjointMPOTensor,t)
         A = convert(Vector{AdjointMPOTensor},tmp)
         if isdisk

@@ -2,7 +2,7 @@
 Generate rand DenseMPS for initial state.
 """
 function randMPS(PhySpaces::Vector,AuxSpaces::Vector;
-    type::Type = Float64,tailSpace::ElementarySpace = trivial(PhySpaces[1]),isdisk::Bool=false)
+    type::Type = Float64,tailSpace::ElementarySpace = trivial(PhySpaces[1]),isdisk::Bool=IS_DISK[])
     @assert (L = length(PhySpaces)) == length(AuxSpaces)
     push!(AuxSpaces, tailSpace)
     tmp = Vector{MPSTensor}(undef,L)

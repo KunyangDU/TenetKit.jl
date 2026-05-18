@@ -3,7 +3,8 @@ using TensorKit
 include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
-DISK_BASEDIR[] = mktempdir(pwd())
+IS_DISK[] = true
+diskdir!()
 
 D = 100
 Lx = 4
