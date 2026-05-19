@@ -98,11 +98,14 @@ end
 # end
 
 pushleft(A::DenseMPO, B::AdjointMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvR.A))
-pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR.A))
 pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvL.A))
+
+pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR.A))
 pushright(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL.A))
-pushleft(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64) = SparseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR))
-pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64) = SparseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL))
+
+pushleft(A::DenseMPO, B::SparseMPO, C::T, EnvR::SparseRightEnvironmentTensor, site::Int64) where T <: Union{AdjointMPO,RefMPO} = SparseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR))
+pushright(A::DenseMPO, B::SparseMPO, C::T, EnvL::SparseLeftEnvironmentTensor, site::Int64) where T <: Union{AdjointMPO,RefMPO} = SparseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL))
+
 pushleft(A::DenseMPS, B::AdjointMPS, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvR.A))
 
 #= Env4 =#
@@ -381,7 +384,6 @@ end
 
 pushleft(A::DenseMPO, B::AdjointMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR.A))
 pushright(A::DenseMPO, B::AdjointMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL.A))
-
 
 pushleft(A::DenseMPO, B::RefMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(A[site], B[site], C[site], EnvR.A))
 pushright(A::DenseMPO, B::RefMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(A[site], B[site], C[site], EnvL.A))

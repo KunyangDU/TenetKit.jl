@@ -34,7 +34,7 @@ lsβ2 = lsβ[2:end]*2
 @save "$(dataname)/lsβ_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ
 @save "$(dataname)/lsβ2_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsβ2
 
-SETTN1!(lsβ[1], H, ρ;trunc = truncdim(DS),isdisk = true)
+SETTN1!(lsβ[1], H, ρ;trunc = truncdim(DS))
 Z = normalize!(ρ) ^ 2 
 
 info = TDVPinfo(log(Z))
@@ -47,14 +47,14 @@ alg = TDVPalgo(
         DSA(),1,D
     ),
     truncdim(D) & truncbelow(1e-8),0,Inf,
-    TDVPDefaultLanczos,true,false,true
+    TDVPDefaultLanczos,true,false
 )
 lsF = Float64[]
 lsE = Float64[]
 lsdata = Dict[]
 
 @time "initialize environment" begin 
-    Env = Environment([ρ,H,ρ'];disk = true)
+    Env = Environment([ρ,H,ρ'])
     initialize!(Env)
 end
 flush(stdout)

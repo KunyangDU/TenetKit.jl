@@ -11,9 +11,10 @@ end
 mutable struct Lanczosinfo <: SolverInfo
     converged::Int
     numiter::Int
-    Lanczosinfo(converged::Int, numiter::Int) = new(converged,numiter)
-    Lanczosinfo(info::KrylovKit.ConvergenceInfo) = new(info.converged, info.numops)
-    Lanczosinfo() = new(1,0)
+    residual::Float64
+    Lanczosinfo(converged::Int, numiter::Int, residual::Float64=0.0) = new(converged, numiter, residual)
+    Lanczosinfo(info::KrylovKit.ConvergenceInfo) = new(info.converged, info.numops, length(info.normres) > 0 ? info.normres[1] : 0.0)
+    Lanczosinfo() = new(1, 0, 0.0)
 end
 
 mutable struct DMRGinfo <: AlgorithmInfo
@@ -217,7 +218,8 @@ TimerOutputs.merge!(::Algebrasiteinfo, ::CBEinfo) = nothing
 
 function TimerOutputs.merge!(A::Lanczosinfo,B::Lanczosinfo)
     A.converged = A.converged & B.converged
-    A.numiter = max(A.numiter,B.numiter)
+    A.numiter = max(A.numiter, B.numiter)
+    A.residual = max(A.residual, B.residual)
     return A
 end
 
@@ -269,14 +271,14 @@ function Base.show(io::IO,info::DMRGsweepinfo)
     # println(io,info.bond,", σS = $(std(y)),  ⟨E⟩ = $(sum(y)/length(y)), K = $(info.solver.numiter), TruncError = $(info.err), E = $(info.E[end]), σE = $(std(x)), ⟨E⟩ = $(sum(x)/length(x))")
     println(io,info.bond,", σS = $(std(y)), ⟨S⟩ = $(sum(y)/length(y)), max |ΔS| = $(maximum(abs.(diff(y))))")
     println("E = $(info.E[end]), σE = $(std(x)), ⟨E⟩ = $(sum(x)/length(x))")
-    println("K = $(info.solver.numiter), TruncError = $(info.err)")
+    println("K = $(info.solver.numiter), TruncError = $(info.err), LanczosError = $(info.solver.residual)")
 end
 
 function Base.show(io::IO,info::TDVPsweepinfo)
     # println(io,info.bond,", K = $(info.solver.numiter), TruncError = $(info.err)")
     y = filter(!isnan,info.S)
     println(io,info.bond,", σS = $(std(y)), ⟨S⟩ = $(sum(y)/length(y)), max |ΔS| = $(maximum(abs.(diff(y))))")
-    println("K = $(info.solver.numiter), TruncError = $(info.err)")
+    println("K = $(info.solver.numiter), TruncError = $(info.err), LanczosError = $(info.solver.residual)")
     println("E = $(info.E)")
 end
 

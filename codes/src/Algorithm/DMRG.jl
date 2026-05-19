@@ -1,7 +1,7 @@
 
 function DMRG1!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     isdisk = get(kwargs,:isdisk,IS_DISK[])
-    ψ′ = ψ'
+    ψ′ = RefMPS(ψ)
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ′];isdisk=isdisk)
         initialize!(Env)
@@ -22,13 +22,13 @@ function DMRG1!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
         lsE,lsinfo = DMRG!(Env,alg)
         return lsE,lsinfo
     finally
-        cleanup!(Env); cleanup!(ψ′)
+        cleanup!(Env)
     end
 end
 
 function DMRG2!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     isdisk = get(kwargs,:isdisk,IS_DISK[])
-    ψ′ = ψ'
+    ψ′ = RefMPS(ψ)
     @time "initialize environment" begin
         Env = Environment([ψ,H,ψ′];isdisk=isdisk)
         initialize!(Env)
@@ -47,7 +47,7 @@ function DMRG2!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
         lsE,lsinfo = DMRG!(Env,alg)
         return lsE,lsinfo
     finally
-        cleanup!(Env); cleanup!(ψ′)
+        cleanup!(Env)
     end
 end
 

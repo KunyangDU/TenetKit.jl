@@ -107,12 +107,13 @@ mutable struct RefMPO{L} <: AbstractMPO
     center::Vector{Int64}
     mapping::Function
     pointer::DenseMPO
-    RefMPO(A::DenseMPO{L},mapping::Function = identity) where L = new{L}(A.ts,A.center,mapping,A)
+    RefMPO(A::DenseMPO{L},mapping::Function = identity) where L = new{L}(A.ts,deepcopy(A.center),mapping,A)
 end
 
 issparse(::RefMPO) = false
 isadjoint(::RefMPO) = false
 isref(::RefMPO) = true
+cleanup!(::RefMPO) = nothing
 
 # Fallback for non-RefMPO types
 isref(::AbstractMPO) = false

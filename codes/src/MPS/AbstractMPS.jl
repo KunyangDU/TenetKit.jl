@@ -82,6 +82,20 @@ function cleanup!(obj::T) where T <: Union{DenseMPS,AdjointMPS}
     return obj
 end
 
+mutable struct RefMPS{L} <: AbstractMPS
+    ts::AbstractVector
+    center::Vector{Int64}
+    mapping::Function
+    pointer::DenseMPS
+    RefMPS(A::DenseMPS{L}, mapping::Function = adjoint) where L = new{L}(A.ts, deepcopy(A.center), mapping, A)
+end
+
+isadjoint(::RefMPS) = true
+isref(::RefMPS) = true
+isref(::AbstractMPS) = false
+
+cleanup!(::RefMPS) = nothing
+
 
 
 
