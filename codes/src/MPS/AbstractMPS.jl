@@ -90,6 +90,8 @@ mutable struct RefMPS{L} <: AbstractMPS
     RefMPS(A::DenseMPS{L}, mapping::Function = adjoint) where L = new{L}(A.ts, deepcopy(A.center), mapping, A)
 end
 
+isadjoint(::DenseMPS) = false
+isadjoint(::AdjointMPS) = true
 isadjoint(::RefMPS) = true
 isref(::RefMPS) = true
 isref(::AbstractMPS) = false
