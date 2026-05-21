@@ -6,24 +6,24 @@
 
 # ========================= 数据结构 =========================
 # 泛型 DAG 节点：双向边 + 哨兵标记 (val === nothing 表示哨兵)
-mutable struct IntrNode{T}
+mutable struct InteractionGraphNode{T}
     val::Union{T, Nothing}
-    in::Vector{IntrNode{T}}
-    out::Vector{IntrNode{T}}
+    in::Vector{InteractionGraphNode}
+    out::Vector{InteractionGraphNode}
 end
 
 # 构造器：普通节点
-IntrNode(val::T) where T = IntrNode{T}(val, IntrNode{T}[], IntrNode{T}[])
+InteractionGraphNode(val::T) where T = InteractionGraphNode{T}(val, Vector{InteractionGraphNode}(), Vector{InteractionGraphNode}())
 # 构造器：哨兵节点
-sentinel(::Type{T}) where T = IntrNode{T}(nothing, IntrNode{T}[], IntrNode{T}[])
+sentinel(::Type{T}) where T = InteractionGraphNode{T}(nothing, Vector{InteractionGraphNode}(), Vector{InteractionGraphNode}())
 
-issentinel(n::IntrNode) = n.val === nothing
-isleaf(n::IntrNode)     = length(n.out) == 0
-isfork(n::IntrNode)     = length(n.out) > 1
-isjoin(n::IntrNode)     = length(n.in) > 1
+issentinel(n::InteractionGraphNode) = n.val === nothing
+isleaf(n::InteractionGraphNode)     = length(n.out) == 0
+isfork(n::InteractionGraphNode)     = length(n.out) > 1
+isjoin(n::InteractionGraphNode)     = length(n.in) > 1
 
-# 添加有向边（防重复）
-function add_edge!(from::IntrNode{T}, to::IntrNode{T}) where T
+# 添加有向边（防重复，不要求两端类型参数一致）
+function add_edge!(from::InteractionGraphNode, to::InteractionGraphNode)
     to in from.out && return
     push!(from.out, to)
     push!(to.in, from)
@@ -35,13 +35,20 @@ _show_val(val) = sprint(show, val)
 # ========================= 核心算法 =========================
 
 # -- 序列 → 线性链 --
-_chain(seq::Vector{T}) where T = _chain!(IntrNode.(seq))
+_chain(seq::Vector{T}) where T = _chain!(InteractionGraphNode.(seq))
+function _chain(seq)
+    n = length(seq)
+    n == 0 && return (nothing, nothing)
+    nodes = InteractionGraphNode[InteractionGraphNode(seq[i]) for i in 1:n]
+    _chain!(nodes)
+    return (nodes[1], nodes[end])
+end
 
-function _chain!(nodes::Vector{IntrNode{T}}) where T
+function _chain!(nodes::Vector{<:InteractionGraphNode})
     for i in 1:length(nodes)-1
         add_edge!(nodes[i], nodes[i+1])
     end
-    return (nodes[1], [nodes[end]])
+    return (nodes[1], nodes[end])
 end
 
 # -- LCP / LCS --
@@ -64,61 +71,73 @@ function _find_lcs(seqs, n, lcp)
 end
 
 # -- 从参考序列抽取前缀/后缀链 --
-function _prefix_chain(seqs::Vector{Vector{T}}, n, lcp) where T
-    lcp == 0 && return IntrNode{T}[]
-    nodes = IntrNode{T}[IntrNode(seqs[1][i]) for i in 1:lcp]
+function _prefix_chain(seqs, n, lcp)
+    lcp == 0 && return InteractionGraphNode[]
+    nodes = InteractionGraphNode[InteractionGraphNode(seqs[1][i]) for i in 1:lcp]
     _chain!(nodes)
     return nodes
 end
 
-function _suffix_chain(seqs::Vector{Vector{T}}, n, lcs) where T
-    lcs == 0 && return IntrNode{T}[]
-    nodes = IntrNode{T}[IntrNode(seqs[1][n-lcs+i]) for i in 1:lcs]
+function _suffix_chain(seqs, n, lcs)
+    lcs == 0 && return InteractionGraphNode[]
+    nodes = InteractionGraphNode[InteractionGraphNode(seqs[1][n-lcs+i]) for i in 1:lcs]
     _chain!(nodes)
     return nodes
 end
 
-# -- 中间段按首元素分组 --
+# -- 中间段按首元素分组（不用 Dict，避免依赖 hash） --
 function _group_by_first(mid_seqs::Vector{Vector{T}}) where T
-    order, dict = T[], Dict{T, Vector{Vector{T}}}()
+    order  = T[]
+    groups = Vector{Vector{T}}[]
     for s in mid_seqs
         if !isempty(s)
             k = s[1]
-            if !haskey(dict, k)
-                push!(order, k); dict[k] = Vector{Vector{T}}()
+            idx = findfirst(x -> isequal(x, k), order)
+            if idx === nothing
+                push!(order, k)
+                push!(groups, [s[2:end]])
+            else
+                push!(groups[idx], s[2:end])
             end
-            push!(dict[k], s[2:end])
         end
     end
-    return order, dict
+    return order, groups
 end
 
 # -- 构建各组子图 --
-function _build_groups(order::Vector{T}, dict::Dict{T, Vector{Vector{T}}}) where T
-    roots, tails = IntrNode{T}[], IntrNode{T}[]
-    for key in order
-        gs = dict[key]
-        head = IntrNode(key)
+function _build_groups(order::Vector{T}, groups::Vector{Vector{Vector{T}}}) where T
+    roots, tails = InteractionGraphNode[], InteractionGraphNode[]
+    for (i, key) in enumerate(order)
+        gs = groups[i]
+        head = InteractionGraphNode(key)
         push!(roots, head)
         if isempty(gs[1])
             push!(tails, head)
         else
-            sub_root, sub_tails = build_intrmap(gs)
-            sub_root !== nothing && add_edge!(head, sub_root)
-            append!(tails, sub_tails)
+            sub_root, sub_tail = build_intrmap(gs)
+            if sub_root !== nothing
+                add_edge!(head, sub_root)
+                push!(tails, sub_tail)
+            end
         end
     end
     return roots, tails
 end
 
 # -- 确定根（单入口 / 哨兵多入口） --
-_root_or_sentinel(prefix::Vector{IntrNode{T}}, group_roots::Vector{IntrNode{T}}) where T =
-    !isempty(prefix)       ? (prefix[1], false) :
-    length(group_roots) == 1 ? (group_roots[1], false) :
-    let r = sentinel(T); for gr in group_roots; add_edge!(r, gr); end; (r, true) end
+function _root_or_sentinel(prefix::Vector{<:InteractionGraphNode}, group_roots::Vector{<:InteractionGraphNode})
+    !isempty(prefix)       && return prefix[1]
+    length(group_roots) == 1 && return group_roots[1]
+    r = sentinel(typeof(group_roots[1].val))
+    for gr in group_roots; add_edge!(r, gr); end
+    return r
+end
 
 # -- 连接：前缀 → 分叉组；叶子 → 后缀 --
-function _stitch!(prefix, suffix, group_roots, group_tails)
+function _stitch!(prefix::Vector{<:InteractionGraphNode},
+                  suffix::Vector{<:InteractionGraphNode},
+                  group_roots::Vector{<:InteractionGraphNode},
+                  group_tails::Vector{<:InteractionGraphNode})
     !isempty(prefix) && !isempty(group_roots) &&
         foreach(gr -> add_edge!(prefix[end], gr), group_roots)
 
@@ -126,22 +145,30 @@ function _stitch!(prefix, suffix, group_roots, group_tails)
 
     if !isempty(suffix)
         foreach(t -> add_edge!(t, suffix[1]), tails)
-        tails = [suffix[end]]
+        return suffix[end]
     end
-    return tails
+
+    length(tails) == 1 && return tails[1]
+    # 多尾巴 → 出口哨兵，供从右向左遍历
+    r = sentinel(typeof(tails[1].val))
+    for t in tails
+        add_edge!(t, r)
+    end
+    return r
 end
 
 """
     build_intrmap(seqs::Vector{Vector{T}}) where T
 
-递归构建合并 DAG，返回 `(root, tails)`
+递归构建合并 DAG，返回 `(left_root, right_root)`
+两个入口均为单节点（可能是哨兵），支持从左或从右进入算法。
 """
-function build_intrmap(seqs::Vector{Vector{T}}) where T
-    isempty(seqs) && return (nothing, IntrNode{T}[])
+function build_intrmap(seqs)
+    isempty(seqs) && return (nothing, nothing)
     length(seqs) == 1 && return _chain(seqs[1])
 
     n = length(seqs[1])
-    n == 0 && return (nothing, IntrNode{T}[])
+    n == 0 && return (nothing, nothing)
 
     lcp = _find_lcp(seqs, n)
     lcs = _find_lcs(seqs, n, lcp)
@@ -149,22 +176,22 @@ function build_intrmap(seqs::Vector{Vector{T}}) where T
     prefix   = _prefix_chain(seqs, n, lcp)
     suffix   = _suffix_chain(seqs, n, lcs)
 
-    mid_seqs           = [s[lcp+1 : n-lcs] for s in seqs]
-    order, dict        = _group_by_first(mid_seqs)
-    group_roots, group_tails = _build_groups(order, dict)
+    mid_seqs                 = [s[lcp+1 : n-lcs] for s in seqs]
+    order, groups            = _group_by_first(mid_seqs)
+    group_roots, group_tails = _build_groups(order, groups)
 
-    isempty(prefix) && isempty(group_roots) && return (nothing, IntrNode{T}[])
+    isempty(prefix) && isempty(group_roots) && return (nothing, nothing)
 
-    root, _ = _root_or_sentinel(prefix, group_roots)
-    tails   = _stitch!(prefix, suffix, group_roots, group_tails)
+    left_root  = _root_or_sentinel(prefix, group_roots)
+    right_root = _stitch!(prefix, suffix, group_roots, group_tails)
 
-    return (root, tails)
+    return (left_root, right_root)
 end
 
 # ========================= DAG 全局最小化 =========================
 # 迭代精炼等价类：两个节点等价 ⇔ 值相同 ∧ 所有出边指向等价节点
 
-function _collect_all!(node::IntrNode{T}, result, seen) where T
+function _collect_all!(node::InteractionGraphNode, result, seen)
     node in seen && return
     push!(seen, node)
     push!(result, node)
@@ -173,7 +200,7 @@ function _collect_all!(node::IntrNode{T}, result, seen) where T
     end
 end
 
-function _eff_children(node::IntrNode)
+function _eff_children(node::InteractionGraphNode)
     result = eltype(node.out)[]
     for c in node.out
         if issentinel(c)
@@ -186,29 +213,34 @@ function _eff_children(node::IntrNode)
 end
 
 """
-    minimize!(root::IntrNode{T}) where T
+    minimize!(root::InteractionGraphNode{T}) where T
 
 全局最小化 DAG，合并等价节点，原地修改
 """
-function minimize!(root::IntrNode{T}) where T
-    all_nodes = IntrNode{T}[]
-    _collect_all!(root, all_nodes, Set{IntrNode{T}}())
+function minimize!(root::InteractionGraphNode)
+    all_nodes = InteractionGraphNode[]
+    _collect_all!(root, all_nodes, Set{InteractionGraphNode}())
 
-    # 初始化等价类：按值分组
-    val2id = Dict{T, Int}()
-    class = Dict{IntrNode{T}, Int}()
-    next_val_id = 1
+    # 初始化等价类：按值分组（数组+findfirst，避免依赖 hash）
+    val_order = Any[]
+    val_ids   = Int[]
+    class = Dict{InteractionGraphNode, Int}()
     for n in all_nodes
         issentinel(n) && continue
-        class[n] = get!(val2id, n.val) do
-            id = next_val_id; next_val_id += 1; id
+        idx = findfirst(x -> isequal(x, n.val), val_order)
+        if idx === nothing
+            push!(val_order, n.val)
+            push!(val_ids, length(val_ids) + 1)
+            class[n] = val_ids[end]
+        else
+            class[n] = val_ids[idx]
         end
     end
 
     # 迭代精炼至不动点
     while true
         sig2id = Dict{String, Int}()
-        new_class = Dict{IntrNode{T}, Int}()
+        new_class = Dict{InteractionGraphNode, Int}()
         next_id = 1
 
         for n in all_nodes
@@ -236,16 +268,16 @@ function minimize!(root::IntrNode{T}) where T
     end
 
     # 每类选代表
-    rep = Dict{Int, IntrNode{T}}()
+    rep = Dict{Int, InteractionGraphNode}()
     for n in all_nodes
         issentinel(n) && continue
         get!(rep, class[n], n)
     end
 
     # 重建边（两阶段：先算后清再连）
-    new_edges = Dict{IntrNode{T}, Vector{IntrNode{T}}}()
+    new_edges = Dict{InteractionGraphNode, Vector{InteractionGraphNode}}()
     for n in all_nodes
-        children = IntrNode{T}[]
+        children = InteractionGraphNode[]
         for c in _eff_children(n)
             r = rep[class[c]]
             r in children || push!(children, r)
@@ -268,8 +300,8 @@ end
 # ========================= 输出显示 =========================
 # AbstractTrees 风格：├── / └── / │，线性链折叠，汇合 ─┘
 
-function _collect_chain(node::IntrNode)
-    vals = [node.val]
+function _collect_chain(node::InteractionGraphNode)
+    vals = Any[node.val]
     cur = node
     while length(cur.out) == 1
         nxt = cur.out[1]
@@ -281,7 +313,7 @@ function _collect_chain(node::IntrNode)
     return vals, cur
 end
 
-function _print_dag(node::IntrNode, prefix::String, is_last::Bool,
+function _print_dag(node::InteractionGraphNode, prefix::String, is_last::Bool,
                     visited::Set)
     # 哨兵透明
     if issentinel(node)
@@ -337,16 +369,16 @@ function _print_dag(node::IntrNode, prefix::String, is_last::Bool,
 end
 
 """
-    print_intrmap(root::IntrNode)
+    print_intrmap(root::InteractionGraphNode)
 
 以树形图打印 IntrMap DAG
 """
-function print_intrmap(root::IntrNode{T}) where T
-    _print_dag(root, "", true, Set{IntrNode{T}}())
+function print_intrmap(root::InteractionGraphNode)
+    _print_dag(root, "", true, Set{InteractionGraphNode}())
 end
 
 # ========================= 辅助函数 =========================
-function count_nodes(node::IntrNode, visited=Set{IntrNode}())
+function count_nodes(node::InteractionGraphNode, visited=Set{InteractionGraphNode}())
     node in visited && return 0
     push!(visited, node)
     cnt = issentinel(node) ? 0 : 1
@@ -356,7 +388,7 @@ function count_nodes(node::IntrNode, visited=Set{IntrNode}())
     return cnt
 end
 
-function count_edges(node::IntrNode, visited=Set{IntrNode}())
+function count_edges(node::InteractionGraphNode, visited=Set{InteractionGraphNode}())
     node in visited && return 0
     push!(visited, node)
     cnt = length(node.out)
@@ -393,3 +425,24 @@ demo("深度嵌套",
     [[1,2,3,4,5,6,7],
      [1,2,3,9,5,6,7],
      [1,2,8,4,5,6,7]])
+
+# ========================= Tunnel 桥接 =========================
+# 依赖 IntType.jl 先加载。将 InteractionTunnel 序列化后建图并赋值。
+# 用法：ig = InteractionGraph(tunnels); build_graph!(ig)
+
+if isdefined(@__MODULE__, :InteractionGraph)
+
+"""
+    build_graph!(ig::InteractionGraph{L}) where L
+
+直接从 `ig.tunnel` 建图。Tunnel 实现了 `length` / `getindex`，
+建图算法通过 duck typing 直接消费 Tunnel，无需预拷贝为 Vector。
+"""
+function build_graph!(ig::InteractionGraph{L}) where L
+    left_root, right_root = build_intrmap(ig.tunnel)
+    minimize!(left_root)
+    ig.graph = SimpleGraph((left_root, right_root))
+    return ig
+end
+
+end # @isdefined InteractionGraph
