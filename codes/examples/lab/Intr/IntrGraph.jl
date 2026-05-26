@@ -1,7 +1,4 @@
 using TensorKit
-include("../../src/TensorWrapper/AbstractType.jl")
-include("../../src/IntrTree/LocalOperator.jl")
-
 abstract type AbstractGraph end
 
 mutable struct SimpleGraph{N,T} <: AbstractGraph
