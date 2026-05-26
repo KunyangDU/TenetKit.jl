@@ -1,24 +1,7 @@
 
-
-mutable struct SparseMPO{L} <: AbstractMPO
+mutable struct SparseMPO{L}
     ts::Vector{SparseMPOTensor}
-    D::Vector{NTuple{2,Int64}}
-
-    function SparseMPO(ts::Vector{SparseMPOTensor},
-        D::Vector{NTuple{2,Int64}})
-        return new{length(ts)}(ts,D)
-    end
-
-    function SparseMPO(ts::Vector{T}) where T <: Union{SparseMPOTensor,SparseMPOTensor{N,M}} where {N,M}
-        D = map(size,ts)
-        return new{length(ts)}(ts,convert(Vector{NTuple{2,Int64}},D))
-    end
-
-    function SparseMPO(t::SparseMPOTensor{N,M}) where {N,M}
-        D = convert(Vector{NTuple{2,Int64}},[(N,M)])
-        ts = convert(Vector{SparseMPOTensor},[t])
-        return new{length(ts)}(ts,D)
-    end
+    D::NTuple{L,NTuple{3,Int64}}
 end
 
 mutable struct DenseMPO{L} <: AbstractMPO

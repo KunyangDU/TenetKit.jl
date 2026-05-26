@@ -21,3 +21,4 @@ abstract type AbstractObservable end
 abstract type AbstractObservableForest end
 abstract type AbstractLocalOperator{R₁,R₂} end
 
+abstract type AbstractGraph end

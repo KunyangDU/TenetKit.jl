@@ -58,7 +58,7 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     if returnnode
         return ig
     else
-        return build_sparse_mpo(ig)
+        return AutomataSparseMPO(ig)
     end
 end
 
@@ -78,7 +78,7 @@ function U1Hamiltonian(Latt::AbstractLattice; Jz::Number=1, Jxy::Number=1/2, h::
             addIntr!(ig, LocalSpace.Sz, i, "Sz", false, -H, nothing)
         end
 
-        build_sparse_mpo(ig)
+        AutomataSparseMPO(ig)
     end
     return H
 end
@@ -92,5 +92,5 @@ function SU2Hamiltonian(Latt::AbstractLattice; J::Number=1)
         addIntr!(ig, LocalSpace.SS, pair, ("S","S"), (false,false), J, nothing)
     end
 
-    return build_sparse_mpo(ig)
+    return AutomataSparseMPO(ig)
 end

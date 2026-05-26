@@ -216,6 +216,11 @@ Base.getindex(obj::RefMPS, ::Colon) = obj.mapping.(obj.ts[:])
 Base.setindex!(obj::T, vals, ::Colon) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (for (i, v) in enumerate(vals); obj.ts[i] = v; end) : (obj.ts[:] = vals)
 Base.setindex!(::RefMPS, vals, ::Colon) = nothing
 
+function Base.getindex(obj::SparseMPO{L}, i::Int64) where L
+    1 <= i <= L || throw(BoundsError(obj, i))
+    return obj.ts[i]
+end
+
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B
 # end

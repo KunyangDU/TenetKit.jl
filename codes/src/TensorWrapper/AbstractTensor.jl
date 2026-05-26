@@ -207,17 +207,13 @@ Base.adjoint(ts::AbstractVector{CompositeMPOTensor}) = return convert(Vector{Adj
 Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::AbstractVector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 
-mutable struct SparseMPOTensor{N,M} <: AbstractMPOTensor
-    m::Matrix{Union{Nothing, AbstractLocalOperator}}
-
-    function SparseMPOTensor(m::Matrix{Union{Nothing,AbstractLocalOperator}})
-        return new{size(m)...}(m::Matrix{Union{Nothing,AbstractLocalOperator}})
-    end
-
-    function SparseMPOTensor(::Nothing,N::Int64,M::Int64)
-        return new{N,M}(Matrix{Union{Nothing,AbstractLocalOperator}}(nothing,N,M))
-    end
+mutable struct SparseMPOTensor{DL,D,DR}
+    A::Vector{AbstractLocalOperator}
+    left::LayerMap{1,DL,D}    # 左 bond 节点 ↔ 本层算符
+    right::LayerMap{1,D,DR}   # 本层算符 ↔ 右 bond 节点
 end
+# -- SparseMPOTensor 构造函数 --
+SparseMPOTensor(A::Vector, left::LayerMap{1,DL,D}, right::LayerMap{1,D,DR}) where {DL,D,DR} = SparseMPOTensor{DL,D,DR}(A, left, right)
 
 
 #= ====================== =#

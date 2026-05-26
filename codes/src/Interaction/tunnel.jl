@@ -1,14 +1,3 @@
-using TensorKit
-abstract type AbstractGraph end
-
-mutable struct SimpleGraph{N,T} <: AbstractGraph
-    node::NTuple{N,T}
-    function SimpleGraph(node::Tuple)
-        N = length(node)
-        T = mapreduce(typeof, typejoin, node)
-        return new{N,T}(node)
-    end
-end
 
 mutable struct InteractionTunnel{L,N}
     A::NTuple{N,LocalOperator}
@@ -29,21 +18,6 @@ mutable struct InteractionTunnel{L,N}
     end
 end
 
-mutable struct InteractionGraph{L,G<:AbstractGraph}
-    graph::Union{Nothing, G}
-    tunnel::Vector{<:InteractionTunnel{L}}
-    values::Union{Nothing, Dict}
-    L::Int64
-
-    function InteractionGraph(tunnel::Vector{<:InteractionTunnel{L}}) where L
-        return new{L, SimpleGraph}(nothing, tunnel, nothing, L)
-    end
-
-    function InteractionGraph(L::Int64)
-        return new{L, SimpleGraph}(nothing, Vector{InteractionTunnel{L}}(), nothing, L)
-    end
-end
-
 function Base.getindex(obj::InteractionTunnel{L,N}, i::Int64) where {L,N}
     sites = map(x -> x.site, obj.A)
     idx = findfirst(x -> x == i, sites)
@@ -57,13 +31,3 @@ Base.length(::InteractionTunnel{L}) where L = L
 function Base.getindex(obj::InteractionTunnel, r::UnitRange{Int64})
     return [obj[i] for i in r]
 end
-
-# -- 图构建：从 tunnels 建立 DAG --
-function build_graph!(ig::InteractionGraph{L}) where L
-    isempty(ig.tunnel) && return ig
-    left_root, right_root = build_intrmap(ig.tunnel)
-    minimize!(left_root)
-    ig.graph = SimpleGraph((left_root, right_root))
-    return ig
-end
-

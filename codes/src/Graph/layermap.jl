@@ -1,4 +1,4 @@
-# BondMap{N,D₁,D₂}: N 阶层间映射，编码 A → B 经过 N 步的路径关系
+# LayerMap{N,D₁,D₂}: N 阶层间映射，编码 A → B 经过 N 步的路径关系
 #   D₁ = 入射维数 (|A|), D₂ = 出射维数 (|B|)
 #   N=1: 相邻层直连映射，路径元组长度 1
 #   N≥2: compose 产生的多阶层间映射，路径保留全部中间节点
@@ -8,18 +8,18 @@
 #   rev[c]: 到达目标节点 c 的全部路径，每条路径 = N 元组 (m₁, ..., m_{N-1}, a)
 #           其中 a 为源节点，m₁..m_{N-1} 为中间层节点 (从近 c 端到近 a 端)
 
-struct BondMap{N,D₁,D₂}
+struct LayerMap{N,D₁,D₂}
     fwd::Vector{Vector{NTuple{N,Int64}}}
     rev::Vector{Vector{NTuple{N,Int64}}}
 end
 
-nsrc(::BondMap{N,D₁,D₂}) where {N,D₁,D₂} = D₁
-ndst(::BondMap{N,D₁,D₂}) where {N,D₁,D₂} = D₂
-Base.size(bm::BondMap{N,D₁,D₂}) where {N,D₁,D₂} = (D₁, D₂)
-Base.length(bm::BondMap) = sum(length, bm.fwd)
+nsrc(::LayerMap{N,D₁,D₂}) where {N,D₁,D₂} = D₁
+ndst(::LayerMap{N,D₁,D₂}) where {N,D₁,D₂} = D₂
+Base.size(::LayerMap{N,D₁,D₂}) where {N,D₁,D₂} = (D₁, D₂)
+Base.length(bm::LayerMap) = sum(length, bm.fwd)
 
 # getindex(bm, i): 第 i 条路径，返回 (src, n₁, n₂, ..., n_N)
-function Base.getindex(bm::BondMap{N,D₁,D₂}, i::Int) where {N,D₁,D₂}
+function Base.getindex(bm::LayerMap{N,D₁,D₂}, i::Int) where {N,D₁,D₂}
     cum = 0
     for a in 1:D₁
         npaths = length(bm.fwd[a])
@@ -33,7 +33,7 @@ function Base.getindex(bm::BondMap{N,D₁,D₂}, i::Int) where {N,D₁,D₂}
 end
 
 # 迭代：每条路径 (src, n₁, n₂, ..., n_N)
-function Base.iterate(bm::BondMap{N,D₁,D₂}, state=(1, 1)) where {N,D₁,D₂}
+function Base.iterate(bm::LayerMap{N,D₁,D₂}, state=(1, 1)) where {N,D₁,D₂}
     a, j = state
     while a <= D₁ && j > length(bm.fwd[a])
         a += 1
@@ -44,13 +44,13 @@ function Base.iterate(bm::BondMap{N,D₁,D₂}, state=(1, 1)) where {N,D₁,D₂
     return ((a, p...), (a, j + 1))
 end
 
-function Base.show(io::IO, bm::BondMap{N,D₁,D₂}) where {N,D₁,D₂}
+function Base.show(io::IO, bm::LayerMap{N,D₁,D₂}) where {N,D₁,D₂}
     edges = sum(length, bm.fwd)
-    print(io, "BondMap{$N}($D₁ ↔ $D₂, $edges paths)")
+    print(io, "LayerMap{$N}($D₁ ↔ $D₂, $edges paths)")
 end
 
-# 从边函数 edges(a) -> [子节点索引] 直接构建 1 阶 BondMap，不经过 Dict
-function BondMap(edges::Function, nA::Int, nB::Int)
+# 从边函数 edges(a) -> [子节点索引] 直接构建 1 阶 LayerMap，不经过 Dict
+function LayerMap(edges::Function, nA::Int, nB::Int)
     fwd = Vector{Vector{NTuple{1,Int64}}}(undef, nA)
     rev = Vector{Vector{NTuple{1,Int64}}}(undef, nB)
     for b in 1:nB
@@ -63,11 +63,11 @@ function BondMap(edges::Function, nA::Int, nB::Int)
             push!(rev[c], (a,))
         end
     end
-    return BondMap{1,nA,nB}(fwd, rev)
+    return LayerMap{1,nA,nB}(fwd, rev)
 end
 
-# 从正向邻接字典构建 1 阶 BondMap (兼容旧接口)
-function BondMap(fwd_dict::Dict{Int64,Vector{Int64}}, nA::Int, nB::Int)
+# 从正向邻接字典构建 1 阶 LayerMap (兼容旧接口)
+function LayerMap(fwd_dict::Dict{Int64,Vector{Int64}}, nA::Int, nB::Int)
     fwd = Vector{Vector{NTuple{1,Int64}}}(undef, nA)
     for a in 1:nA
         cs = get(fwd_dict, Int64(a), Int64[])
@@ -82,11 +82,11 @@ function BondMap(fwd_dict::Dict{Int64,Vector{Int64}}, nA::Int, nB::Int)
             push!(rev[c], (a,))
         end
     end
-    return BondMap{1,nA,nB}(fwd, rev)
+    return LayerMap{1,nA,nB}(fwd, rev)
 end
 
 # 关系复合: R₁: A→B (N₁阶), R₂: B→C (N₂阶) → R₁∘R₂: A→C (N₁+N₂阶)
-function compose(r1::BondMap{N₁,D₁,DM}, r2::BondMap{N₂,DM,D₂}) where {N₁,N₂,D₁,DM,D₂}
+function compose(r1::LayerMap{N₁,D₁,DM}, r2::LayerMap{N₂,DM,D₂}) where {N₁,N₂,D₁,DM,D₂}
     N = N₁ + N₂
 
     fwd_new = Vector{Vector{NTuple{N,Int64}}}(undef, D₁)
@@ -115,5 +115,23 @@ function compose(r1::BondMap{N₁,D₁,DM}, r2::BondMap{N₂,DM,D₂}) where {N�
         rev_new[c] = paths
     end
 
-    return BondMap{N,D₁,D₂}(fwd_new, rev_new)
+    return LayerMap{N,D₁,D₂}(fwd_new, rev_new)
+end
+
+
+function LayerMap(src::Vector, dst::Vector)
+    # DirectedNode
+    nA = length(src)
+    nB = length(dst)
+    node2idx = Dict{Any,Int64}(n => Int64(i) for (i, n) in enumerate(dst))
+    return LayerMap(nA, nB) do a
+        idxs = Int64[]
+        for c in src[a].out
+            for r in _resolve_forward(c)
+                ci = get(node2idx, r, nothing)
+                ci !== nothing && push!(idxs, ci)
+            end
+        end
+        return idxs
+    end
 end
