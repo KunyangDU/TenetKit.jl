@@ -75,8 +75,8 @@ function Base.isequal(A::LocalOperator, B::LocalOperator)
     # else check strength
     # repeat interaction added without merging
     !(isnan(A.strength) && isnan(B.strength)) && !(A.strength ≈ B.strength) && return false
-    # return A.A ≈ B.A
-    return isequal(A.A,B.A)
+    return A.A ≈ B.A
+    # return isequal(A.A,B.A)
 end
 
 function getIdTensor(A::AbstractLocalOperator)

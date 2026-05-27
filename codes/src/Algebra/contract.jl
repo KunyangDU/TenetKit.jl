@@ -56,10 +56,10 @@ function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::De
     @assert DR₁ == D₂
     @assert DL₂ == D₁
     tmp = nothing
-    for (l_inds, (j,k), r_inds) in _validind(C, D)
-        tmp1 = contract(sum(EnvL[l_inds]), A, C[j])
-        tmp2 = contract(B, D[k], sum(EnvR[r_inds]))
-        tmp = axpy!(1, contract(tmp1, tmp2), tmp)
+    for (l_inds, (j,k), r_inds, wl, w_mid, wr) in _validind(C, D)
+        tmp1 = contract(_wsum(EnvL, l_inds, wl), A, C[j])
+        tmp2 = contract(B, D[k], _wsum(EnvR, r_inds, wr))
+        tmp = axpy!(w_mid, contract(tmp1, tmp2), tmp)
     end
     return tmp
 end
@@ -68,10 +68,10 @@ function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::MPSTens
     @assert DR₁ == D₂
     @assert DL₂ == D₁
     tmp = nothing
-    for (l_inds, (j,k), r_inds) in _validind(C, D)
-        tmp1 = contract(sum(EnvL[l_inds]), A, C[j])
-        tmp2 = contract(B, D[k], sum(EnvR[r_inds]))
-        tmp = axpy!(1, contract(tmp1, tmp2), tmp)
+    for (l_inds, (j,k), r_inds, wl, w_mid, wr) in _validind(C, D)
+        tmp1 = contract(_wsum(EnvL, l_inds, wl), A, C[j])
+        tmp2 = contract(B, D[k], _wsum(EnvR, r_inds, wr))
+        tmp = axpy!(w_mid, contract(tmp1, tmp2), tmp)
     end
     return tmp
 end

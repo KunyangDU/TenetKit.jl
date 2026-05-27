@@ -2,11 +2,11 @@ function orthogonalize!(env::Environment{3},B::Union{DenseMPOTensor{4},MPSTensor
     EnvRorth = Vector(undef, length(env.layer[2][osite].left.fwd))
     EnvRorth .= nothing
 
-    for (l_inds, j, r_inds) in _validind(env.layer[2][osite])
-        tmp = contract(B, env.layer[2][osite][j], sum(EnvR[r_inds]))
+    for (l_inds, j, r_inds, wl, wr) in _validind(env.layer[2][osite])
+        tmp = contract(B, env.layer[2][osite][j], _wsum(EnvR, r_inds, wr))
         C = tmp - contract(tmp, B)
-        for i in l_inds
-            EnvRorth[i] = axpy!(1, C, EnvRorth[i])
+        for (i, wi) in zip(l_inds, wl)
+            EnvRorth[i] = axpy!(wi, C, EnvRorth[i])
         end
     end
 
@@ -17,11 +17,11 @@ function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor
     EnvLorth = Vector(undef, length(env.layer[2][osite].right.rev))
     EnvLorth .= nothing
 
-    for (l_inds, j, r_inds) in _validind(env.layer[2][osite])
-        tmp = contract(sum(EnvL[l_inds]), A, env.layer[2][osite][j])
+    for (l_inds, j, r_inds, wl, wr) in _validind(env.layer[2][osite])
+        tmp = contract(_wsum(EnvL, l_inds, wl), A, env.layer[2][osite][j])
         C = tmp - contract(tmp, A)
-        for i in r_inds
-            EnvLorth[i] = axpy!(1, C, EnvLorth[i])
+        for (i, wi) in zip(r_inds, wr)
+            EnvLorth[i] = axpy!(wi, C, EnvLorth[i])
         end
     end
 
@@ -78,12 +78,12 @@ function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnviron
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(validind) && break
-                l_inds, j, r_inds = validind[ct]
-                C = contract(B, H[j], sum(EnvR[r_inds])) |> x -> x - contract(x, B′)
+                l_inds, j, r_inds, wl, wr = validind[ct]
+                C = contract(B, H[j], _wsum(EnvR, r_inds, wr)) |> x -> x - contract(x, B′)
                 lock(Lock)
                 try
-                    for i in l_inds
-                        EnvRorth[i] = axpy!(1, C, EnvRorth[i])
+                    for (i, wi) in zip(l_inds, wl)
+                        EnvRorth[i] = axpy!(wi, C, EnvRorth[i])
                     end
                 catch
                     rethrow()
@@ -93,10 +93,10 @@ function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnviron
             end
         end
     else
-        for (l_inds, j, r_inds) in validind
-            C = contract(B, H[j], sum(EnvR[r_inds])) |> x -> x - contract(x, B′)
-            for i in l_inds
-                EnvRorth[i] = axpy!(1, C, EnvRorth[i])
+        for (l_inds, j, r_inds, wl, wr) in validind
+            C = contract(B, H[j], _wsum(EnvR, r_inds, wr)) |> x -> x - contract(x, B′)
+            for (i, wi) in zip(l_inds, wl)
+                EnvRorth[i] = axpy!(wi, C, EnvRorth[i])
             end
         end
     end
@@ -116,12 +116,12 @@ function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironm
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(validind) && break
-                l_inds, j, r_inds = validind[ct]
-                C = contract(sum(EnvL[l_inds]), A, H[j]) |> x -> x - contract(x, A′)
+                l_inds, j, r_inds, wl, wr = validind[ct]
+                C = contract(_wsum(EnvL, l_inds, wl), A, H[j]) |> x -> x - contract(x, A′)
                 lock(Lock)
                 try
-                    for i in r_inds
-                        EnvLorth[i] = axpy!(1, C, EnvLorth[i])
+                    for (i, wi) in zip(r_inds, wr)
+                        EnvLorth[i] = axpy!(wi, C, EnvLorth[i])
                     end
                 catch
                     rethrow()
@@ -131,10 +131,10 @@ function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironm
             end
         end
     else
-        for (l_inds, j, r_inds) in validind
-            C = contract(sum(EnvL[l_inds]), A, H[j]) |> x -> x - contract(x, A′)
-            for i in r_inds
-                EnvLorth[i] = axpy!(1, C, EnvLorth[i])
+        for (l_inds, j, r_inds, wl, wr) in validind
+            C = contract(_wsum(EnvL, l_inds, wl), A, H[j]) |> x -> x - contract(x, A′)
+            for (i, wi) in zip(r_inds, wr)
+                EnvLorth[i] = axpy!(wi, C, EnvLorth[i])
             end
         end
     end

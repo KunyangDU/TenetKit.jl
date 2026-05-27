@@ -207,12 +207,12 @@ Base.adjoint(ts::AbstractVector{CompositeMPOTensor}) = return convert(Vector{Adj
 Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::AbstractVector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 
-mutable struct SparseMPOTensor{DL,D,DR} <: AbstractMPOTensor
+mutable struct SparseMPOTensor{DL,D,DR,T} <: AbstractMPOTensor
     A::Vector{AbstractLocalOperator}
-    left::LayerMap{1,DL,D}    # 左 bond 节点 ↔ 本层算符
-    right::LayerMap{1,D,DR}   # 本层算符 ↔ 右 bond 节点
-    SparseMPOTensor(A::Vector, left::LayerMap{1,DL,D}, right::LayerMap{1,D,DR}) where {DL,D,DR} = new{DL,D,DR}(A, left, right)
+    left::LayerMap{1,DL,D,T}    # 左 bond 节点 ↔ 本层算符
+    right::LayerMap{1,D,DR,T}   # 本层算符 ↔ 右 bond 节点
+    SparseMPOTensor(A::Vector, left::LayerMap{1,DL,D,T}, right::LayerMap{1,D,DR,T}) where {DL,D,DR,T} = new{DL,D,DR,T}(A, left, right)
 end
 
-Base.length(::SparseMPOTensor{DL,D,DR}) where {DL,D,DR} = D
+Base.length(::SparseMPOTensor{DL,D,DR,T}) where {DL,D,DR,T} = D
 Base.eachindex(h::SparseMPOTensor) = Base.OneTo(length(h))

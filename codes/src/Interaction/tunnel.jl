@@ -3,6 +3,7 @@ mutable struct InteractionTunnel{L,N}
     A::NTuple{N,LocalOperator}
     fermionic::NTuple{N,Bool}
     Z::Union{Nothing,AbstractTensorMap}
+    strength::Float64
     function InteractionTunnel(
         As::NTuple{N,AbstractTensorMap},
         sites::NTuple{N,Int64},
@@ -12,9 +13,8 @@ mutable struct InteractionTunnel{L,N}
         Z::Union{Nothing,AbstractTensorMap},
         L::Int64
     ) where N
-        # ops = ntuple(i -> LocalOperator(As[i], names[i], sites[i], i == N ? strength : 1.0), N)
         ops = ntuple(i -> LocalOperator(As[i], names[i], sites[i], 1.0), N)
-        new{L,N}(ops, fermionic, Z)
+        new{L,N}(ops, fermionic, Z, Float64(strength))
     end
 end
 

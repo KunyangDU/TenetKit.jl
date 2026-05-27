@@ -26,4 +26,4 @@ end
 Base.IteratorSize(::Type{<:LayerIterator}) = Base.SizeUnknown()
 
 # -- 收集当前层节点的 val --
-_layervals(cur::Vector{T}) where T = T[n.val for n in cur]
+_layervals(cur::Vector{<:DirectedNode}) = [n.val for n in cur]

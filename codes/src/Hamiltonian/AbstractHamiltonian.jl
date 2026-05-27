@@ -14,7 +14,6 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
         DL2,D2,DR2 = H.D[2]
         @assert EnvL.D[1] == DL1
         @assert EnvR.D[1] == DR2
-
         return new{2}(EnvL,EnvR,H,Tuple(_validind(H[1], H[2])),E₀)
     end
 

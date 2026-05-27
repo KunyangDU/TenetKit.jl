@@ -15,10 +15,28 @@ function DirectedAcyclicGraph(tunnels::Vector)
         for pos in 1:L
             val = tun[pos]
             node = DirectedNode(val)
-            add_edge!(prev, node)
+            w = pos == 1 ? tun.strength : 1.0
+            add_edge!(prev, node; weight = w)
             prev = node
         end
         add_edge!(prev, exit_s)
     end
     return DirectedAcyclicGraph((entry,), (exit_s,))
+end
+
+# -- 从 DAG source 出发收集全部节点 --
+function collect_nodes(dag::DirectedAcyclicGraph)
+    all_nodes = Vector{DirectedNode}()
+    seen = Set{DirectedNode}()
+    queue = collect(Any, dag.source)
+    while !isempty(queue)
+        n = popfirst!(queue)
+        n in seen && continue
+        push!(all_nodes, n)
+        push!(seen, n)
+        for e in n.out_edges
+            e.to in seen || push!(queue, e.to)
+        end
+    end
+    return all_nodes
 end

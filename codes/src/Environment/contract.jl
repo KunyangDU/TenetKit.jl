@@ -70,24 +70,26 @@ end
 MPO + sparse MPO + ENVR
 push left
 """
-function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{DL, D, DR}, C::AdjointMPOTensor{4}, EnvR::SparseRightEnvironmentTensor) where {DL, D, DR}
+function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{DL, D, DR, T}, C::AdjointMPOTensor{4}, EnvR::SparseRightEnvironmentTensor) where {DL, D, DR, T}
     @assert EnvR.D[1] == DR
     tmpEnvR = Vector{Any}(nothing, D)
     r_map = _validind1(B, R2L())
-    for (j, r_inds) in enumerate(r_map)
-        isempty(r_inds) && continue
-        tmpEnvR[j] = axpy!(1, contract(A, B[j], C, sum(EnvR[r_inds])), tmpEnvR[j])
+    for (j, r_pairs) in enumerate(r_map)
+        isempty(r_pairs) && continue
+        weighted_env = sum(w * EnvR[b] for (b, w) in r_pairs)
+        tmpEnvR[j] = axpy!(1, contract(A, B[j], C, weighted_env), tmpEnvR[j])
     end
     return convert(Vector{RightEnvironmentTensor}, tmpEnvR)
 end
 
-function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{DL, D, DR}, C::AdjointMPOTensor{4}, EnvL::SparseLeftEnvironmentTensor) where {DL, D, DR}
+function contract(A::DenseMPOTensor{4}, B::SparseMPOTensor{DL, D, DR, T}, C::AdjointMPOTensor{4}, EnvL::SparseLeftEnvironmentTensor) where {DL, D, DR, T}
     @assert EnvL.D[1] == DL
     tmpEnvL = Vector{Any}(nothing, D)
     l_map = _validind1(B, L2R())
-    for (j, l_inds) in enumerate(l_map)
-        isempty(l_inds) && continue
-        tmpEnvL[j] = axpy!(1, contract(sum(EnvL[l_inds]), A, B[j], C), tmpEnvL[j])
+    for (j, l_pairs) in enumerate(l_map)
+        isempty(l_pairs) && continue
+        weighted_env = sum(w * EnvL[b] for (b, w) in l_pairs)
+        tmpEnvL[j] = axpy!(1, contract(weighted_env, A, B[j], C), tmpEnvL[j])
     end
     return convert(Vector{LeftEnvironmentTensor}, tmpEnvL)
 end
@@ -168,25 +170,30 @@ function contract(EnvL::SparseLeftEnvironmentTensor{2}, Hup::SparseMPOTensor, t:
                 ct = Threads.atomic_add!(counter, 1)
                 ct > length(pairs) && break
                 a, b = pairs[ct]
-                l_up, op_up, r_up = vind_up[a]
-                l_down, op_down, r_down = vind_down[b]
-                for i in l_up, j in l_down, k in r_up, l in r_down
-                    C = contract(EnvL.A[i,j], Hup[op_up], t, Hdown[op_down], t′, EnvR.A[k,l])
-                    lock(Lock)
-                    try
-                        tmp += C
-                    catch
-                        rethrow()
-                    finally
-                        unlock(Lock)
+                l_up, op_up, r_up, wl_up, wr_up = vind_up[a]
+                l_down, op_down, r_down, wl_down, wr_down = vind_down[b]
+                lock(Lock)
+                try
+                    for (pi, i) in enumerate(l_up), (pj, j) in enumerate(l_down)
+                        for (pk, k) in enumerate(r_up), (pl, l) in enumerate(r_down)
+                            w = wl_up[pi] * wl_down[pj] * wr_up[pk] * wr_down[pl]
+                            tmp += w * contract(EnvL.A[i,j], Hup[op_up], t, Hdown[op_down], t′, EnvR.A[k,l])
+                        end
                     end
+                catch
+                    rethrow()
+                finally
+                    unlock(Lock)
                 end
             end
         end
     else
-        for (l_up, op_up, r_up) in vind_up, (l_down, op_down, r_down) in vind_down
-            for i in l_up, j in l_down, k in r_up, l in r_down
-                tmp += contract(EnvL.A[i,j], Hup[op_up], t, Hdown[op_down], t′, EnvR.A[k,l])
+        for (l_up, op_up, r_up, wl_up, wr_up) in vind_up, (l_down, op_down, r_down, wl_down, wr_down) in vind_down
+            for (pi, i) in enumerate(l_up), (pj, j) in enumerate(l_down)
+                for (pk, k) in enumerate(r_up), (pl, l) in enumerate(r_down)
+                    w = wl_up[pi] * wl_down[pj] * wr_up[pk] * wr_down[pl]
+                    tmp += w * contract(EnvL.A[i,j], Hup[op_up], t, Hdown[op_down], t′, EnvR.A[k,l])
+                end
             end
         end
     end

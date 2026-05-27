@@ -130,7 +130,7 @@ Base.firstindex(obj::RefMPO) = 1
 Base.lastindex(obj::RefMPO) = lastindex(obj.ts)
 Base.size(obj::RefMPO) = (lastindex(obj),)
 Base.axes(obj::RefMPO) = Base.OneTo(lastindex(obj))
-Base.size(::SparseMPOTensor{DL,D,DR}) where {DL,D,DR} = DL,DR
+Base.size(::SparseMPOTensor{DL,D,DR,T}) where {DL,D,DR,T} = DL,DR
 
 function normalize!(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where L
     @assert (site = obj.center[1]) == obj.center[2]
@@ -272,6 +272,9 @@ function Base.:+(A::RightEnvironmentTensor,
     B::RightEnvironmentTensor)
     return RightEnvironmentTensor(A.A + B.A)
 end
+
+Base.:*(α::Number, A::LeftEnvironmentTensor) = LeftEnvironmentTensor(α * A.A)
+Base.:*(α::Number, A::RightEnvironmentTensor) = RightEnvironmentTensor(α * A.A)
 
 axpy!(α::Number, A::LeftEnvironmentTensor, B::LeftEnvironmentTensor) = (B.A = α * A.A + B.A; B)
 axpy!(α::Number, A::RightEnvironmentTensor, B::RightEnvironmentTensor) = (B.A = α * A.A + B.A; B)
