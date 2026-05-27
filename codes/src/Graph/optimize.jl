@@ -76,7 +76,7 @@ end
 
 # ========================= 层提取 =========================
 # 从 DAG 的 source 出发，逐层收集物理节点
-function _extract_layers(dag::LayerDirectedAcyclicGraph)
+function _extract_layers(dag::DirectedAcyclicGraph)
     layers = Vector{DirectedNode}[]
     cur = [dag.source[1]]
     while true
@@ -91,11 +91,11 @@ end
 
 # ========================= 优化入口 =========================
 """
-    optimize!(dag::LayerDirectedAcyclicGraph)
+    optimize!(dag::DirectedAcyclicGraph)
 
-对 LayerDirectedAcyclicGraph 运行 Moore 框架下的逐层 merge-split 优化，迭代至不动点。
+对 DirectedAcyclicGraph 运行 Moore 框架下的逐层 merge-split 优化，迭代至不动点。
 """
-function optimize!(dag::LayerDirectedAcyclicGraph)
+function optimize!(dag::DirectedAcyclicGraph)
     layers = _extract_layers(dag)
     isempty(layers) && return dag
 

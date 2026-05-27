@@ -130,6 +130,20 @@ mutable struct SparseLeftEnvironmentTensor{N} <: AbstractLeftEnvironmentTensor
     function SparseLeftEnvironmentTensor(t::Array)
         return new{ndims(t)}(convert(Array{LeftEnvironmentTensor},[LeftEnvironmentTensor(ti) for ti in t]),size(t))
     end
+
+    function SparseLeftEnvironmentTensor(::UndefInitializer, n::Integer)
+        return new{1}(Vector{LeftEnvironmentTensor}(undef, Int(n)), (Int(n),))
+    end
+
+    function SparseLeftEnvironmentTensor(t::LeftEnvironmentTensor, n::Integer)
+        n = Int(n)
+        A = Vector{LeftEnvironmentTensor}(undef, n)
+        T = scalartype(t)
+        for i in 1:n
+            A[i] = zerovector(t, T)
+        end
+        return new{1}(A, (n,))
+    end
 end
 
 mutable struct SparseRightEnvironmentTensor{N} <: AbstractRightEnvironmentTensor
@@ -154,6 +168,20 @@ mutable struct SparseRightEnvironmentTensor{N} <: AbstractRightEnvironmentTensor
 
     function SparseRightEnvironmentTensor(t::Array)
         return new{ndims(t)}(convert(Array{RightEnvironmentTensor},[RightEnvironmentTensor(ti) for ti in t]),size(t))
+    end
+
+    function SparseRightEnvironmentTensor(::UndefInitializer, n::Integer)
+        return new{1}(Vector{RightEnvironmentTensor}(undef, Int(n)), (Int(n),))
+    end
+
+    function SparseRightEnvironmentTensor(t::RightEnvironmentTensor, n::Integer)
+        n = Int(n)
+        A = Vector{RightEnvironmentTensor}(undef, n)
+        T = scalartype(t)
+        for i in 1:n
+            A[i] = zerovector(t, T)
+        end
+        return new{1}(A, (n,))
     end
 end
 
@@ -231,13 +259,14 @@ end
 mutable struct CBEenvironment <: AbstractEnvironment
     tL₀::AbstractTensorWrapper
     tR₀::AbstractTensorWrapper
-    tL::Union{AbstractTensorWrapper,Nothing}
-    tR::Union{AbstractTensorWrapper,Nothing}
+    tL::Union{AbstractTensorWrapper,SparseMPOTensor,Nothing}
+    tR::Union{AbstractTensorWrapper,SparseMPOTensor,Nothing}
     D_i::Int64
     D_f::Int64
     Λ::Union{AbstractTensorWrapper,Nothing}
     Lorth::Union{SparseLeftEnvironmentTensor,LeftCompositeEnvironmentTensor,LeftEnvironmentTensor,DenseLeftEnvironmentTensor,Nothing}
     Rorth::Union{SparseRightEnvironmentTensor,RightCompositeEnvironmentTensor,RightEnvironmentTensor,DenseRightEnvironmentTensor,Nothing}
+    lm::Union{LayerMap,Nothing}
 
     # function CBEenvironment(env::Environment{N,L},ind::Int64,D_i::Int64,D_f::Int64) where {N,L}
     #     return new(env,nothing,nothing,nothing,ind,D_i,D_f,N,L)

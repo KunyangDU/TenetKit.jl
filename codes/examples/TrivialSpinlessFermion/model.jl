@@ -1,3 +1,16 @@
+# Spinless Fermion 哈密顿量 — 基于 InteractionGraph + SparseMPO
+# 新 API 版本，与 Heisenberg model.jl 模式一致
+
+function YCRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0), θ::Real = 0.0)
+    e = ((a, 0.0), (0.0, b))
+    sites = [(x, y) for x in 1:L for y in 1:W]
+    if iszero(θ)
+         BC = PeriodicBoundaryCondition((0, W))
+    else
+         BC = TwistBoundaryCondition((0, W), θ)
+    end
+    return SquareLattice(e, sites, BC)
+end
 
 function ϵ(k)
     return -2sum(cos.(k))
@@ -39,36 +52,30 @@ function ce(β::Number,Lx::Int,Ly::Int)
 end
 
 function ParticleNumber(Latt::AbstractLattice)
-    N = let 
-        Root = InteractionTreeNode()
-        LocalSpace = TrivialSpinlessFermion
-    
-        for i in 1:size(Latt)
-            addIntr!(Root,LocalSpace.n,i,"n",false,1,nothing)
-        end
-    
-        AutomataSparseMPO(Root,size(Latt))
+    L = size(Latt)
+    LocalSpace = TrivialSpinlessFermion
+    ig = InteractionGraph(L)
+
+    for i in 1:L
+        addIntr!(ig, LocalSpace.n, i, "n", false, 1, nothing)
     end
 
-    return N
+    return AutomataSparseMPO(ig)
 end
 
-function Hamiltonian(Latt::AbstractLattice;t::Number=1,μ::Number=0)
-    H = let 
-        Root = InteractionTreeNode()
-        LocalSpace = TrivialSpinlessFermion
-    
-        for i in 1:size(Latt)
-            addIntr!(Root,LocalSpace.n,i,"n",false,μ,nothing)
-        end
-        
-        for pair in neighbor(Latt)
-            addIntr!(Root,LocalSpace.F⁺F,pair,("F⁺","F"),(true,true),-t,LocalSpace.Z)
-            addIntr!(Root,LocalSpace.FF⁺,pair,("F","F⁺"),(true,true),t,LocalSpace.Z)
-        end
-        
-        AutomataSparseMPO(Root,size(Latt))
+function Hamiltonian(Latt::AbstractLattice; t::Number=1, μ::Number=0)
+    L = size(Latt)
+    LocalSpace = TrivialSpinlessFermion
+    ig = InteractionGraph(L)
+
+    for i in 1:L
+        addIntr!(ig, LocalSpace.n, i, "n", false, μ, nothing)
     end
 
-    return H
+    for pair in neighbor(Latt)
+        addIntr!(ig, LocalSpace.F⁺F, pair, ("F⁺","F"), (true,true), -t, LocalSpace.Z)
+        addIntr!(ig, LocalSpace.FF⁺, pair, ("F","F⁺"), (true,true),  -t, LocalSpace.Z)
+    end
+
+    return AutomataSparseMPO(ig)
 end

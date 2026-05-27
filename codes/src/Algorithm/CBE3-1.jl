@@ -17,7 +17,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,DSA,1}, info::CBEinfo{L2
     @timeit to "left orthogonalize" Lorth = orthogonalize!(hl,tL,tL,EnvL)
     @timeit to "right orthogonalize" Rorth = orthogonalize!(hr,tR₀,tR₀,EnvR)
 
-    CBEenv = CBEenvironment(tL₀,tR₀,tL,nothing,D_i,D_f,Λ,Lorth,Rorth)
+    CBEenv = CBEenvironment(tL₀,tR₀,tL,nothing,D_i,D_f,Λ,Lorth,Rorth,hl.right)
 
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
@@ -49,7 +49,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,DSA,1}, info::CBEinfo{R2
     @timeit to "left orthogonalize" Lorth = orthogonalize!(hl,tL₀,tL₀,EnvL)
     @timeit to "right orthogonalize" Rorth = orthogonalize!(hr,tR,tR,EnvR)
 
-    CBEenv = CBEenvironment(tL₀,tR₀,nothing,tR,D_i,D_f,Λ,Lorth,Rorth)
+    CBEenv = CBEenvironment(tL₀,tR₀,nothing,tR,D_i,D_f,Λ,Lorth,Rorth,hr.left)
 
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
@@ -78,7 +78,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,DSA,1}, info::CBEinfo{L2
     D_f = alg.D
     D_i ≥ D_f && return to
 
-    CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR)
+    CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR,hl.right)
 
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
@@ -108,7 +108,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,DSA,1}, info::CBEinfo{R2
     D_f = alg.D
     D_i ≥ D_f && return to
 
-    CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR)
+    CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR,hl.right)
 
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 

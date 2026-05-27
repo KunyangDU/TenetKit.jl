@@ -17,9 +17,10 @@ function pushright!(env::Environment{R}) where R
 end
 
 function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRightEnvironmentTensor{1}, site::Int64)
-    @assert mpo.D[site][2] == EnvR.D[1]
-    tmpEnvR = Vector{Any}(nothing,mpo.D[site][1])
-    validinds = filter(x -> !isnothing(mpo[site].m[x[1],x[2]]), [(i,j) for i in eachindex(tmpEnvR),j in 1:EnvR.D[1]][:])
+    @assert mpo.D[site][3] == EnvR.D[1]
+    tmpEnvR = Vector{Any}(nothing, mpo.D[site][2])
+    r_map = _validind1(mpo[site], R2L())
+    validind = [(j, r_inds) for (j, r_inds) in enumerate(r_map) if !isempty(r_inds)]
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -27,12 +28,12 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > length(validinds) && break
-                i,j = validinds[ct]
-                x = contract(A[site], mpo[site].m[i,j], B[site], EnvR.A[j])
+                ct > length(validind) && break
+                j, r_inds = validind[ct]
+                x = contract(A[site], mpo[site][j], B[site], sum(EnvR[r_inds]))
                 lock(Lock)
                 try
-                    tmpEnvR[i] = axpy!(1,x,tmpEnvR[i])
+                    tmpEnvR[j] = axpy!(1, x, tmpEnvR[j])
                 catch
                     rethrow()
                 finally
@@ -41,17 +42,18 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
             end
         end
     else
-        for (i,j) in validinds
-            tmpEnvR[i] = axpy!(1,contract(A[site], mpo[site].m[i,j], B[site], EnvR.A[j]),tmpEnvR[i])
+        for (j, r_inds) in validind
+            tmpEnvR[j] = axpy!(1, contract(A[site], mpo[site][j], B[site], sum(EnvR[r_inds])), tmpEnvR[j])
         end
     end
-    return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
+    return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor}, tmpEnvR))
 end
 
 function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseLeftEnvironmentTensor{1}, site::Int64)
     @assert mpo.D[site][1] == EnvL.D[1]
-    tmpEnvL = Vector{Any}(nothing,mpo.D[site][2])
-    validinds = filter(x -> !isnothing(mpo[site].m[x[1],x[2]]), [(i,j) for i in 1:EnvL.D[1],j in eachindex(tmpEnvL)][:])
+    tmpEnvL = Vector{Any}(nothing, mpo.D[site][2])
+    l_map = _validind1(mpo[site], L2R())
+    validind = [(j, l_inds) for (j, l_inds) in enumerate(l_map) if !isempty(l_inds)]
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -59,12 +61,12 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > length(validinds) && break
-                j,i = validinds[ct]
-                x = contract(A[site], mpo[site].m[j,i], B[site],EnvL.A[j])
+                ct > length(validind) && break
+                j, l_inds = validind[ct]
+                x = contract(A[site], mpo[site][j], B[site], sum(EnvL[l_inds]))
                 lock(Lock)
                 try
-                    tmpEnvL[i] = axpy!(1,x,tmpEnvL[i])
+                    tmpEnvL[j] = axpy!(1, x, tmpEnvL[j])
                 catch
                     rethrow()
                 finally
@@ -73,11 +75,11 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
             end
         end
     else
-        for (j,i) in validinds
-            tmpEnvL[i] = axpy!(1,contract(A[site], mpo[site].m[j,i], B[site],EnvL.A[j]),tmpEnvL[i])
+        for (j, l_inds) in validind
+            tmpEnvL[j] = axpy!(1, contract(A[site], mpo[site][j], B[site], sum(EnvL[l_inds])), tmpEnvL[j])
         end
     end
-    return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
+    return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor}, tmpEnvL))
 end
 
 # function pushright!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
@@ -112,63 +114,83 @@ pushleft(A::DenseMPS, B::AdjointMPS, EnvR::DenseRightEnvironmentTensor{2}, site:
 
 function pushright(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::AdjointMPO, EnvL::SparseLeftEnvironmentTensor{2}, site::Int64)
     tmpEnvL = Array{Any}(nothing, Hup.D[site][2], Hdown.D[site][2])
-    validinds = filter(x -> !isnothing(Hup[site].m[x[1],x[3]]) && !isnothing(Hdown[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:EnvL.D[1], j in 1:EnvL.D[2], k in 1:Hup.D[site][2], l in 1:Hdown.D[site][2]][:])
+    l_map_up = _validind1(Hup[site], L2R())
+    l_map_down = _validind1(Hdown[site], L2R())
+    vind_up = [(j, l_inds) for (j, l_inds) in enumerate(l_map_up) if !isempty(l_inds)]
+    vind_down = [(j, l_inds) for (j, l_inds) in enumerate(l_map_down) if !isempty(l_inds)]
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
+        pairs = [(a,b) for a in eachindex(vind_up) for b in eachindex(vind_down)]
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > length(validinds) && break
-                i,j,k,l = validinds[ct]
-                C = pushright(Hup[site].m[i,k],ρ[site],Hdown[site].m[j,l],ρ′[site],EnvL.A[i,j])
-                lock(Lock)
-                try
-                    tmpEnvL[k,l] = axpy!(1,C,tmpEnvL[k,l])
-                    # sleep(1e-8)
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
+                ct > length(pairs) && break
+                a, b = pairs[ct]
+                op_up, l_up = vind_up[a]
+                op_down, l_down = vind_down[b]
+                for i in l_up, j in l_down
+                    C = pushright(Hup[site][op_up], ρ[site], Hdown[site][op_down], ρ′[site], EnvL.A[i,j])
+                    lock(Lock)
+                    try
+                        tmpEnvL[op_up,op_down] = axpy!(1, C, tmpEnvL[op_up,op_down])
+                    catch
+                        rethrow()
+                    finally
+                        unlock(Lock)
+                    end
                 end
             end
         end
     else
-        for (i,j,k,l) in validinds
-            tmpEnvL[k,l] = axpy!(1,pushright(Hup[site].m[i,k], ρ[site], Hdown[site].m[j,l], ρ′[site], EnvL.A[i,j]),tmpEnvL[k,l])
+        for (op_up, l_up) in vind_up, (op_down, l_down) in vind_down
+            for i in l_up, j in l_down
+                C = pushright(Hup[site][op_up], ρ[site], Hdown[site][op_down], ρ′[site], EnvL.A[i,j])
+                tmpEnvL[op_up,op_down] = axpy!(1, C, tmpEnvL[op_up,op_down])
+            end
         end
     end
     return SparseLeftEnvironmentTensor(convert(Array{LeftEnvironmentTensor}, tmpEnvL))
 end
 
 function pushleft(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::AdjointMPO, EnvR::SparseRightEnvironmentTensor{2}, site::Int64)
-    tmpEnvR = Array{Any}(nothing, Hup.D[site][1], Hdown.D[site][1])
-    validinds = filter(x -> !isnothing(Hup[site].m[x[1],x[3]]) && !isnothing(Hdown[site].m[x[2],x[4]]), [(i,j,k,l) for i in 1:Hup.D[site][1], j in 1:Hdown.D[site][1], k in 1:EnvR.D[1], l in 1:EnvR.D[2]][:])
+    tmpEnvR = Array{Any}(nothing, Hup.D[site][2], Hdown.D[site][2])
+    r_map_up = _validind1(Hup[site], R2L())
+    r_map_down = _validind1(Hdown[site], R2L())
+    vind_up = [(j, r_inds) for (j, r_inds) in enumerate(r_map_up) if !isempty(r_inds)]
+    vind_down = [(j, r_inds) for (j, r_inds) in enumerate(r_map_down) if !isempty(r_inds)]
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
+        pairs = [(a,b) for a in eachindex(vind_up) for b in eachindex(vind_down)]
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > length(validinds) && break
-                i,j,k,l = validinds[ct]
-                C = pushleft(Hup[site].m[i,k],ρ[site],Hdown[site].m[j,l],ρ′[site],EnvR.A[k,l])
-                lock(Lock)
-                try
-                    tmpEnvR[i,j] = axpy!(1,C,tmpEnvR[i,j])
-                    # sleep(1e-8)
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
+                ct > length(pairs) && break
+                a, b = pairs[ct]
+                op_up, r_up = vind_up[a]
+                op_down, r_down = vind_down[b]
+                for k in r_up, l in r_down
+                    C = pushleft(Hup[site][op_up], ρ[site], Hdown[site][op_down], ρ′[site], EnvR.A[k,l])
+                    lock(Lock)
+                    try
+                        tmpEnvR[op_up,op_down] = axpy!(1, C, tmpEnvR[op_up,op_down])
+                    catch
+                        rethrow()
+                    finally
+                        unlock(Lock)
+                    end
                 end
             end
         end
     else
-        for (i,j,k,l) in validinds
-            tmpEnvR[i,j] = axpy!(1,pushleft(Hup[site].m[i,k],ρ[site],Hdown[site].m[j,l],ρ′[site],EnvR.A[k,l]),tmpEnvR[i,j])
+        for (op_up, r_up) in vind_up, (op_down, r_down) in vind_down
+            for k in r_up, l in r_down
+                C = pushleft(Hup[site][op_up], ρ[site], Hdown[site][op_down], ρ′[site], EnvR.A[k,l])
+                tmpEnvR[op_up,op_down] = axpy!(1, C, tmpEnvR[op_up,op_down])
+            end
         end
     end
     return SparseRightEnvironmentTensor(convert(Array{RightEnvironmentTensor}, tmpEnvR))
@@ -362,23 +384,25 @@ end
 #= densify! =#
 
 function pushleft(A::SparseMPO, B::AdjointMPO, EnvR::SparseRightEnvironmentTensor{1}, site::Int64)
-    @assert A.D[site][2] == EnvR.D[1]
-    tmpEnvR = Vector{Any}(nothing,A.D[site][1])
-    for i in eachindex(tmpEnvR), j in 1:EnvR.D[1]
-        isnothing(A[site].m[i,j]) && continue
-        tmpEnvR[i] = axpy!(1, contract(A[site].m[i,j], B[site], EnvR.A[j]), tmpEnvR[i])
+    @assert A.D[site][3] == EnvR.D[1]
+    tmpEnvR = Vector{Any}(nothing, A.D[site][2])
+    r_map = _validind1(A[site], R2L())
+    for (j, r_inds) in enumerate(r_map)
+        isempty(r_inds) && continue
+        tmpEnvR[j] = axpy!(1, contract(A[site][j], B[site], sum(EnvR[r_inds])), tmpEnvR[j])
     end
-    return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
+    return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor}, tmpEnvR))
 end
 
 function pushright(A::SparseMPO, B::AdjointMPO, EnvL::SparseLeftEnvironmentTensor{1}, site::Int64)
     @assert A.D[site][1] == EnvL.D[1]
-    tmpEnvL = Vector{Any}(nothing,A.D[site][2])
-    for i in eachindex(tmpEnvL), j in 1:EnvL.D[1]
-        isnothing(A[site].m[j,i]) && continue
-        tmpEnvL[i] = axpy!(1, contract(A[site].m[j,i], B[site],EnvL.A[j]),tmpEnvL[i])
+    tmpEnvL = Vector{Any}(nothing, A.D[site][2])
+    l_map = _validind1(A[site], L2R())
+    for (j, l_inds) in enumerate(l_map)
+        isempty(l_inds) && continue
+        tmpEnvL[j] = axpy!(1, contract(A[site][j], B[site], sum(EnvL[l_inds])), tmpEnvL[j])
     end
-    return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
+    return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor}, tmpEnvL))
 end
 
 

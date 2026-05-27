@@ -2,6 +2,19 @@
 mutable struct SparseMPO{L}
     ts::Vector{SparseMPOTensor}
     D::NTuple{L,NTuple{3,Int64}}
+
+    function SparseMPO(ts::Vector{<:SparseMPOTensor})
+        D_tuple = ntuple(i -> (Int64(length(ts[i].left.fwd)), Int64(length(ts[i].A)), Int64(length(ts[i].right.rev))), length(ts))
+        return new{length(ts)}(ts, D_tuple)
+    end
+
+    function SparseMPO(t::SparseMPOTensor{DL,D,DR}) where {DL,D,DR}
+        return new{1}([t], ((Int64(DL), Int64(D), Int64(DR)),))
+    end
+
+    function SparseMPO(ts::Vector{<:SparseMPOTensor}, D::NTuple{L,NTuple{3,Int64}}) where L
+        return new{L}(ts, D)
+    end
 end
 
 mutable struct DenseMPO{L} <: AbstractMPO

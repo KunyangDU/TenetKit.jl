@@ -1,8 +1,8 @@
 # ========================= LayerIterator =========================
-# 从 LayerDirectedAcyclicGraph 的 source sentinel 出发，逐层推进至 sink sentinel
+# 从 DirectedAcyclicGraph 的 source sentinel 出发，逐层推进至 sink sentinel
 # 每次迭代 yield (left::LayerMap, vals::Vector, right::LayerMap)
 
-struct LayerIterator{G<:LayerDirectedAcyclicGraph}
+struct LayerIterator{G<:DirectedAcyclicGraph}
     dag::G
 end
 

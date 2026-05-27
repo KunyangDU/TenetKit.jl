@@ -9,45 +9,31 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
         EnvR::SparseRightEnvironmentTensor{1},
-        H::SparseMPO{2},E₀::Number = 0.0) 
-        N,M1 = H.D[1]
-        M2,R = H.D[2]
-        @assert M1 == M2
-        @assert EnvL.D[1] == N 
-        @assert EnvR.D[1] == R
+        H::SparseMPO{2},E₀::Number = 0.0)
+        DL1,D1,DR1 = H.D[1]
+        DL2,D2,DR2 = H.D[2]
+        @assert EnvL.D[1] == DL1
+        @assert EnvR.D[1] == DR2
 
-        viv = []
-        for i in 1:N,j in 1:M1, k in 1:R
-            isnothing(H[1].m[i,j]) | isnothing(H[2].m[j,k]) && continue
-            push!(viv,(i,j,k))
-        end
-
-        return new{2}(EnvL,EnvR,H,Tuple(viv),E₀)
+        return new{2}(EnvL,EnvR,H,Tuple(_validind(H[1], H[2])),E₀)
     end
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
         EnvR::SparseRightEnvironmentTensor{1},
-        H::SparseMPO{1},E₀::Number = 0.0)  
-        N,R = H.D[1]
-        @assert EnvL.D[1] == N 
-        @assert EnvR.D[1] == R
+        H::SparseMPO{1},E₀::Number = 0.0)
+        DL,D,DR = H.D[1]
+        @assert EnvL.D[1] == DL
+        @assert EnvR.D[1] == DR
 
-        viv = []
-        for i in 1:N, j in 1:R
-            isnothing(H[1].m[i,j]) && continue
-            push!(viv,(i,j))
-        end
-
-        return new{1}(EnvL,EnvR,H,Tuple(viv),E₀)
+        return new{1}(EnvL,EnvR,H,Tuple(_validind(H[1])),E₀)
     end
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
-        EnvR::SparseRightEnvironmentTensor{1},E₀::Number = 0.0)  
-        N = EnvL.D[1]
-        M = EnvR.D[1]
-        @assert M == N 
-        
-        return new{0}(EnvL,EnvR,nothing,Tuple(1:N),E₀)
+        EnvR::SparseRightEnvironmentTensor{1},
+        lm::LayerMap{N,D₁,D₂}, E₀::Number = 0.0) where {N,D₁,D₂}
+        @assert EnvL.D[1] == D₁
+        @assert EnvR.D[1] == D₂
+        return new{0}(EnvL,EnvR,nothing,Tuple(_validind0(lm)),E₀)
     end
 end
 
@@ -56,13 +42,23 @@ proj0(EnvL,EnvR;E₀::Number = 0.0) = SparseProjectiveHamiltonian(EnvL,EnvR,E₀
 function projleft0(env::Environment{3};E₀::Number = 0.0)
     site = env.center[1]
     EnvR = pushleft(map(x -> env.layer[x],eachindex(env.layer))...,env.envs[site+1],site)
-    return issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site],EnvR,E₀) : DenseProjectiveHamiltonian(env.envs[site],EnvR,E₀)
+    if issparse(env.layer[2])
+        lm = env.layer[2][site].left
+        return SparseProjectiveHamiltonian(env.envs[site], EnvR, lm, E₀)
+    else
+        return DenseProjectiveHamiltonian(env.envs[site], EnvR, E₀)
+    end
 end
 
 function projright0(env::Environment{3};E₀::Number = 0.0)
     site = env.center[1]
     EnvL = pushright(map(x -> env.layer[x],eachindex(env.layer))...,env.envs[site],site)
-    return issparse(env.layer[2]) ? SparseProjectiveHamiltonian(EnvL,env.envs[site+1],E₀) : DenseProjectiveHamiltonian(EnvL,env.envs[site+1],E₀)
+    if issparse(env.layer[2])
+        lm = env.layer[2][site].right
+        return SparseProjectiveHamiltonian(EnvL, env.envs[site+1], lm, E₀)
+    else
+        return DenseProjectiveHamiltonian(EnvL, env.envs[site+1], E₀)
+    end
 end
 
 proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site],env.envs[site+1],SparseMPO(env.layer[2][site]),E₀) : DenseProjectiveHamiltonian(env.envs[site],env.envs[site+1],[env.layer[2][site],],E₀)

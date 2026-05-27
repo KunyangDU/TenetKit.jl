@@ -10,7 +10,8 @@ function XTRG!(obj::DenseMPO{L}, Alg::XTRGalgo, info::XTRGinfo) where L
     merge!(sweepinfo,mulinfo)
     @timeit to "normalize!" sweepinfo.lnZ = 2log(normalize!(obj)) + 2 * info.lnZ
     @timeit to "measure E" if !isnothing(Alg.H)
-        Eenv = Environment([obj,Alg.H];isdisk=Alg.isdisk)
+        Eenv = Environment([obj,Alg.H,RefMPO(obj,adjoint)];isdisk=Alg.isdisk)
+        initialize!(Eenv)
         sweepinfo.E = real(_scalar(Eenv))
         cleanup!(Eenv)
     end

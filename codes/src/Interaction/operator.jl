@@ -31,15 +31,15 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
         return new{length(codomain(A))}(nothing, site, NaN ,nothing)
    end
     function IdentityOperator(site::Int64, strength::Number = NaN)
-         return new{0}(nothing, site, strength,nothing)
+         return new{1}(nothing, site, strength,nothing)
     end
 
     function IdentityOperator(site::Int64, name::Union{String,Tuple})
-        return new{0}(nothing, site, NaN ,name)
+        return new{1}(nothing, site, NaN ,name)
     end
 
     function IdentityOperator(site::Int64)
-        return new{0}(nothing, site, NaN ,nothing)
+        return new{1}(nothing, site, NaN ,nothing)
     end
 
     function IdentityOperator(A::LocalOperator)
@@ -75,7 +75,8 @@ function Base.isequal(A::LocalOperator, B::LocalOperator)
     # else check strength
     # repeat interaction added without merging
     !(isnan(A.strength) && isnan(B.strength)) && !(A.strength ≈ B.strength) && return false
-    return A.A ≈ B.A
+    # return A.A ≈ B.A
+    return isequal(A.A,B.A)
 end
 
 function getIdTensor(A::AbstractLocalOperator)

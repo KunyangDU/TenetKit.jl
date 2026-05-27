@@ -56,29 +56,30 @@ end
 
 # dirty detail, threads free
 
-function _action(O::SparseProjectiveHamiltonian{0}, obj::T,i::Int64) where T <: Union{MPSTensor{2},DenseMPOTensor{2}}
-    tmp,localto = _action0(obj,O.EnvL.A[i],O.EnvR.A[i])
+function _action(O::SparseProjectiveHamiltonian{0}, obj::T, ind::Tuple{Vector{Int64},Nothing,Vector{Int64}}) where T <: Union{MPSTensor{2},DenseMPOTensor{2}}
+    l_inds, ~, r_inds = ind
+    tmp,localto = _action0(obj, sum(O.EnvL[l_inds]), sum(O.EnvR[r_inds]))
     return tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{1}, obj::T, ind::Tuple) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
-    i,j = ind
-    tmp,localto = _action1(obj,O.EnvL.A[i],O.H[1].m[i,j],O.EnvR.A[j])
+function _action(O::SparseProjectiveHamiltonian{1}, obj::T, ind::Tuple{Vector{Int64},Int64,Vector{Int64}}) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
+    l_inds, j, r_inds = ind
+    tmp,localto = _action1(obj, sum(O.EnvL[l_inds]), O.H[1][j], sum(O.EnvR[r_inds]))
     return tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple) where T <: Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
-    i,j,k = ind
-    tmp,localto = _action2(obj,O.EnvL.A[i],O.H[1].m[i,j],O.H[2].m[j,k],O.EnvR.A[k])
+function _action(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple{Vector{Int64},Tuple{Int64,Int64},Vector{Int64}}) where T <: Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
+    l_inds, (j,k), r_inds = ind
+    tmp,localto = _action2(obj, sum(O.EnvL[l_inds]), O.H[1][j], O.H[2][k], sum(O.EnvR[r_inds]))
     return tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2}, ind::Tuple)
-    i,j,k = ind
+function _action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2}, ind::Tuple{Vector{Int64},Tuple{Int64,Int64},Vector{Int64}})
+    l_inds, (j,k), r_inds = ind
     localto = TimerOutput()
-    @timeit localto "_action2_EL1=El_H1" EL1 = contract(O.EnvL.A[i], obj[1].m[i,j])
-    @timeit localto "_action2_EL2=EL1_H2" EL2 = contract(EL1, obj[2].m[j,k])
-    @timeit localto "_action2_C=EL2_Er" C = contract(EL2, O.EnvR.A[k])
+    @timeit localto "_action2_EL1=El_H1" EL1 = contract(sum(O.EnvL[l_inds]), obj[1][j])
+    @timeit localto "_action2_EL2=EL1_H2" EL2 = contract(EL1, obj[2][k])
+    @timeit localto "_action2_C=EL2_Er" C = contract(EL2, sum(O.EnvR[r_inds]))
     return C, localto
 end
 

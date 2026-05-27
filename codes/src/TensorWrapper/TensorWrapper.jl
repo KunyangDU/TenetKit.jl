@@ -102,6 +102,7 @@ TensorKit.dims(A::AbstractTensorWrapper) = dims(A.A)
 
 issparse(::T) where T <: Union{DenseMPS,AdjointMPS,DenseMPO,AdjointMPO} = false
 issparse(::SparseMPO) = true
+issparse(::SparseMPOTensor) = true
 
 _isdisk(obj::T) where T <: Union{DenseMPS,AdjointMPS,DenseMPO,AdjointMPO} = obj.isdisk
 _isdisk(::SparseMPO) = false
@@ -129,7 +130,7 @@ Base.firstindex(obj::RefMPO) = 1
 Base.lastindex(obj::RefMPO) = lastindex(obj.ts)
 Base.size(obj::RefMPO) = (lastindex(obj),)
 Base.axes(obj::RefMPO) = Base.OneTo(lastindex(obj))
-Base.size(::SparseMPOTensor{N,M}) where {N,M} = N,M
+Base.size(::SparseMPOTensor{DL,D,DR}) where {DL,D,DR} = DL,DR
 
 function normalize!(obj::Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}}) where L
     @assert (site = obj.center[1]) == obj.center[2]
@@ -186,7 +187,7 @@ end
 scale(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale((t[1].A,t[2]))
 scale!!(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale!!((t[1].A,t[2]))
 scale!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = scale!!((t[1].A,t[2].A,t[3]))
-zerovector(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = zerovector((t[1].A,t[2]))
+TensorKit.zerovector(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = zerovector((t[1].A,t[2]))
 add!!(t::Tuple{T₁,T₂,T₃}) where {T₁ <: AbstractTensorWrapper,T₂ <: AbstractTensorWrapper,T₃ <: Number} = add!!((t[1].A,t[2].A,t[3],t[4]))
 
 TensorKit.codomain(A::AbstractTensorWrapper) = codomain(A.A)
@@ -221,6 +222,14 @@ function Base.getindex(obj::SparseMPO{L}, i::Int64) where L
     return obj.ts[i]
 end
 
+Base.getindex(obj::T, i::Int64) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = obj.A[i]
+Base.getindex(obj::T, inds::AbstractVector{Int64}) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = [obj.A[i] for i in inds]
+Base.setindex!(obj::SparseLeftEnvironmentTensor, A::LeftEnvironmentTensor,i::Int64) = (obj.A[i] = A)
+Base.setindex!(obj::SparseRightEnvironmentTensor, A::RightEnvironmentTensor,i::Int64) = (obj.A[i] = A)
+
+Base.getindex(obj::SparseMPOTensor, i::Int64) = obj.A[i]
+
+
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
 #     return A + (-1) * B
 # end
@@ -254,15 +263,22 @@ end
 #     return RightCompositeEnvironmentTensor(A.A + B.A)
 # end
 
-# function Base.:+(A::LeftEnvironmentTensor,
-#     B::LeftEnvironmentTensor)
-#     return LeftEnvironmentTensor(A.A + B.A)
-# end
+function Base.:+(A::LeftEnvironmentTensor,
+    B::LeftEnvironmentTensor)
+    return LeftEnvironmentTensor(A.A + B.A)
+end
 
-# function Base.:+(A::RightEnvironmentTensor,
-#     B::RightEnvironmentTensor)
-#     return RightEnvironmentTensor(A.A + B.A)
-# end
+function Base.:+(A::RightEnvironmentTensor,
+    B::RightEnvironmentTensor)
+    return RightEnvironmentTensor(A.A + B.A)
+end
+
+axpy!(α::Number, A::LeftEnvironmentTensor, B::LeftEnvironmentTensor) = (B.A = α * A.A + B.A; B)
+axpy!(α::Number, A::RightEnvironmentTensor, B::RightEnvironmentTensor) = (B.A = α * A.A + B.A; B)
+axpy!(α::Number, A::LeftEnvironmentTensor, ::Nothing) = α * A
+axpy!(α::Number, A::RightEnvironmentTensor, ::Nothing) = α * A
+axpy!(::Number, ::Nothing, B::LeftEnvironmentTensor) = B
+axpy!(::Number, ::Nothing, B::RightEnvironmentTensor) = B
 
 # function Base.:+(A::CompositeMPOTensor{N₁, R₁}, B::CompositeMPOTensor{N₂, R₂}) where {N₁, N₂, R₁, R₂}
 #     @assert N₁ == N₂ && R₁ == R₂

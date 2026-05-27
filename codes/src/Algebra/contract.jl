@@ -52,30 +52,26 @@ function contract(El::LeftCompositeEnvironmentTensor{2, 5}, Er::RightCompositeEn
     return CompositeMPOTensor(tmp)
 end
 
-function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::DenseMPOTensor{4}, C::SparseMPOTensor{N₁,M₁}, D::SparseMPOTensor{N₂,M₂}, EnvR::SparseRightEnvironmentTensor) where {N₁,M₁,N₂,M₂}
-    @assert M₁ == N₂
+function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::DenseMPOTensor{4}, C::SparseMPOTensor{DL₁,D₁,DR₁}, D::SparseMPOTensor{DL₂,D₂,DR₂}, EnvR::SparseRightEnvironmentTensor) where {DL₁,D₁,DR₁,DL₂,D₂,DR₂}
+    @assert DR₁ == D₂
+    @assert DL₂ == D₁
     tmp = nothing
-    for i in 1:N₁, j in 1:M₁, k in 1:M₂
-        isnothing(C.m[i,j]) | isnothing(D.m[j,k]) && continue
-        tmp1 = contract(EnvL.A[i], A, C.m[i,j])
-        tmp2 = contract(B, D.m[j,k], EnvR.A[k])
-        if isnothing(tmp)
-            tmp = contract(tmp1, tmp2)
-        else
-            tmp += contract(tmp1, tmp2)
-        end
+    for (l_inds, (j,k), r_inds) in _validind(C, D)
+        tmp1 = contract(sum(EnvL[l_inds]), A, C[j])
+        tmp2 = contract(B, D[k], sum(EnvR[r_inds]))
+        tmp = axpy!(1, contract(tmp1, tmp2), tmp)
     end
     return tmp
 end
 
-function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::MPSTensor{3}, C::SparseMPOTensor{N₁,M₁}, D::SparseMPOTensor{N₂,M₂}, EnvR::SparseRightEnvironmentTensor) where {N₁,M₁,N₂,M₂}
-    @assert M₁ == N₂
+function contract(EnvL::SparseLeftEnvironmentTensor, A::MPSTensor{3}, B::MPSTensor{3}, C::SparseMPOTensor{DL₁,D₁,DR₁}, D::SparseMPOTensor{DL₂,D₂,DR₂}, EnvR::SparseRightEnvironmentTensor) where {DL₁,D₁,DR₁,DL₂,D₂,DR₂}
+    @assert DR₁ == D₂
+    @assert DL₂ == D₁
     tmp = nothing
-    for i in 1:N₁, j in 1:M₁, k in 1:M₂
-        isnothing(C.m[i,j]) | isnothing(D.m[j,k]) && continue
-        tmp1 = contract(EnvL.A[i], A, C.m[i,j])
-        tmp2 = contract(B, D.m[j,k], EnvR.A[k])
-        tmp = axpy!(1,contract(tmp1, tmp2),tmp)
+    for (l_inds, (j,k), r_inds) in _validind(C, D)
+        tmp1 = contract(sum(EnvL[l_inds]), A, C[j])
+        tmp2 = contract(B, D[k], sum(EnvR[r_inds]))
+        tmp = axpy!(1, contract(tmp1, tmp2), tmp)
     end
     return tmp
 end

@@ -1,39 +1,28 @@
 function orthogonalize!(env::Environment{3},B::Union{DenseMPOTensor{4},MPSTensor{3}},EnvR::SparseRightEnvironmentTensor,osite::Int64)
-    w,w2 = env.layer[2].D[osite]
-    EnvRorth = Vector(undef,w)
+    EnvRorth = Vector(undef, length(env.layer[2][osite].left.fwd))
     EnvRorth .= nothing
-    @show "here"
 
-    for i in 1:w, j in 1:w2
-        Hij = env.layer[2][osite].m[i,j]
-        isnothing(Hij) && continue
-        tmp = contract(B,Hij,EnvR.A[j])
-        EnvRorth[i] = axpy!(1, tmp - contract(tmp,B) ,EnvRorth[i])
-        # if isnothing(EnvRorth[i])
-        #     EnvRorth[i] = tmp - contract(tmp,B)
-        # else
-        #     EnvRorth[i] += tmp - contract(tmp,B)
-        # end
+    for (l_inds, j, r_inds) in _validind(env.layer[2][osite])
+        tmp = contract(B, env.layer[2][osite][j], sum(EnvR[r_inds]))
+        C = tmp - contract(tmp, B)
+        for i in l_inds
+            EnvRorth[i] = axpy!(1, C, EnvRorth[i])
+        end
     end
 
     return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
 end
 
 function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor{3}},EnvL::SparseLeftEnvironmentTensor,osite::Int64)
-    w1,w = env.layer[2].D[osite]
-    EnvLorth = Vector(undef,w)
+    EnvLorth = Vector(undef, length(env.layer[2][osite].right.rev))
     EnvLorth .= nothing
 
-    for i in 1:w1, j in 1:w
-        Hij = env.layer[2][osite].m[i,j]
-        isnothing(Hij) && continue
-        tmp = contract(EnvL.A[i],A,Hij)
-        EnvLorth[j] = axpy!(1, tmp - contract(tmp,A) ,EnvLorth[j])
-        # if isnothing(EnvLorth[j])
-        #     EnvLorth[j] = tmp - contract(tmp,A)
-        # else
-        #     EnvLorth[j] += tmp - contract(tmp,A)
-        # end
+    for (l_inds, j, r_inds) in _validind(env.layer[2][osite])
+        tmp = contract(sum(EnvL[l_inds]), A, env.layer[2][osite][j])
+        C = tmp - contract(tmp, A)
+        for i in r_inds
+            EnvLorth[i] = axpy!(1, C, EnvLorth[i])
+        end
     end
 
     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
@@ -78,10 +67,9 @@ end
 # end
 
 function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
-    w,w2 = size(H)
-    EnvRorth = Vector(undef,w)
+    EnvRorth = Vector(undef, length(H.left.fwd))
     EnvRorth .= nothing
-    validinds = filter(x -> !isnothing(H.m[x...]), [(i,j) for i in 1:w, j in 1:w2][:])
+    validind = _validind(H)
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -89,12 +77,14 @@ function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnviron
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > length(validinds) && break
-                i,j = validinds[ct]
-                C = contract(B,H.m[i,j],EnvR.A[j]) |> x -> x - contract(x,B′)
+                ct > length(validind) && break
+                l_inds, j, r_inds = validind[ct]
+                C = contract(B, H[j], sum(EnvR[r_inds])) |> x -> x - contract(x, B′)
                 lock(Lock)
                 try
-                    EnvRorth[i] = axpy!(1, C, EnvRorth[i])
+                    for i in l_inds
+                        EnvRorth[i] = axpy!(1, C, EnvRorth[i])
+                    end
                 catch
                     rethrow()
                 finally
@@ -103,19 +93,21 @@ function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnviron
             end
         end
     else
-        for (i,j) in validinds
-            EnvRorth[i] = axpy!(1, contract(B,H.m[i,j],EnvR.A[j]) |> x -> x - contract(x,B′), EnvRorth[i])
+        for (l_inds, j, r_inds) in validind
+            C = contract(B, H[j], sum(EnvR[r_inds])) |> x -> x - contract(x, B′)
+            for i in l_inds
+                EnvRorth[i] = axpy!(1, C, EnvRorth[i])
+            end
         end
     end
 
-    return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
+    return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor}, EnvRorth))
 end
 
 function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
-    w1,w = size(H.m)
-    EnvLorth = Vector(undef,w)
+    EnvLorth = Vector(undef, length(H.right.rev))
     EnvLorth .= nothing
-    validinds = filter(x -> !isnothing(H.m[x...]), [(i,j) for i in 1:w1, j in 1:w][:])
+    validind = _validind(H)
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -123,12 +115,14 @@ function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironm
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > length(validinds) && break
-                i,j = validinds[ct]
-                C = contract(EnvL.A[i],A,H.m[i,j]) |> x -> x - contract(x,A′)
+                ct > length(validind) && break
+                l_inds, j, r_inds = validind[ct]
+                C = contract(sum(EnvL[l_inds]), A, H[j]) |> x -> x - contract(x, A′)
                 lock(Lock)
                 try
-                    EnvLorth[j] = axpy!(1, C, EnvLorth[j])
+                    for i in r_inds
+                        EnvLorth[i] = axpy!(1, C, EnvLorth[i])
+                    end
                 catch
                     rethrow()
                 finally
@@ -137,12 +131,15 @@ function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironm
             end
         end
     else
-        for (i,j) in validinds
-            EnvLorth[j] = axpy!(1, contract(EnvL.A[i],A,H.m[i,j]) |> x -> x - contract(x,A′), EnvLorth[j])
+        for (l_inds, j, r_inds) in validind
+            C = contract(sum(EnvL[l_inds]), A, H[j]) |> x -> x - contract(x, A′)
+            for i in r_inds
+                EnvLorth[i] = axpy!(1, C, EnvLorth[i])
+            end
         end
     end
 
-    return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
+    return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor}, EnvLorth))
 end
 
 # function _orthogonalize!(Hij::AbstractLocalOperator,A::T,A′::T,EnvL::LeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}

@@ -13,11 +13,14 @@
 function AutomataSparseMPO(ig::InteractionGraph{L}) where L
     initialize!(ig)
     ts_vec = SparseMPOTensor[]
+    prev_right = nothing
     for (left, A, right) in LayerIterator(ig.graph)
-        push!(ts_vec, SparseMPOTensor(A, left, right))
+        l = isnothing(prev_right) ? left : prev_right
+        push!(ts_vec, SparseMPOTensor(A, l, right))
+        prev_right = right
     end
     D_tuple = ntuple(L) do i
         (Int64(length(ts_vec[i].left.fwd)), Int64(length(ts_vec[i].A)), Int64(length(ts_vec[i].right.rev)))
     end
-    return SparseMPO{L}(ts_vec, D_tuple)
+    return SparseMPO(ts_vec, D_tuple)
 end

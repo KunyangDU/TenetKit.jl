@@ -30,6 +30,7 @@ include("Defaults.jl")
 
 include("TensorWrapper/TensorWrapper.jl")
 include("TensorWrapper/canonicalize.jl")
+include("TensorWrapper/method.jl")
 
 include("MPS/contract.jl")
 include("MPS/methods.jl")

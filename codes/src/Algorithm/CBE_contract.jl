@@ -44,9 +44,8 @@ function contract(A::MPSTensor{3}, B::LocalOperator{2,1}, EnvR::RightEnvironment
     return RightCompositeEnvironmentTensor(tmp)
 end
 
-function contract(EnvL::SparseLeftEnvironmentTensor{1},EnvR::SparseRightEnvironmentTensor{1})
-    @assert (w = EnvL.D[1]) == EnvR.D[1]
-    mps = nothing 
+function contract(EnvL::SparseLeftEnvironmentTensor{1}, EnvR::SparseRightEnvironmentTensor{1}, lm::LayerMap)
+    mps = nothing
     Nthr = get_num_threads_julia()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
@@ -54,8 +53,10 @@ function contract(EnvL::SparseLeftEnvironmentTensor{1},EnvR::SparseRightEnvironm
         Threads.@sync for _ in 1:Nthr
             Threads.@spawn while true
                 ct = Threads.atomic_add!(counter, 1)
-                ct > w && break
-                C = contract(EnvL.A[ct],EnvR.A[ct])
+                ct > length(lm.rev) && break
+                ind = [t[1] for t in lm.rev[ct]]
+                isempty(ind) && continue
+                C = contract(EnvL.A[ct], sum(EnvR.A[ind]))
                 lock(Lock)
                 try
                     mps = axpy!(1, C, mps)
@@ -67,8 +68,10 @@ function contract(EnvL::SparseLeftEnvironmentTensor{1},EnvR::SparseRightEnvironm
             end
         end
     else
-        for i in 1:w 
-            mps = axpy!(1,contract(EnvL.A[i],EnvR.A[i]),mps)
+        for (i, tuples) in enumerate(lm.rev)
+            isempty(tuples) && continue
+            ind = [t[1] for t in tuples]
+            mps = axpy!(1, contract(EnvL.A[i], sum(EnvR.A[ind])), mps)
         end
     end
     return mps

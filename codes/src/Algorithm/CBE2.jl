@@ -17,7 +17,7 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{L2R};kw
     @timeit to "left orthogonalize" Lorth = orthogonalize!(tL,tL′,EnvL)
     @timeit to "right orthogonalize" Rorth = orthogonalize!(tR₀,tR′,EnvR)
 
-    CBEenv = CBEenvironment(tL′,tR′,tL,nothing,D_i,D_f,Λ,Lorth,Rorth)
+    CBEenv = CBEenvironment(tL′,tR′,tL,nothing,D_i,D_f,Λ,Lorth,Rorth,nothing)
 
     localto = CBE!(CBEenv,alg,info)
 
@@ -47,7 +47,7 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{R2L};kw
     @timeit to "left orthogonalize" Lorth = orthogonalize!(tL₀,tL′,EnvL)
     @timeit to "right orthogonalize" Rorth = orthogonalize!(tR,tR′,EnvR)
 
-    CBEenv = CBEenvironment(tL′,tR′,nothing,tR,D_i,D_f,Λ,Lorth,Rorth)
+    CBEenv = CBEenvironment(tL′,tR′,nothing,tR,D_i,D_f,Λ,Lorth,Rorth,nothing)
 
     localto = CBE!(CBEenv,alg,info)
 

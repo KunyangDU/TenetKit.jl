@@ -13,6 +13,10 @@ struct LayerMap{N,D₁,D₂}
     rev::Vector{Vector{NTuple{N,Int64}}}
 end
 
+function Base.:(==)(bm1::LayerMap{N,D₁,D₂}, bm2::LayerMap{N,D₁,D₂}) where {N,D₁,D₂}
+    return bm1.fwd == bm2.fwd && bm1.rev == bm2.rev
+end
+
 nsrc(::LayerMap{N,D₁,D₂}) where {N,D₁,D₂} = D₁
 ndst(::LayerMap{N,D₁,D₂}) where {N,D₁,D₂} = D₂
 Base.size(::LayerMap{N,D₁,D₂}) where {N,D₁,D₂} = (D₁, D₂)
@@ -42,6 +46,20 @@ function Base.iterate(bm::LayerMap{N,D₁,D₂}, state=(1, 1)) where {N,D₁,D�
     a > D₁ && return nothing
     p = bm.fwd[a][j]
     return ((a, p...), (a, j + 1))
+end
+
+# getindex(bm, :): 全部路径，返回 Vector{NTuple{N+1, Int64}}
+function Base.getindex(bm::LayerMap{N,D₁,D₂}, ::Colon) where {N,D₁,D₂}
+    total = length(bm)
+    result = Vector{NTuple{N+1,Int64}}(undef, total)
+    k = 1
+    for a in 1:D₁
+        for p in bm.fwd[a]
+            result[k] = (a, p...)
+            k += 1
+        end
+    end
+    return result
 end
 
 function Base.show(io::IO, bm::LayerMap{N,D₁,D₂}) where {N,D₁,D₂}
@@ -116,6 +134,12 @@ function compose(r1::LayerMap{N₁,D₁,DM}, r2::LayerMap{N₂,DM,D₂}) where {
     end
 
     return LayerMap{N,D₁,D₂}(fwd_new, rev_new)
+end
+
+# 三元复合: R₁: A→B, R₂: B→C, R₃: C→D → R₁∘R₂∘R₃: A→D
+function compose(r1::LayerMap{N₁,D₁,DM₁}, r2::LayerMap{N₂,DM₁,DM₂},
+                 r3::LayerMap{N₃,DM₂,D₂}) where {N₁,N₂,N₃,D₁,DM₁,DM₂,D₂}
+    return compose(compose(r1, r2), r3)
 end
 
 
