@@ -4,7 +4,7 @@ mutable struct DirectedEdge{T}
     to::DirectedNode
 end
 
-function add_edge!(from::DirectedNode, to::DirectedNode; weight::Float64 = 1.0)
+function add_edge!(from::DirectedNode, to::DirectedNode, weight::T) where T
     existing = findfirst(e -> e.to === to, from.out_edges)
     if existing !== nothing
         @assert from.out_edges[existing].weight == weight "bond added twice with non identity coefficient"
@@ -24,3 +24,11 @@ function _remove_edge!(from::DirectedNode, to::DirectedNode)
         idx2 !== nothing && deleteat!(to.in_edges, idx2)
     end
 end
+
+function Base.show(io::IO, edge::DirectedEdge)
+    print(io, "$(typeof(edge))[ $(edge.from) ⇨ $(edge.to) ]")
+end
+
+isdefault(A::DirectedEdge{<:Number}) = (A.weight == 1)
+inherit_weight!(A::DirectedEdge{<:Number}, w::Number) = (A.weight *= w)
+default_weight!(A::DirectedEdge{<:Number}) = (A.weight = 1.0)

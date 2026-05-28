@@ -79,3 +79,11 @@ end
 isfermionic(A::NTuple{N, Bool}) where N = ((-1)^sum(A) == -1)
 # isfermionic(A::Vector{Bool})= ((-1)^sum(A) == -1)
 
+# trivialspace(A::ObservableOperator) = trivialspace(A.A)
+# trivialspace(A::LocalOperator) = trivial(A.A)
+# trivialspace(A::AbstractTensorMap) = trivial(space(A)[1])
+
+_left_isometry(obj::DenseMPS) = space(obj[1])[1] |> x -> isometry(x,x)
+_right_isometry(obj::DenseMPS) = space(obj[end])[3]' |> x -> isometry(x,x)
+_left_isometry(obj::DenseMPO) = space(obj[1])[2] |> x -> isometry(x,x)
+_right_isometry(obj::DenseMPO) = space(obj[end])[3]' |> x -> isometry(x,x)

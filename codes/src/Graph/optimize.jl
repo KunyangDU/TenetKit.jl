@@ -18,12 +18,12 @@ function _lr_split_at!(layers::Vector{Vector{DirectedNode}}, pos::Int)
             parent = parent_edge.from
             issentinel(parent) && continue
             length(n.in_edges) <= 1 && break
-            m = DirectedNode(n.val)
+            m = DirectedNode(deepcopy(n.val))
             push!(layer, m)
             _remove_edge!(parent, n)
-            add_edge!(parent, m; weight = parent_edge.weight)
+            add_edge!(parent, m, deepcopy(parent_edge.weight))
             for out_e in copy(n.out_edges)
-                add_edge!(m, out_e.to; weight = out_e.weight)
+                add_edge!(m, out_e.to, deepcopy(out_e.weight))
             end
             changed = true
         end
@@ -42,12 +42,12 @@ function _rl_split_at!(layers::Vector{Vector{DirectedNode}}, pos::Int)
             child = child_edge.to
             issentinel(child) && continue
             length(n.out_edges) <= 1 && break
-            m = DirectedNode(n.val)
+            m = DirectedNode(deepcopy(n.val))
             push!(layer, m)
             _remove_edge!(n, child)
-            add_edge!(m, child; weight = child_edge.weight)
+            add_edge!(m, child, deepcopy(child_edge.weight))
             for in_e in copy(n.in_edges)
-                add_edge!(in_e.from, m; weight = in_e.weight)
+                add_edge!(in_e.from, m, deepcopy(in_e.weight))
             end
             changed = true
         end
@@ -56,7 +56,7 @@ function _rl_split_at!(layers::Vector{Vector{DirectedNode}}, pos::Int)
 end
 
 # 逐层优化：split 拆开 (保证 merge 时 push 安全) → merge 推 weight → 反向 merge 合回去
-function _lr_optimize!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
+function _l2r!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
     for pos in 1:length(layers)
         _lr_split_at!(layers, pos)
         _lr_merge_at!(layers, pos)
@@ -64,7 +64,7 @@ function _lr_optimize!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
     end
 end
 
-function _rl_optimize!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
+function _r2l!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
     for pos in reverse(1:length(layers))
         _rl_split_at!(layers, pos)
         _rl_merge_at!(layers, pos)
@@ -72,7 +72,7 @@ function _rl_optimize!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
     end
 end
 
-function _center_optimize!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
+function _lr2c!(layers::Vector{Vector{DirectedNode}}, isrev::Bool)
     L′ = div(length(layers),2)
     for pos in 1:L′
         _lr_split_at!(layers, pos)
@@ -92,14 +92,15 @@ function _extract_layers(dag::DirectedAcyclicGraph)
     layers = Vector{DirectedNode}[]
     cur = [dag.source[1]]
     while true
+        push!(layers, cur)
         nxt = _next_nodes(cur)
-        real = filter(!issentinel, nxt)
-        isempty(real) && break
-        push!(layers, real)
-        cur = real
+        isempty(nxt) && break
+        cur = nxt
     end
     return layers
 end
+
+clear!(layers::Vector{Vector{DirectedNode}}) = map(layer -> filter!(n -> !(isempty(n.in_edges) && isempty(n.out_edges)), layer),layers)
 
 # ========================= 优化入口 =========================
 """
@@ -108,20 +109,21 @@ end
 对 DirectedAcyclicGraph 运行 Moore 框架下的逐层 merge-split 优化，迭代至不动点。
 """
 function optimize!(dag::DirectedAcyclicGraph;N::Int64 = 20)
-    layers = _extract_layers(dag)
-    isempty(layers) && return dag
+    to = TimerOutput()
+    @timeit to "collect layer" layers = _extract_layers(dag)
+    isempty(layers) && return dag,to
+
     # 迭代至不动点
     for i in 1:N
         old = [length(l) for l in layers]
-        _lr_optimize!(layers, i ≠ 1)
-        _rl_optimize!(layers, true)
-        _center_optimize!(layers,true)
+        @timeit to "sweep!" begin
+            @timeit to "_l2r!" _l2r!(layers, i ≠ 1)
+            @timeit to "_r2l!" _r2l!(layers, true)
+            @timeit to "_lr2c!" _lr2c!(layers,true)
+        end
+        @timeit to "clear!" clear!(layers)
         [length(l) for l in layers] == old && break
     end
 
-    for layer in layers
-        filter!(n -> !(isempty(n.in_edges) && isempty(n.out_edges)), layer)
-    end
-
-    return dag
+    return dag,to
 end

@@ -12,7 +12,7 @@ function addIntr!(ig::InteractionGraph,
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap})
     strength ≈ 0 && return nothing
-    tunnel = InteractionTunnel((A,), (site,), (name,), (fermionic,), strength, Z, ig.L)
+    tunnel = InteractionTunnel((A,), (site,), (name,), (fermionic,), strength, Z, ig.L, LocalOperator)
     push!(ig.tunnel, tunnel)
     ig.graph = nothing
     return nothing
@@ -27,7 +27,7 @@ function addIntr!(ig::InteractionGraph,
     strength::Number,
     Z::Union{Nothing,AbstractTensorMap}) where N
     strength ≈ 0 && return nothing
-    tunnel = InteractionTunnel(A, site, name, fermionic, strength, Z, ig.L)
+    tunnel = InteractionTunnel(A, site, name, fermionic, strength, Z, ig.L, LocalOperator)
     push!(ig.tunnel, tunnel)
     ig.graph = nothing
     return nothing

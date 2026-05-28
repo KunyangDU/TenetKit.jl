@@ -1,6 +1,6 @@
 
-mutable struct InteractionTunnel{L,N}
-    A::NTuple{N,LocalOperator}
+mutable struct InteractionTunnel{L,T,N}
+    A::NTuple{N,T}
     fermionic::NTuple{N,Bool}
     Z::Union{Nothing,AbstractTensorMap}
     strength::Float64
@@ -11,14 +11,14 @@ mutable struct InteractionTunnel{L,N}
         fermionic::NTuple{N,Bool},
         strength::Number,
         Z::Union{Nothing,AbstractTensorMap},
-        L::Int64
+        L::Int64,T::Type = LocalOperator
     ) where N
-        ops = ntuple(i -> LocalOperator(As[i], names[i], sites[i], 1.0), N)
-        new{L,N}(ops, fermionic, Z, Float64(strength))
+        ops = ntuple(i -> T(As[i], names[i], sites[i]), N)
+        new{L,T,N}(ops, fermionic, Z, Float64(strength))
     end
 end
 
-function Base.getindex(obj::InteractionTunnel{L,N}, i::Int64) where {L,N}
+function Base.getindex(obj::InteractionTunnel{L,<:LocalOperator,N}, i::Int64) where {L,N}
     sites = map(x -> x.site, obj.A)
     idx = findfirst(x -> x == i, sites)
     idx !== nothing && return obj.A[idx]
@@ -26,8 +26,6 @@ function Base.getindex(obj::InteractionTunnel{L,N}, i::Int64) where {L,N}
     return iseven(sum([(sites[j] > i && obj.fermionic[j]) ? 1 : 0 for j in 1:N])) ? IdentityOperator(i) : LocalOperator(obj.Z, "Z", i)
 end
 
+Base.getindex(obj::InteractionTunnel{L,<:LocalOperator,N}, r::UnitRange{Int64}) where {L,N} = [obj[i] for i in r]
 Base.length(::InteractionTunnel{L}) where L = L
 
-function Base.getindex(obj::InteractionTunnel, r::UnitRange{Int64})
-    return [obj[i] for i in r]
-end

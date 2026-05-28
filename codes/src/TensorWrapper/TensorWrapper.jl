@@ -59,18 +59,6 @@ axpby!(α::Number, A::AbstractTensorWrapper, ::Number, ::Nothing) = α * A
 axpby!(::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
 axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
 axpy!(::Number, ::Nothing, B::AbstractTensorWrapper) = B
-function axpy!(α::Number, x::AbstractLocalOperator, y::AbstractLocalOperator)
-    # @show "check"
-    # @assert x.Opri ≈ y.Opri
-    @assert x.site == y.site
-    # @assert x.name == y.name
-    y.strength += α * x.strength
-    y.A += x.A
-    return y
-end
-
-axpy!(::Number,::Nothing,y::AbstractLocalOperator) = y
-axpy!(α::Number,x::AbstractLocalOperator,::Nothing) = α * x
 
 add!(A::AbstractTensorWrapper, B::AbstractTensorWrapper) = axpy!(true, B, A)
 add!(A::AbstractTensorWrapper, ::Nothing) = A
@@ -178,11 +166,6 @@ Base.:-(A::T, B::T) where T <: AbstractTensorWrapper = T(A.A - B.A)
 Base.:*(A::T,B::T) where T <: AbstractTensorWrapper = T(A.A * B.A)
 Base.:*(A::Number,B::T) where T <: AbstractTensorWrapper = T(A * B.A)
 Base.:/(A::T,B::Number) where T <: AbstractTensorWrapper = (1/B) * A
-function Base.:*(A::Number,B::AbstractLocalOperator)
-    B.strength *= A
-    return B 
-end
-
 
 scale(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale((t[1].A,t[2]))
 scale!!(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale!!((t[1].A,t[2]))

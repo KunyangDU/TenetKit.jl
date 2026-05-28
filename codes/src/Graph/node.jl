@@ -48,3 +48,10 @@ function _next_nodes(cur::Vector)
     return convert(Vector{DirectedNode}, result)
 end
 
+child(node::DirectedNode) = map(x -> (x,x.to), node.out_edges)
+parent(node::DirectedNode) = map(x -> (x,x.from), node.in_edges)
+
+function Base.show(io::IO, node::DirectedNode)
+    print(io, "$(typeof(node))($(length(node.in_edges)) → $(node.val) → $(length(node.out_edges)))")
+    # print(io, "$(typeof(node))($(tuple(map(x -> x.from.val,node.in_edges)...)) → $(node.val) → $(tuple(map(x -> x.to.val,node.out_edges)...)))")
+end

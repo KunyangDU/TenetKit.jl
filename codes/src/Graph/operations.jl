@@ -4,7 +4,7 @@
 # -- weight 继承：仅当 bond weight 冲突时才推系数 --
 # 合并时 other 的共享边会被删除，若 keeper 同位置 weight 相同则直接覆盖，无需推；
 # 仅当 weight 不同 (冲突) 时才将各自 weight 推到非共享边，共享边统一重置为 1。
-function _merge_inherit_weight!(keeper::DirectedNode, other::DirectedNode, ::Type{Float64}, ::L2R)
+function _merge_inherit_weight!(keeper::DirectedNode, other::DirectedNode, ::L2R)
     # 无冲突：两节点入边 weight 相同，keeper 入边覆盖 other 路径
     # keeper.in_edges[1].weight ≈ other.in_edges[1].weight && return
     # 有冲突：各自入边 weight 推到各自出边，入边统一重置为 1
@@ -12,18 +12,18 @@ function _merge_inherit_weight!(keeper::DirectedNode, other::DirectedNode, ::Typ
         @assert length(n.in_edges) == 1
         for in_e in n.in_edges
             w = in_e.weight
-            length(n.out_edges) > 1 && (@assert in_e.weight == 1)
+            length(n.out_edges) > 1 && (@assert isdefault(in_e))
             # in_e.weight ≠ 1 && (@assert length(n.out_edges) == 1)
             for out_e in n.out_edges
-                @assert 1 in (in_e.weight,out_e.weight)
-                out_e.weight *= w
+                @assert (isdefault(in_e) || isdefault(out_e))
+                inherit_weight!(out_e,w)
             end
-            in_e.weight = 1.0
+            default_weight!(in_e)
         end
     end
 end
 
-function _merge_inherit_weight!(keeper::DirectedNode, other::DirectedNode, ::Type{Float64}, ::R2L)
+function _merge_inherit_weight!(keeper::DirectedNode, other::DirectedNode, ::R2L)
     # 无冲突：两节点出边 weight 相同，keeper 出边覆盖 other 路径
     # keeper.out_edges[1].weight ≈ other.out_edges[1].weight && return
     # 有冲突：各自出边 weight 推到各自入边，出边统一重置为 1
@@ -31,24 +31,24 @@ function _merge_inherit_weight!(keeper::DirectedNode, other::DirectedNode, ::Typ
         @assert length(n.out_edges) == 1
         for out_e in n.out_edges
             w = out_e.weight
-            length(n.in_edges) > 1 && (@assert out_e.weight == 1)
+            length(n.in_edges) > 1 && (@assert isdefault(out_e))
             # out_e.weight ≠ 1 && (@assert length(n.in_edges) == 1)
             for in_e in n.in_edges
-                @assert 1 in (in_e.weight,out_e.weight)
-                in_e.weight *= w
+                @assert (isdefault(in_e) || isdefault(out_e))
+                inherit_weight!(in_e, w)
             end
-            out_e.weight = 1.0
+            default_weight!(out_e)
         end
     end
 end
 
 function _merge_into!(keeper::DirectedNode, other::DirectedNode, direction = L2R())
-    _merge_inherit_weight!(keeper, other, Float64, direction)
+    _merge_inherit_weight!(keeper, other, direction)
     if direction == L2R()
         # L2R: 同 in-set → other 入边可删 (keeper 已有); 不同 out-set → other 出边并入 keeper
         for e in copy(other.out_edges)
             _remove_edge!(other, e.to)
-            add_edge!(keeper, e.to; weight = e.weight)
+            add_edge!(keeper, e.to, e.weight)
         end
         for e in copy(other.in_edges)
             _remove_edge!(e.from, other)
@@ -59,7 +59,7 @@ function _merge_into!(keeper::DirectedNode, other::DirectedNode, direction = L2R
         end
         for e in copy(other.in_edges)
             _remove_edge!(e.from, other)
-            add_edge!(e.from, keeper; weight = e.weight)
+            add_edge!(e.from, keeper, e.weight)
         end
     end
     empty!(other.out_edges)
