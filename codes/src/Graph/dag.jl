@@ -39,6 +39,23 @@ function collect_nodes(dag::DirectedAcyclicGraph)
     return all_nodes
 end
 
+# -- 收集全部边 --
+function collect_edges(dag::DirectedAcyclicGraph)
+    edges = DirectedEdge[]
+    seen = Set{DirectedNode}()
+    queue = collect(Any, dag.source)
+    while !isempty(queue)
+        n = popfirst!(queue)
+        n in seen && continue
+        push!(seen, n)
+        for e in n.out_edges
+            push!(edges, e)
+            e.to in seen || push!(queue, e.to)
+        end
+    end
+    return edges
+end
+
 # -- 枚举 source → sink 的全部路径 --
 function paths(dag::DirectedAcyclicGraph)
     result = Vector{Vector{DirectedNode}}()

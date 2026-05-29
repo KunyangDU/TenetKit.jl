@@ -62,9 +62,11 @@ include("Observables/tunnel.jl")
 include("Observables/graph.jl")
 include("Observables/weight.jl")
 include("Observables/addObs.jl")
-include("Observables/calObs.jl")
 include("Observables/update.jl")
 include("Observables/tools.jl")
+include("Observables/stack.jl")
+include("Observables/calObs.jl")
+
 
 include("tools/algebra.jl")
 include("tools/geometry.jl")

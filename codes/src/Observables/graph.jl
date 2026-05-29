@@ -23,8 +23,8 @@ end
 
 function DirectedAcyclicGraph(tunnels::Vector{InteractionTunnel{L,ObservableOperator}}) where L
     isempty(tunnels) && return DirectedAcyclicGraph((), ())
-    entry = sentinel(AbstractLocalOperator)
-    exit_s = sentinel(AbstractLocalOperator)
+    entry = sentinel(ObservableOperator{0,0})
+    exit_s = sentinel(ObservableOperator{0,0})
     for tun in tunnels
         prev = entry
         for pos in 1:L
