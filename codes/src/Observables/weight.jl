@@ -7,6 +7,8 @@ mutable struct ObservableWeight
     ObservableWeight() = new(nothing,nothing,nothing,nothing,ReentrantLock())
 end
 
+composite(::ObservableWeight, ::ObservableWeight) = ObservableWeight()
+
 isdefault(A::DirectedEdge{ObservableWeight}) = isnothing(A.weight.EnvL) && isnothing(A.weight.EnvR) && isnothing(A.weight.leftdata) && isnothing(A.weight.rightdata)
 isleftdefault(A::DirectedEdge{ObservableWeight}) = isnothing(A.weight.EnvL) && isnothing(A.weight.leftdata)
 isrightdefault(A::DirectedEdge{ObservableWeight}) = isnothing(A.weight.EnvR) && isnothing(A.weight.rightdata)

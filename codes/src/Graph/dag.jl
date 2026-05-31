@@ -82,3 +82,31 @@ function Base.show(io::IO, dag::DirectedAcyclicGraph)
 end
 
 graphsize(ig::DirectedAcyclicGraph) = length(collect_nodes(ig))
+
+
+function composite(A::DirectedAcyclicGraph, B::DirectedAcyclicGraph)
+    # cause errors for calObs by introducing multi in/out edges
+    layersA = _extract_layers(A)
+    layersB = _extract_layers(B)
+    @assert (L = length(layersA)) == length(layersB) "DAGs must have same number of layers, got $(length(layersA)) vs $(length(layersB))"
+    
+    layers = Vector{DirectedNode}[]
+    mapping = Dict{NTuple{2,DirectedNode},DirectedNode}()
+    for i in 1:L
+        layer = DirectedNode[]
+        lA = layersA[i]
+        lB = layersB[i]
+        tmp = Dict{NTuple{2,DirectedNode},DirectedNode}()
+        for nA in lA, nB in lB
+            !haskey(mapping,(nA,nB)) && (mapping[(nA,nB)] = DirectedNode(composite(nA.val,nB.val)))
+            for (eA,cA) in child(nA), (eB,cB) in child(nB)
+                !haskey(tmp,(cA,cB)) && (tmp[(cA,cB)] = DirectedNode(composite(cA.val,cB.val)))
+                add_edge!(mapping[(nA,nB)],tmp[(cA,cB)],composite(eA.weight,eB.weight))
+            end
+            push!(layer,mapping[(nA,nB)])
+        end
+        push!(layers,layer)
+        mapping = tmp
+    end
+    return DirectedAcyclicGraph(Tuple(layers[1]),Tuple(layers[end]))
+end

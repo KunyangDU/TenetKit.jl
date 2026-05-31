@@ -22,3 +22,4 @@ abstract type AbstractObservableForest end
 abstract type AbstractLocalOperator{R₁,R₂} end
 
 abstract type AbstractGraph end
+abstract type AbstractTunnel{L,T} end

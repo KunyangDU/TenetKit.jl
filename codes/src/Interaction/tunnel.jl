@@ -1,5 +1,5 @@
 
-mutable struct InteractionTunnel{L,T,N}
+mutable struct InteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
     A::NTuple{N,T}
     fermionic::NTuple{N,Bool}
     Z::Union{Nothing,AbstractTensorMap}
@@ -26,6 +26,15 @@ function Base.getindex(obj::InteractionTunnel{L,<:LocalOperator,N}, i::Int64) wh
     return iseven(sum([(sites[j] > i && obj.fermionic[j]) ? 1 : 0 for j in 1:N])) ? IdentityOperator(i) : LocalOperator(obj.Z, "Z", i)
 end
 
-Base.getindex(obj::InteractionTunnel{L,<:LocalOperator,N}, r::UnitRange{Int64}) where {L,N} = [obj[i] for i in r]
-Base.length(::InteractionTunnel{L}) where L = L
+mutable struct CompositeInteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
+    A::NTuple{N,InteractionTunnel{L}}
+    strength::Float64
+end
+
+Base.getindex(obj::CompositeInteractionTunnel, i::Int64) = CompositeObservableOperator([a[i] for a in obj.A])
+composite(A::InteractionTunnel{L,T}, B::InteractionTunnel{L,T}) where {L,T <: ObservableOperator} = CompositeInteractionTunnel{L,CompositeObservableOperator{2},2}(NTuple{2,InteractionTunnel{L}}((A,B)), A.strength * B.strength)
+
+
+Base.getindex(obj::AbstractTunnel, r::UnitRange{Int64}) = [obj[i] for i in r]
+Base.length(::AbstractTunnel{L}) where L = L
 

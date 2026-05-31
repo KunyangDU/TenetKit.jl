@@ -27,15 +27,15 @@ function _calObs_serial!(obs::InteractionGraph,obj::T;kwargs...) where T <: Unio
     data = obs.values
     push!(stack, obs.graph.source[1],obs.graph.sink[1])
     while !isempty(stack)
-        @timeit to "pop!"    task = popat!(stack,1)           # LIFO: depth-first
+        @timeit to "pop!"    task = pop!(stack)           # LIFO: depth-first
         @timeit to "update!" ans = _update!(task, obj)
-        if typeof(ans) <: Tuple
+        if ans isa Tuple
             name,site,value = ans
             !haskey(data,name) && (data[name] = Dict{Tuple,Number}())
             @assert !haskey(data[name],site) "Observable Overcounted!"
             data[name][site] = value
-        else
-            @timeit to "push!" push!(stack, ans...)
+        elseif ans isa AbstractDirection
+            @timeit to "push!" push!(stack, dispatch!(task, ans)...)
         end
     end
     return to
@@ -105,14 +105,12 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
         @timeit to "put!" put!(ch, Obs.graph.source[1])
         @timeit to "put!" put!(ch, Obs.graph.sink[1])
 
-        let remain = length(Obs.tunnel)
+        let remain = length(paths(Obs.graph))
             total = remain
             # showtimes=0 means silent (e.g. warmup runs). Guard against cld(total,0).
             showspacing::Int64 = showtimes > 0 ? cld(total, showtimes) : typemax(Int64)
             while remain > 0
-                # for task in task_work
-                #     istaskfailed(task) && fetch(task)
-                # end
+                @show remain
                 info = take!(ch_info)
                 if info[1] == :err
                     isopen(ch) && close(ch)
@@ -159,15 +157,17 @@ function _calObs_work!(obj::T, ch::Channel, ch_swap::LIFOStack;
     @timeit to "take!" push!(task, take!(ch))
     while !isempty(task)
         let p = pop!(task)
-            @timeit to "update!" ans = _update!(p, obj)
-            if typeof(ans) <: Tuple 
+            @timeit to "update!" ans = lock(typeof(p) <: ObservableWeight ? p.lock : p.val.lock) do
+                _update!(p, obj)
+            end
+            if ans isa Tuple 
                 name,site,value = ans
                 !haskey(data,name) && (data[name] = Dict{Tuple,Number}())
                 @assert !haskey(data[name],site) "Observable Overcounted!"
                 data[name][site] = value
                 count += 1
-            else
-                for a in ans
+            elseif ans isa AbstractDirection
+                for a in dispatch!(p, ans)
                     if length(task) < max_local
                         push!(task, a)              # stay local: DFS continues
                     else

@@ -1,15 +1,15 @@
 ObservableGraph(L::Int64) = InteractionGraph(L,ObservableOperator)
 
 # -- 初始化 InteractionGraph：建 DAG --
-function initialize!(ig::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}};verbose::Bool = true) where L
+function initialize!(ig::InteractionGraph{L,T,DirectedAcyclicGraph{1,1}};verbose::Bool = true) where {L,T <: Union{ObservableOperator,CompositeObservableOperator}}
     to = TimerOutput()
     @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
     @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
     @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph)
     merge!(to,localto;tree_point = ["optimize!"])
     verbose && (show(to;title = "Observable Graph"); print("\n"); flush(stdout))
-    ig.graph.source[1].val = ObservableOperator(0)
-    ig.graph.sink[1].val = ObservableOperator(L + 1)
+    ig.graph.source[1].val = T(0)
+    ig.graph.sink[1].val = T(L + 1)
     ig.values = Dict{Tuple,Dict}()
     return ig
 end
@@ -21,10 +21,10 @@ function setdefault!(ig::InteractionGraph{L,ObservableOperator,DirectedAcyclicGr
     ig.graph.sink[1].val.rightdata = Dict("site" => Int64[], "name" => String[])
 end
 
-function DirectedAcyclicGraph(tunnels::Vector{InteractionTunnel{L,ObservableOperator}}) where L
+function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,T}}) where {L,T <: Union{ObservableOperator, CompositeObservableOperator}}
     isempty(tunnels) && return DirectedAcyclicGraph((), ())
-    entry = sentinel(ObservableOperator{0,0})
-    exit_s = sentinel(ObservableOperator{0,0})
+    entry = sentinel(T)
+    exit_s = sentinel(T)
     for tun in tunnels
         prev = entry
         for pos in 1:L

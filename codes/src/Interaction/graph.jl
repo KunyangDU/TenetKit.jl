@@ -1,16 +1,16 @@
 
 mutable struct InteractionGraph{L,T,G <: DirectedAcyclicGraph{1,1}}
     graph::Union{Nothing, G}
-    tunnel::Vector{InteractionTunnel{L,T}}
+    tunnel::Vector{AbstractTunnel{L,T}}
     values::Union{Nothing, Dict}
     L::Int64
 
-    function InteractionGraph(tunnel::Vector{<:InteractionTunnel{L,T,N}}) where {L,T,N}
+    function InteractionGraph(tunnel::Vector{<:AbstractTunnel{L,T}}) where {L,T}
         return new{L, T, DirectedAcyclicGraph{1,1}}(nothing, tunnel, nothing, L)
     end
 
     function InteractionGraph(L::Int64, T::Type = LocalOperator)
-        return new{L, T, DirectedAcyclicGraph{1,1}}(nothing, Vector{InteractionTunnel{L,T}}(), nothing, L)
+        return new{L, T, DirectedAcyclicGraph{1,1}}(nothing, Vector{AbstractTunnel{L,T}}(), nothing, L)
     end
 end
 
@@ -30,7 +30,7 @@ end
 
 
 function Base.show(io::IO, ig::InteractionGraph{L}) where L
-    print(io, "$(typeof(ig)) $(100*(1 - round((isnothing(ig.graph) ? length(ig.tunnel) * L : graphsize(ig.graph)) / length(ig.tunnel) / L;digits = 4)))% compressed\n")
+    print(io, "$(typeof(ig)) $(round(100*(1 - (isnothing(ig.graph) ? length(ig.tunnel) * L : graphsize(ig.graph)) / length(ig.tunnel) / L);digits = 4))% compressed\n")
     println(io, " - ","graph : ", isnothing(ig.graph) ? Nothing : ig.graph)
     println(io, " - ","tunnel: $(length(ig.tunnel)) x $(typeof(ig.tunnel))")
     println(io, " - ","values: $(typeof(ig.values)) -> $(isnothing(ig.values) ? 0 : dictsize(ig.values)) elements")
