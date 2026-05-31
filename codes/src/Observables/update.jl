@@ -1,36 +1,32 @@
 function dispatch!(node::DirectedNode, ::L2R)
-    EnvL = node.val.EnvL
-    leftdata = node.val.leftdata
+    EnvL,leftdata = lock(node.val.lock) do
+        node.val.EnvL, node.val.leftdata
+    end
     tasks = []
     for (e,c) in child(node)
+        leftdata′ = deepcopy(leftdata)
         wt = e.weight
-        wt_EnvL = deepcopy(EnvL)
-        wt_leftdata = deepcopy(leftdata)
         edge_done = false
         lock(wt.lock) do
             if !isrightdefault(e)
-                wt.EnvL = wt_EnvL
-                wt.leftdata = wt_leftdata
+                wt.EnvL = EnvL
+                wt.leftdata = leftdata′
                 push!(tasks, wt)
                 edge_done = true
                 return
             elseif length(parent(c)) > 1
-                wt.EnvL = wt_EnvL
-                wt.leftdata = wt_leftdata
+                wt.EnvL = EnvL
+                wt.leftdata = leftdata′
                 edge_done = true
                 return
             end
         end
         edge_done && continue
-        c_val_EnvL = deepcopy(EnvL)
-        c_val_leftdata = deepcopy(leftdata)
-        ispush = false
         lock(c.val.lock) do
-            c.val.EnvL = c_val_EnvL
-            c.val.leftdata = c_val_leftdata
-            ispush = true
+            c.val.EnvL = EnvL
+            c.val.leftdata = leftdata′
         end
-        ispush && push!(tasks, c)
+        push!(tasks, c)
     end
     lock(node.val.lock) do
         isrightdefault(node.val) && leftdelfault_val!(node)
@@ -39,38 +35,34 @@ function dispatch!(node::DirectedNode, ::L2R)
 end
 
 function dispatch!(node::DirectedNode, ::R2L)
-    EnvR = node.val.EnvR
-    rightdata = node.val.rightdata
+    EnvR,rightdata = lock(node.val.lock) do
+        node.val.EnvR, node.val.rightdata
+    end
     tasks = []
     for (e,p) in parent(node)
+        rightdata′ = deepcopy(rightdata)
         wt = e.weight
-        wt_EnvR = deepcopy(EnvR)
-        wt_rightdata = deepcopy(rightdata)
         edge_done = false
         lock(wt.lock) do
             if !isleftdefault(e)
-                wt.EnvR = wt_EnvR
-                wt.rightdata = wt_rightdata
+                wt.EnvR = EnvR
+                wt.rightdata = rightdata′
                 push!(tasks, wt)
                 edge_done = true
                 return
             elseif length(child(p)) > 1
-                wt.EnvR = wt_EnvR
-                wt.rightdata = wt_rightdata
+                wt.EnvR = EnvR
+                wt.rightdata = rightdata′
                 edge_done = true
                 return
             end
         end
         edge_done && continue
-        p_val_EnvR = deepcopy(EnvR)
-        p_val_rightdata = deepcopy(rightdata)
-        ispush = false
         lock(p.val.lock) do
-            p.val.EnvR = p_val_EnvR
-            p.val.rightdata = p_val_rightdata
-            ispush = true
+            p.val.EnvR = EnvR
+            p.val.rightdata = rightdata′
         end
-        ispush && push!(tasks, p)
+        push!(tasks, p)
     end
     lock(node.val.lock) do
         isleftdefault(node.val) && rightdelfault_val!(node)
