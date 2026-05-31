@@ -13,7 +13,9 @@ function rightdelfault_val!(node::DirectedNode{T}) where T <:  Union{CompositeOb
     node.val.rightdata = nothing
 end
 
-isdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isnothing(node.EnvL) && isnothing(node.EnvR) && isnothing(node.leftdata) && isnothing(node.rightdata)
+isdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isleftdefault(node) && isrightdefault(node)
+isrightdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isnothing(node.EnvL) && isnothing(node.leftdata)
+isleftdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isnothing(node.EnvR) && isnothing(node.rightdata)
 
 _lr_merge(left::Dict,right::Dict) = map(x -> _lr_merge(left[x],right[x]), ["name","site"])
 

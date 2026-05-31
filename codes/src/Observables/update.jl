@@ -9,14 +9,12 @@ function dispatch!(node::DirectedNode, ::L2R)
         edge_done = false
         lock(wt.lock) do
             if !isrightdefault(e)
-                # (!isnothing(wt.EnvL) || !isnothing(wt.leftdata)) && return
                 wt.EnvL = wt_EnvL
                 wt.leftdata = wt_leftdata
                 push!(tasks, wt)
                 edge_done = true
                 return
             elseif length(parent(c)) > 1
-                # (!isnothing(wt.EnvL) || !isnothing(wt.leftdata)) && return
                 wt.EnvL = wt_EnvL
                 wt.leftdata = wt_leftdata
                 edge_done = true
@@ -28,7 +26,6 @@ function dispatch!(node::DirectedNode, ::L2R)
         c_val_leftdata = deepcopy(leftdata)
         ispush = false
         lock(c.val.lock) do
-            # isnothing(c.val.EnvL) || return
             c.val.EnvL = c_val_EnvL
             c.val.leftdata = c_val_leftdata
             ispush = true
@@ -36,7 +33,7 @@ function dispatch!(node::DirectedNode, ::L2R)
         ispush && push!(tasks, c)
     end
     lock(node.val.lock) do
-        leftdelfault_val!(node)
+        isrightdefault(node.val) && leftdelfault_val!(node)
     end
     return tasks
 end
@@ -52,14 +49,12 @@ function dispatch!(node::DirectedNode, ::R2L)
         edge_done = false
         lock(wt.lock) do
             if !isleftdefault(e)
-                # (!isnothing(wt.EnvR) || !isnothing(wt.rightdata)) && return
                 wt.EnvR = wt_EnvR
                 wt.rightdata = wt_rightdata
                 push!(tasks, wt)
                 edge_done = true
                 return
             elseif length(child(p)) > 1
-                # (!isnothing(wt.EnvR) || !isnothing(wt.rightdata)) && return
                 wt.EnvR = wt_EnvR
                 wt.rightdata = wt_rightdata
                 edge_done = true
@@ -71,7 +66,6 @@ function dispatch!(node::DirectedNode, ::R2L)
         p_val_rightdata = deepcopy(rightdata)
         ispush = false
         lock(p.val.lock) do
-            # isnothing(p.val.EnvR) || return
             p.val.EnvR = p_val_EnvR
             p.val.rightdata = p_val_rightdata
             ispush = true
@@ -79,7 +73,7 @@ function dispatch!(node::DirectedNode, ::R2L)
         ispush && push!(tasks, p)
     end
     lock(node.val.lock) do
-        rightdelfault_val!(node)
+        isleftdefault(node.val) && rightdelfault_val!(node)
     end
     return tasks
 end
@@ -90,7 +84,6 @@ function _update!(node::DirectedNode, obj::T) where T <: Union{DenseMPS,DenseMPO
      hasL &&  hasR && return _update!(node, obj, C2C())
     !hasL &&  hasR && return _update!(node, obj, R2L())
      hasL && !hasR && return _update!(node, obj, L2R())
-    throw(ErrorException("multi threading error"))
 end
 
 function _update!(node::DirectedNode, obj::T, ::L2R) where T <: Union{DenseMPS{L},DenseMPO{L}} where L

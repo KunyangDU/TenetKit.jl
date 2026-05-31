@@ -110,7 +110,6 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
             # showtimes=0 means silent (e.g. warmup runs). Guard against cld(total,0).
             showspacing::Int64 = showtimes > 0 ? cld(total, showtimes) : typemax(Int64)
             while remain > 0
-                @show remain
                 info = take!(ch_info)
                 if info[1] == :err
                     isopen(ch) && close(ch)
