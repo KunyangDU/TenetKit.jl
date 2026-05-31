@@ -5,6 +5,7 @@ mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
     site::Int64
 
     LocalOperator(A::AbstractTensorMap, name::String, site::Int64) = new{length(codomain(A)),length(domain(A))}(A, name, site)
+    LocalOperator{R₁,R₂}(A::AbstractTensorMap, name::String, site::Int64) where {R₁,R₂} = new{R₁,R₂}(A, name, site)
 end
 
 function Base.show(io::IO,A::LocalOperator)
@@ -14,22 +15,22 @@ end
 
 mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
     A::Union{Nothing, AbstractTensorMap}
-    site::Int64
     name::Union{Nothing,String,Tuple}
+    site::Int64
     function IdentityOperator(A::AbstractTensorMap,site::Int64)
-        return new{length(codomain(A))}(nothing, site, nothing)
+        return new{length(codomain(A))}(nothing, nothing, site)
    end
     function IdentityOperator(site::Int64, name::Union{String,Tuple})
-        return new{1}(nothing, site, name)
+        return new{1}(nothing, name, site)
     end
 
     function IdentityOperator(site::Int64)
-        return new{1}(nothing, site, nothing)
+        return new{1}(nothing, nothing, site)
     end
 
     function IdentityOperator(A::LocalOperator)
         A′ = getIdTensor(A)
-        return new{length(codomain(A′))}(nothing, A.site, nothing)
+        return new{length(codomain(A′))}(nothing, nothing, A.site)
     end
 
     function IdentityOperator(A::IdentityOperator)
@@ -37,6 +38,7 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
     end
 
     IdentityOperator() = IdentityOperator(0)
+    IdentityOperator{R}(::Nothing,::Nothing,site::Int64) where R = new{R}(nothing,nothing,site)
 end
 
 function Base.show(io::IO,A::IdentityOperator)
@@ -55,6 +57,8 @@ function Base.isequal(A::LocalOperator, B::LocalOperator)
     A.site ≠ B.site && return false
     return A.A ≈ B.A
 end
+
+Base.copy(A::T) where T <: Union{LocalOperator,IdentityOperator} = T(A.A, A.name, A.site)
 
 function getIdTensor(A::AbstractLocalOperator)
     space = codomain(A.A)[1]

@@ -70,7 +70,7 @@ function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnviron
     EnvRorth = Vector(undef, length(H.left.fwd))
     EnvRorth .= nothing
     validind = _validind(H)
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -108,7 +108,7 @@ function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironm
     EnvLorth = Vector(undef, length(H.right.rev))
     EnvLorth .= nothing
     validind = _validind(H)
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)

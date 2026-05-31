@@ -21,7 +21,7 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
     tmpEnvR = Vector{Any}(nothing, mpo.D[site][2])
     r_map = _validind1(mpo[site], R2L())
     validind = [(j, r_pairs) for (j, r_pairs) in enumerate(r_map) if !isempty(r_pairs)]
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -56,7 +56,7 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
     tmpEnvL = Vector{Any}(nothing, mpo.D[site][2])
     l_map = _validind1(mpo[site], L2R())
     validind = [(j, l_pairs) for (j, l_pairs) in enumerate(l_map) if !isempty(l_pairs)]
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -122,7 +122,7 @@ function pushright(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::Adjoin
     l_map_down = _validind1(Hdown[site], L2R())
     vind_up = [(j, l_pairs) for (j, l_pairs) in enumerate(l_map_up) if !isempty(l_pairs)]
     vind_down = [(j, l_pairs) for (j, l_pairs) in enumerate(l_map_down) if !isempty(l_pairs)]
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -164,7 +164,7 @@ function pushleft(Hup::SparseMPO, ρ::DenseMPO, Hdown::SparseMPO, ρ′::Adjoint
     r_map_down = _validind1(Hdown[site], R2L())
     vind_up = [(j, r_pairs) for (j, r_pairs) in enumerate(r_map_up) if !isempty(r_pairs)]
     vind_down = [(j, r_pairs) for (j, r_pairs) in enumerate(r_map_down) if !isempty(r_pairs)]
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)

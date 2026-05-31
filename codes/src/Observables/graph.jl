@@ -17,20 +17,16 @@ function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,T}}) where {L,T <
     return DirectedAcyclicGraph((entry,), (exit_s,))
 end
 
-function composite(A::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}, B::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}) where L
-    C = InteractionGraph([composite(a,b) for a in A.tunnel for b in B.tunnel])
-    initialize!(C)
-    return C
-end
+composite(A::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}, B::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}) where L = InteractionGraph([composite(a,b) for a in A.tunnel for b in B.tunnel])
 
 # -- 初始化 InteractionGraph：建 DAG --
-function initialize!(ig::InteractionGraph{L,T,DirectedAcyclicGraph{1,1}};verbose::Bool = true) where {L,T <: Union{ObservableOperator,CompositeObservableOperator}}
+function initialize!(ig::InteractionGraph{L,T,DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where {L,T <: Union{ObservableOperator,CompositeObservableOperator}}
     to = TimerOutput()
     @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
     @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
-    @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph)
+    @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph;verbose = verbose, N = N)
     merge!(to,localto;tree_point = ["optimize!"])
-    verbose && (show(to;title = "Observable Graph"); print("\n"); flush(stdout))
+    show(to;title = "Observable Graph"); print("\n"); flush(stdout)
     ig.graph.source[1].val = T(0)
     ig.graph.sink[1].val = T(L + 1)
     ig.values = Dict{Tuple,Dict}()

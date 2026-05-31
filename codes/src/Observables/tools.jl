@@ -98,6 +98,7 @@ end
 function leftmergedata!(val::CompositeObservableOperator{2})
     for i in eachindex(val.A)
         val.isstring[i] && continue
+        # !isempty(val.leftdata["site"][i]) && val.leftdata["site"][i][end] == val.A[i].site && continue
         push!(val.leftdata["name"][i], val.A[i].name)
         push!(val.leftdata["site"][i], val.A[i].site)
     end
@@ -106,6 +107,7 @@ end
 function rightmergedata!(val::CompositeObservableOperator{2})
     for i in eachindex(val.A)
         val.isstring[i] && continue
+        # !isempty(val.rightdata["site"][i]) && val.rightdata["site"][i][end] == val.A[i].site && continue
         push!(val.rightdata["name"][i], val.A[i].name)
         push!(val.rightdata["site"][i], val.A[i].site)
     end
@@ -123,4 +125,10 @@ _calObs_right_contract(val::ObservableOperator, obj::T) where T <: Union{MPSTens
 
 _calObs_left_contract(val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(val.A[1], obj, val.A[2], obj', val.EnvL)
 _calObs_right_contract(val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(val.A[1], obj, val.A[2], obj', val.EnvR)
+
+_leftsite(val::ObservableOperator) = _endsite(val.leftdata["site"])
+_rightsite(val::ObservableOperator) = _endsite(val.rightdata["site"])
+_endsite(d::Vector{Int64}) = isempty(d) ? NaN : d[end] 
+_leftsite(val::CompositeObservableOperator) = (site = 0; map(x -> (site = max(site,_endsite(x))), val.leftdata["site"]); return site)
+_rightsite(val::CompositeObservableOperator) = (site = 0; map(x -> (site = max(site,_endsite(x))), val.rightdata["site"]); return site)
 

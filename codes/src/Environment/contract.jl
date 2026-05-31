@@ -160,7 +160,7 @@ function contract(EnvL::SparseLeftEnvironmentTensor{2}, Hup::SparseMPOTensor, t:
     tmp = 0
     vind_up = _validind(Hup)
     vind_down = _validind(Hdown)
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)

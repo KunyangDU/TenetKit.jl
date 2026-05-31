@@ -15,14 +15,11 @@ mutable struct InteractionGraph{L,T,G <: DirectedAcyclicGraph{1,1}}
 end
 
 # -- 初始化 InteractionGraph：建 DAG --
-function initialize!(ig::InteractionGraph{L, LocalOperator, DirectedAcyclicGraph{1,1}};verbose::Bool = false) where L
-    # @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
-    # ig.graph = DirectedAcyclicGraph(ig.tunnel)
-    # ig.graph = optimize!(ig.graph)
+function initialize!(ig::InteractionGraph{L, LocalOperator, DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where L
     to = TimerOutput()
     @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
     @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
-    @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph)
+    @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph;verbose = verbose, N = N)
     merge!(to,localto;tree_point = ["optimize!"])
     verbose && (show(to;title = "Interaction Graph"); print("\n"); flush(stdout))
     return ig

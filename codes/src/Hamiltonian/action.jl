@@ -2,7 +2,7 @@ function action(O::SparseProjectiveHamiltonian, obj::T) where T <: Union{MPSTens
     x = nothing
     to = get_timer("action")
     timer_acc = TimerOutput()
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     @timeit to "action" if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -45,7 +45,7 @@ function action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2})
     x = nothing
     to = get_timer("action")
     timer_acc = TimerOutput()
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     for ind in O.validinds
         C,localto = _action(O,obj,ind)
         x = axpy!(1,C,x)

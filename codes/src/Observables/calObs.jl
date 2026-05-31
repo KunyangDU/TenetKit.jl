@@ -4,7 +4,7 @@ function calObs!(Obs::InteractionGraph, obj::T;kwargs...) where T <: Union{Dense
     !isempty(Obs.values) && empty!(Obs.values)
     setdefault!(Obs,obj)
     
-    if get_num_threads_julia() ≤ 2
+    if get_nworker() ≤ 2
         to = _calObs_serial!(Obs,obj;kwargs...)
     else
         to = _calObs_threading!(Obs,obj;kwargs...)
@@ -43,7 +43,7 @@ end
 
 
 function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS};kwargs...)
-    nworker   = get(kwargs, :nworker,    get_num_threads_julia() - 1)
+    nworker   = get(kwargs, :nworker,    get_nworker() - 1)
     cachesize = get(kwargs, :cachesize,  4 * nworker)
     showtimes = get(kwargs, :showtimes,  20)
     isdisk    = get(kwargs, :isdisk,     false)

@@ -5,7 +5,7 @@ end
 
 # ========================= DirectedAcyclicGraph 构造函数 =========================
 # 从 tunnels 构建未优化的 DirectedAcyclicGraph
-function DirectedAcyclicGraph(tunnels::Vector{InteractionTunnel{L,LocalOperator}}) where L
+function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,LocalOperator}}) where L
     isempty(tunnels) && return DirectedAcyclicGraph((), ())
     entry = sentinel(AbstractLocalOperator)
     exit_s = sentinel(AbstractLocalOperator)

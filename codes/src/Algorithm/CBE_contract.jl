@@ -46,7 +46,7 @@ end
 
 function contract(EnvL::SparseLeftEnvironmentTensor{1}, EnvR::SparseRightEnvironmentTensor{1}, lm::LayerMap)
     mps = nothing
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)

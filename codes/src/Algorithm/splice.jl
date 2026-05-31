@@ -1,6 +1,6 @@
 function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
     tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -29,7 +29,7 @@ end
 
 function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
     tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -58,7 +58,7 @@ end
 
 function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)
@@ -87,7 +87,7 @@ end
 
 function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_num_threads_julia()
+    Nthr = get_nworker()
     if Nthr > 1
         Lock = Threads.ReentrantLock()
         counter = Threads.Atomic{Int64}(1)

@@ -8,6 +8,7 @@ mutable struct ObservableOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
     lock::ReentrantLock
     ObservableOperator(A::AbstractLocalOperator{R₁,R₂}, isstring::Bool) where {R₁,R₂} = new{R₁,R₂}(A,isstring,nothing,nothing,nothing,nothing,ReentrantLock())
     ObservableOperator(A::AbstractTensorMap, name::String, site::Int64, isstring::Bool = false) = new{length(codomain(A)),length(domain(A))}(LocalOperator(A, name, site),isstring,nothing,nothing,nothing,nothing,ReentrantLock())
+    ObservableOperator{R₁,R₂}(A::AbstractLocalOperator{R₁,R₂}, isstring::Bool) where {R₁,R₂} = new{R₁,R₂}(A,isstring,nothing,nothing,nothing,nothing,ReentrantLock())
 end
 
 trivial(A::ObservableOperator) = ObservableOperator(trivial(A.A), true)
@@ -25,6 +26,7 @@ mutable struct CompositeObservableOperator{N} <: AbstractLocalOperator{0,0}
     CompositeObservableOperator(A::NTuple{N,AbstractLocalOperator}, isstring::NTuple{N,Bool}) where N = new{N}(A, isstring, nothing, nothing, nothing, nothing,ReentrantLock())
     CompositeObservableOperator(A::Vector{<:ObservableOperator}) = CompositeObservableOperator(NTuple{length(A),AbstractLocalOperator}([a.A for a in A]), Tuple([a.isstring for a in A]))
     CompositeObservableOperator{N}(i::Int64) where N = CompositeObservableOperator([ObservableOperator(i) for _ in 1:N])
+    CompositeObservableOperator{N}(A::NTuple{N,AbstractLocalOperator}, isstring::NTuple{N,Bool}) where N = new{N}(A, isstring, nothing, nothing, nothing, nothing,ReentrantLock())
 end
 
 
@@ -35,5 +37,6 @@ end
 
 Base.isequal(A::T, B::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= isequal(A.A,B.A) && isequal(A.isstring,B.isstring)
 Base.show(io::IO,A::T) where T <: Union{ObservableOperator,CompositeObservableOperator} = show(io,A.A)
+Base.copy(A::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= T(A.A,A.isstring)
 
 

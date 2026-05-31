@@ -102,8 +102,14 @@ end
 function _update!(node::DirectedNode, obj::T, ::C2C) where T <: Union{DenseMPS{L},DenseMPO{L}} where L
     @assert 1 ≤ (site = _site(node.val)) ≤ L
     isnothing(node.val.EnvL) || isnothing(node.val.EnvR) && return nothing
-    !reduce(&,node.val.isstring) && leftmergedata!(node.val)
-    ans = contract(_calObs_left_contract(node.val, obj[site]), node.val.EnvR)
+    
+    @assert (lsite = _leftsite(node.val)) ≠ (rsite = _rightsite(node.val)) "L2R + R2L on same node"
+    if site == lsite || site == rsite
+        ans = contract(node.val.EnvL, node.val.EnvR)
+    else
+        !reduce(&,node.val.isstring) && leftmergedata!(node.val)
+        ans = contract(_calObs_left_contract(node.val, obj[site]), node.val.EnvR)
+    end
     names, sites = _lr_merge(node.val.leftdata, node.val.rightdata)
     default_val!(node)
     return (names, sites, ans)
