@@ -47,12 +47,12 @@ Base.isequal(A::T, B::T) where T <: Union{ObservableOperator,CompositeObservable
 # Base.show(io::IO,A::T) where T <: Union{ObservableOperator,CompositeObservableOperator} = show(io,A.A)
 Base.copy(A::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= T(A)
 function Base.show(io::IO,A::ObservableOperator)
-    print(io,"$(A.name)$(String(collect("$(A.site)") .+ 8272))")
+    print(io,"$(isnothing(A.name) ? "I" : A.name)$(String(collect("$(A.site)") .+ 8272))")
 end
 function Base.show(io::IO,A::CompositeObservableOperator{N}) where N
     print(io,"(")
     for i in 1:N
-        print(io,"$(A.name[i])$(String(collect("$(A.site[i])") .+ 8272)),")
+        print(io,"$(A.A[i]),")
     end
     print(io,")")
 end

@@ -9,7 +9,7 @@ function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,T}}) where {L,T <
         for pos in 1:L
             val = tun[pos]
             node = DirectedNode(val)
-            add_edge!(prev, node, ObservableWeight())
+            add_edge!(prev, node, ObservableWeight(pos == 1 ? tun.strength : 1.0))
             prev = node
         end
         add_edge!(prev, exit_s, ObservableWeight())

@@ -23,7 +23,7 @@ function dispatch!(node::DirectedNode, ::L2R)
         end
         edge_done && continue
         lock(c.val.lock) do
-            c.val.EnvL = EnvL
+            c.val.EnvL = EnvL * wt.strength
             c.val.leftdata = leftdata′
         end
         push!(tasks, c)
@@ -59,7 +59,7 @@ function dispatch!(node::DirectedNode, ::R2L)
         end
         edge_done && continue
         lock(p.val.lock) do
-            p.val.EnvR = EnvR
+            p.val.EnvR = EnvR * wt.strength
             p.val.rightdata = rightdata′
         end
         push!(tasks, p)
@@ -93,7 +93,7 @@ end
 
 function _update!(weight::ObservableWeight, ::T) where T <: Union{DenseMPS,DenseMPO}
     (isnothing(weight.EnvL) || isnothing(weight.EnvR)) && return nothing
-    ans = contract(weight.EnvL, weight.EnvR)
+    ans = contract(weight.EnvL, weight.EnvR) * weight.strength
     names, sites = _lr_merge(weight.leftdata, weight.rightdata)
     default_weight!(weight)
     return (names, sites, ans)

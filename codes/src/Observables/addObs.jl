@@ -5,8 +5,8 @@ function addObs!(ig::InteractionGraph,
     site::Int64,
     name::String,
     fermionic::Bool,
-    Z::Union{Nothing,AbstractTensorMap})
-    tunnel = InteractionTunnel((A,), (site,), (name,), (fermionic,), 1.0, Z, ig.L, ObservableOperator)
+    Z::Union{Nothing,AbstractTensorMap}, strength::Number = 1.0)
+    tunnel = InteractionTunnel((A,), (site,), (name,), (fermionic,), strength, Z, ig.L, ObservableOperator)
     push!(ig.tunnel, tunnel)
     ig.graph = nothing
     return nothing
@@ -18,8 +18,8 @@ function addObs!(ig::InteractionGraph,
     site::NTuple{N,Int64},
     name::NTuple{N,String},
     fermionic::NTuple{N,Bool},
-    Z::Union{Nothing,AbstractTensorMap}) where N
-    tunnel = InteractionTunnel(A, site, name, fermionic, 1.0, Z, ig.L, ObservableOperator)
+    Z::Union{Nothing,AbstractTensorMap}, strength::Number = 1.0) where N
+    tunnel = InteractionTunnel(A, site, name, fermionic, strength, Z, ig.L, ObservableOperator)
     push!(ig.tunnel, tunnel)
     ig.graph = nothing
     return nothing

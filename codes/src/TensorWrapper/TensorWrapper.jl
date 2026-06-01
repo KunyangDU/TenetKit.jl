@@ -165,6 +165,7 @@ Base.:+(A::AbstractTensorWrapper, ::Nothing) = A
 Base.:-(A::T, B::T) where T <: AbstractTensorWrapper = T(A.A - B.A)
 Base.:*(A::T,B::T) where T <: AbstractTensorWrapper = T(A.A * B.A)
 Base.:*(A::Number,B::T) where T <: AbstractTensorWrapper = T(A * B.A)
+Base.:*(B::T,A::Number) where T <: AbstractTensorWrapper = T(A * B.A)
 Base.:/(A::T,B::Number) where T <: AbstractTensorWrapper = (1/B) * A
 
 scale(t::Tuple{T₁,T₂}) where {T₁ <: AbstractTensorWrapper,T₂ <: Number} = scale((t[1].A,t[2]))
