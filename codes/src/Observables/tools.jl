@@ -86,13 +86,13 @@ end
 
 
 function leftmergedata!(val::ObservableOperator)
-    push!(val.leftdata["name"], val.A.name)
-    push!(val.leftdata["site"], val.A.site)
+    push!(val.leftdata["name"], val.name)
+    push!(val.leftdata["site"], val.site)
 end
 
 function rightmergedata!(val::ObservableOperator)
-    push!(val.rightdata["name"], val.A.name)
-    push!(val.rightdata["site"], val.A.site)
+    push!(val.rightdata["name"], val.name)
+    push!(val.rightdata["site"], val.site)
 end
 
 function leftmergedata!(val::CompositeObservableOperator{2})
@@ -113,15 +113,15 @@ function rightmergedata!(val::CompositeObservableOperator{2})
     end
 end
 
-_site(val::ObservableOperator) = val.A.site 
+_site(val::ObservableOperator) = val.site 
 _site(val::CompositeObservableOperator) = (sites = map(x -> x.site,val.A); @assert reduce(==, sites); sites[1])
 
 
 _lr_merge(left::Vector{T},right::Vector{T}) where T <: Union{Int64,String} = tuple(left..., reverse(right)...)
 _lr_merge(left::Vector{Vector{T}},right::Vector{Vector{T}}) where T <: Union{Int64,String} = (@assert length(left) == length(right) ; Tuple(map(x -> _lr_merge(left[x],right[x]), eachindex(left))))
 
-_calObs_left_contract(val::ObservableOperator, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(obj, val.A, obj', val.EnvL)
-_calObs_right_contract(val::ObservableOperator, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(obj, val.A, obj', val.EnvR)
+_calObs_left_contract(val::ObservableOperator, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(obj, isnothing(val.A) ? IdentityOperator(val.site) : LocalOperator(val.A, val.name, val.site), obj', val.EnvL)
+_calObs_right_contract(val::ObservableOperator, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(obj, isnothing(val.A) ? IdentityOperator(val.site) : LocalOperator(val.A, val.name, val.site), obj', val.EnvR)
 
 _calObs_left_contract(val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(val.A[1], obj, val.A[2], obj', val.EnvL)
 _calObs_right_contract(val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(val.A[1], obj, val.A[2], obj', val.EnvR)

@@ -1,6 +1,6 @@
 
 mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
-    A::Union{Nothing,AbstractTensorMap}
+    A::AbstractTensorMap
     name::String
     site::Int64
 
@@ -14,13 +14,13 @@ end
 
 
 mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
-    A::Union{Nothing, AbstractTensorMap}
-    name::Union{Nothing,String,Tuple}
+    A::Union{Nothing,AbstractTensorMap}
+    name::Union{Nothing,String}
     site::Int64
     function IdentityOperator(A::AbstractTensorMap,site::Int64)
         return new{length(codomain(A))}(nothing, nothing, site)
    end
-    function IdentityOperator(site::Int64, name::Union{String,Tuple})
+    function IdentityOperator(site::Int64, name::String)
         return new{1}(nothing, name, site)
     end
 
@@ -68,3 +68,9 @@ end
 
 trivial(A::T) where T<: Union{LocalOperator,IdentityOperator} = IdentityOperator(A)
 
+TensorKit.norm(A::LocalOperator) = norm(A.A)
+
+Base.:*(A::Number, B::LocalOperator) = LocalOperator(A * B.A, B.name, B.site)
+Base.:*(A::LocalOperator, B::LocalOperator) = (@assert A.site == B.site; LocalOperator(A.A * B.A, string(A.name,B.name), A.site))
+Base.:+(A::LocalOperator, B::LocalOperator) = (@assert A.site == B.site; LocalOperator(A.A + B.A, string(A.name, "+", B.name), A.site))
+Base.:-(A::LocalOperator, B::LocalOperator) = (@assert A.site == B.site; LocalOperator(A.A - B.A, string(A.name, "-", B.name), A.site))

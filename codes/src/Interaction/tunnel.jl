@@ -16,6 +16,21 @@ mutable struct InteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
         ops = ntuple(i -> T(As[i], names[i], sites[i]), N)
         new{L,T,N}(ops, fermionic, Z, Float64(strength))
     end
+    function InteractionTunnel{L,T}(A::NTuple{N,T}, fermionic::NTuple{N,Bool}, Z::Union{Nothing,AbstractTensorMap}, strength::Float64) where {L,T,N}
+        return new{L,T,N}(A,fermionic,Z,strength)
+    end
+
+    function InteractionTunnel(
+        A::AbstractTensorMap,
+        site::Int64,
+        name::String,
+        fermionic::Bool,
+        strength::Number,
+        Z::Union{Nothing,AbstractTensorMap},
+        L::Int64,T::Type = LocalOperator
+    )
+        return new{L,T,1}((T(A,name,site),),(fermionic,),Z,strength)
+    end
 end
 
 function Base.getindex(obj::InteractionTunnel{L,<:LocalOperator,N}, i::Int64) where {L,N}
@@ -38,3 +53,5 @@ composite(A::InteractionTunnel{L,T}, B::InteractionTunnel{L,T}) where {L,T <: Ob
 Base.getindex(obj::AbstractTunnel, r::UnitRange{Int64}) = [obj[i] for i in r]
 Base.length(::AbstractTunnel{L}) where L = L
 
+_site(A::InteractionTunnel) = map(x -> x.site,A.A)
+Base.:*(A::Number, B::InteractionTunnel) = (B′ = deepcopy(B); B′.strength *= A; return B′)

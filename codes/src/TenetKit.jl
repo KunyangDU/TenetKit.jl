@@ -56,6 +56,7 @@ include("Hamiltonian/contract.jl")
 include("Interaction/graph.jl")
 include("Interaction/addIntr.jl")
 include("Interaction/automata.jl")
+include("Interaction/algebra.jl")
 
 include("Observables/tunnel.jl")
 include("Observables/graph.jl")

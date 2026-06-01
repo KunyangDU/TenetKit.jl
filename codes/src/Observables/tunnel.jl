@@ -1,5 +1,5 @@
 function Base.getindex(obj::InteractionTunnel{L,<:ObservableOperator,N}, i::Int64) where {L,N}
-    sites = map(x -> x.A.site, obj.A)
+    sites = map(x -> x.site, obj.A)
     idx = findfirst(x -> x == i, sites)
     if idx !== nothing
         @assert !obj.A[idx].isstring
