@@ -21,13 +21,14 @@ function initialize!(ig::InteractionGraph{L, LocalOperator, DirectedAcyclicGraph
     @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
     @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph;verbose = verbose, N = N)
     merge!(to,localto;tree_point = ["optimize!"])
-    verbose && (show(to;title = "Interaction Graph"); print("\n"); flush(stdout))
+    verbose && (show(to;title = "Interaction Graph"); print("\n"); show(ig); flush(stdout))
     return ig
 end
 
 
 function Base.show(io::IO, ig::InteractionGraph{L}) where L
-    print(io, "$(typeof(ig)) $(round(100*(1 - (isnothing(ig.graph) ? length(ig.tunnel) * L : graphsize(ig.graph)) / length(ig.tunnel) / L);digits = 4))% compressed\n")
+    GS = isnothing(ig.graph) ? length(ig.tunnel) * L : graphsize(ig.graph)-2
+    print(io, "$(typeof(ig)) (1 - $(GS)/$(length(ig.tunnel) * L)) ≈ $(round(100*(1 - GS / length(ig.tunnel) / L);digits = 4))% compressed\n")
     println(io, " - ","graph : ", isnothing(ig.graph) ? Nothing : ig.graph)
     println(io, " - ","tunnel: $(length(ig.tunnel)) x $(typeof(ig.tunnel))")
     println(io, " - ","values: $(typeof(ig.values)) -> $(isnothing(ig.values) ? 0 : dictsize(ig.values)) elements")

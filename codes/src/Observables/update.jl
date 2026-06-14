@@ -93,9 +93,10 @@ end
 
 function _update!(weight::ObservableWeight, ::T) where T <: Union{DenseMPS,DenseMPO}
     (isnothing(weight.EnvL) || isnothing(weight.EnvR)) && return nothing
+    # @show _leftsite(weight), _rightsite(weight)
     ans = contract(weight.EnvL, weight.EnvR) * weight.strength
     names, sites = _lr_merge(weight.leftdata, weight.rightdata)
-    default_weight!(weight)
+    default_weight!(weight,false)
     return (names, sites, ans)
 end
 

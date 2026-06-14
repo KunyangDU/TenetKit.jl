@@ -26,7 +26,7 @@ function initialize!(ig::InteractionGraph{L,T,DirectedAcyclicGraph{1,1}};verbose
     @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
     @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph;verbose = verbose, N = N)
     merge!(to,localto;tree_point = ["optimize!"])
-    show(to;title = "Observable Graph"); print("\n"); flush(stdout)
+    show(to;title = "Observable Graph"); print("\n"); show(ig); flush(stdout)
     ig.graph.source[1].val = T(0)
     ig.graph.sink[1].val = T(L + 1)
     ig.values = Dict{Tuple,Dict}()

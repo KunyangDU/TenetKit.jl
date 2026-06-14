@@ -52,11 +52,7 @@ end
 
 # Base.isequal(::AbstractLocalOperator, ::AbstractLocalOperator) = false
 Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.name == B.name)
-function Base.isequal(A::LocalOperator, B::LocalOperator)
-    A.name ≠ B.name && return false
-    A.site ≠ B.site && return false
-    return A.A ≈ B.A
-end
+Base.isequal(A::LocalOperator, B::LocalOperator) = (A.A ≈ B.A && A.name == B.name && A.site == B.site)
 
 Base.copy(A::T) where T <: Union{LocalOperator,IdentityOperator} = T(A.A, A.name, A.site)
 

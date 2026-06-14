@@ -3,7 +3,6 @@ mutable struct DirectedAcyclicGraph{E₁,E₂,T} <: AbstractGraph
     sink::NTuple{E₂,T}
 end
 
-# ========================= DirectedAcyclicGraph 构造函数 =========================
 # 从 tunnels 构建未优化的 DirectedAcyclicGraph
 function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,LocalOperator}}) where L
     isempty(tunnels) && return DirectedAcyclicGraph((), ())

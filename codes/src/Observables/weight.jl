@@ -15,11 +15,11 @@ isleftdefault(A::DirectedEdge{ObservableWeight}) = isnothing(A.weight.EnvL) && i
 isrightdefault(A::DirectedEdge{ObservableWeight}) = isnothing(A.weight.EnvR) && isnothing(A.weight.rightdata)
 
 inherit_weight!(A::DirectedEdge{ObservableWeight}, w::ObservableWeight) = (A.weight.strength *= w.strength)
-default_weight!(A::DirectedEdge{ObservableWeight}) = default_weight!(A.weight)
-function default_weight!(A::ObservableWeight)
+default_weight!(A::DirectedEdge{ObservableWeight}, isstrength::Bool = true) = default_weight!(A.weight, isstrength)
+function default_weight!(A::ObservableWeight,isstrength::Bool = true)
     A.EnvL = nothing
     A.EnvR = nothing
     A.leftdata = nothing
     A.rightdata = nothing
-    A.strength = 1.0
+    isstrength && (A.strength = 1.0)
 end

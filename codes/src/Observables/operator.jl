@@ -43,7 +43,7 @@ function composite(A::ObservableOperator,B::ObservableOperator)
     return CompositeObservableOperator((LA, LB), (A.isstring, B.isstring))
 end
 
-Base.isequal(A::T, B::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= isequal(A.A,B.A) && isequal(A.isstring,B.isstring)
+Base.isequal(A::T, B::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= (isequal(A.A,B.A) && isequal(A.isstring,B.isstring))
 # Base.show(io::IO,A::T) where T <: Union{ObservableOperator,CompositeObservableOperator} = show(io,A.A)
 Base.copy(A::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= T(A)
 function Base.show(io::IO,A::ObservableOperator)

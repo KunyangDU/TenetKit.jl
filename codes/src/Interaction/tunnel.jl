@@ -31,6 +31,16 @@ mutable struct InteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
     )
         return new{L,T,1}((T(A,name,site),),(fermionic,),Z,strength)
     end
+
+    function InteractionTunnel(
+        A::NTuple{N,T},
+        fermionic::NTuple{N,Bool},
+        Z::Union{Nothing,AbstractTensorMap},
+        strength::Float64, L::Int64,T′::Type = T
+    ) where {N,T}
+        @assert T <: T′
+        return new{L,T′,N}(A,fermionic,Z,strength)
+    end
 end
 
 function Base.getindex(obj::InteractionTunnel{L,<:LocalOperator,N}, i::Int64) where {L,N}

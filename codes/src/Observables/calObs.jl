@@ -4,19 +4,19 @@ function calObs!(Obs::InteractionGraph, obj::T;kwargs...) where T <: Union{Dense
     !isempty(Obs.values) && empty!(Obs.values)
     setdefault!(Obs,obj)
     
-    if get_nworker() ≤ 2
+    if get_nworker() ≤ 100
         to = _calObs_serial!(Obs,obj;kwargs...)
     else
         to = _calObs_threading!(Obs,obj;kwargs...)
     end
 
-    @timeit to "default!" map(e -> default_weight!(e), collect_edges(Obs.graph))
-    
+    # @timeit to "default!" map(e -> default_weight!(e,false), collect_edges(Obs.graph))
+    # @timeit to "default!" map(e -> default_val!(e), collect_nodes(Obs.graph))
+
     show(to,title = "calObs!")
     print("\n")
+    show(Obs)
     flush(stdout)
-
-    get(kwargs,:destroy,false) && (Obs.node = nothing)
 
     return Obs.values
 end

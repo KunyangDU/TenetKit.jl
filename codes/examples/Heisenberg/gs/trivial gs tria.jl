@@ -2,16 +2,16 @@ using TensorKit
 
 include("../../../src/TenetKit.jl")
 include("../model.jl")
-dataname = "examples/Heisenberg/data/trivial"
+dataname = "examples/Heisenberg/data/triangular"
 IS_DISK[] = true
 diskdir!()
 
 D = 128
 Lx = 8
 Ly = 6
-params = (J=1, Δ = 1, hz = 0.001)
+params = (J=1, Δ = 1, hx = 1.0 * sqrt(3)/2, hy = 1.0 * 1/2)
 
-Latt = YCSqua(Lx,Ly)
+Latt = XCTria(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 ψ = let 

@@ -32,3 +32,6 @@ function addIntr!(ig::InteractionGraph,
     ig.graph = nothing
     return nothing
 end
+
+addIntr!(ig::InteractionGraph,tunnel::Vector{T}) where T <: AbstractTunnel = push!(ig.tunnel, tunnel...)
+

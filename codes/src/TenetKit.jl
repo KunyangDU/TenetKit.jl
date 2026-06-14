@@ -66,7 +66,7 @@ include("Observables/update.jl")
 include("Observables/tools.jl")
 include("Observables/stack.jl")
 include("Observables/calObs.jl")
-
+include("Observables/instance.jl")
 
 include("tools/algebra.jl")
 include("tools/geometry.jl")

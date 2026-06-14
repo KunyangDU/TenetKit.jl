@@ -111,7 +111,7 @@ end
 
 function Base.:+(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
     skiplist = Int64[]
-    tunnel = AbstractTunnel{L, T}[]
+    tunnel = InteractionTunnel{L, T}[]
     for b in B.tunnel
         ispushed = false
         for (i,a) in enumerate(A.tunnel)
@@ -132,7 +132,7 @@ end
 
 function Base.:-(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
     skiplist = Int64[]
-    tunnel = AbstractTunnel{L, T}[]
+    tunnel = InteractionTunnel{L, T}[]
     for b in B.tunnel
         ispushed = false
         for (i,a) in enumerate(A.tunnel)
@@ -152,7 +152,7 @@ function Base.:-(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
 end
 
 function Base.:*(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
-    tunnel = AbstractTunnel{L, T}[]
+    tunnel = InteractionTunnel{L, T}[]
     for b in B.tunnel
         push!(tunnel, (A * b)...)
     end
@@ -160,7 +160,7 @@ function Base.:*(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
 end
 
 function Base.:*(A::InteractionGraph{L,T}, b::InteractionTunnel{L,T}) where {L,T}
-    tunnel = AbstractTunnel{L, T}[]
+    tunnel = InteractionTunnel{L, T}[]
     for a in A.tunnel
         push!(tunnel, a * b)
     end
@@ -168,7 +168,7 @@ function Base.:*(A::InteractionGraph{L,T}, b::InteractionTunnel{L,T}) where {L,T
 end
 
 function Base.:*(b::InteractionTunnel{L,T}, A::InteractionGraph{L,T}) where {L,T}
-    tunnel = AbstractTunnel{L, T}[]
+    tunnel = InteractionTunnel{L, T}[]
     for a in A.tunnel
         push!(tunnel, b * a)
     end
