@@ -10,38 +10,34 @@ function calObs!(Obs::InteractionGraph, obj::T;kwargs...) where T <: Union{Dense
         to = _calObs_threading!(Obs,obj;kwargs...)
     end
 
-    # @timeit to "default!" map(e -> default_weight!(e,false), collect_edges(Obs.graph))
-    # @timeit to "default!" map(e -> default_val!(e), collect_nodes(Obs.graph))
+    @timeit to "default!" map(e -> default_weight!(e,false), collect_edges(Obs.graph))
+    @timeit to "default!" map(e -> default_val!(e), collect_nodes(Obs.graph))
 
     show(to,title = "calObs!")
     print("\n")
     show(Obs)
     flush(stdout)
-    @show TimerOutputs.todict(to)["inner_timers"]["update_w!"]["n_calls"]
-    @show TimerOutputs.todict(to)["inner_timers"]["update_n!"]["n_calls"]
+    # @show TimerOutputs.todict(to)["inner_timers"]["update_w!"]["n_calls"]
+    # @show TimerOutputs.todict(to)["inner_timers"]["update_n!"]["n_calls"]
 
     return Obs.values
 end
 
 function _calObs_serial!(obs::InteractionGraph,obj::T;kwargs...) where T <: Union{DenseMPO,DenseMPS}
     to = TimerOutput()
-    stack = Union{DirectedNode,ObservableWeight}[]
+    stack = DirectedEdge[]
     data = obs.values
-    push!(stack, obs.graph.source[1],obs.graph.sink[1])
+    push!(stack, obs.graph.source[1].out_edges..., obs.graph.sink[1].in_edges...)
     while !isempty(stack)
         @timeit to "pop!"    task = pop!(stack)           # LIFO: depth-first
-        if task isa DirectedNode
-            @timeit to "update_n!" ans = _update!(task, obj)
-        elseif task isa ObservableWeight
-            @timeit to "update_w!" ans = _update!(task, obj)
-        end
+        ans = _update!(task, obj)
         if ans isa Tuple
             name,site,value = ans
             !haskey(data,name) && (data[name] = Dict{Tuple,Number}())
-            @assert !haskey(data[name],site) "Observable Overcounted!"
+            # @assert !haskey(data[name],site) "Observable Overcounted!",name,site
             data[name][site] = value
-        elseif ans isa AbstractDirection
-            @timeit to "push!" push!(stack, dispatch!(task, ans)...)
+        elseif ans isa Vector
+            @timeit to "push!" push!(stack, ans...)
         end
     end
     return to
@@ -75,8 +71,8 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
 
     to = TimerOutput()
 
-    ch      = Channel{Union{DirectedNode,ObservableWeight}}(cachesize)
-    ch_swap = LIFOStack{Union{DirectedNode,ObservableWeight}}()   # LIFO → DFS scheduling
+    ch      = Channel{DirectedEdge}(cachesize)
+    ch_swap = LIFOStack{DirectedEdge}()   # LIFO → DFS scheduling
     ch_info = Channel{Any}(Inf)
 
     println("initialization finish, begin to calculate Observables.")
@@ -108,19 +104,15 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
 
 
     try
-        @timeit to "put!" put!(ch, Obs.graph.source[1])
-        # while Base.n_avail(ch) ≠ 0 || Base.n_avail(ch_swap) ≠ 0
-        #     sleep(1e-2)
-        # end
-        # sleep(0.1)
-        @timeit to "put!" put!(ch, Obs.graph.sink[1])
-
+        for e in vcat(Obs.graph.source[1].out_edges, Obs.graph.sink[1].in_edges)
+            @timeit to "put!" put!(ch, e)
+        end
+        
         let remain = length(paths(Obs.graph))
             total = remain
             # showtimes=0 means silent (e.g. warmup runs). Guard against cld(total,0).
             showspacing::Int64 = showtimes > 0 ? cld(total, showtimes) : typemax(Int64)
             while remain > 0
-                # @show remain
                 info = take!(ch_info)
                 if info[1] == :err
                     isopen(ch) && close(ch)
@@ -130,7 +122,8 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
                 end
                 data, count, tm = info[2]
                 deepmerge!(Obs.values, data)
-                remain -= count
+                # remain -= count
+                remain = total - dictsize(Obs.values)
                 merge!(to, tm)
                 if remain % showspacing == 0
                     show(to, title="$(total - remain)/$(total)")
@@ -140,7 +133,7 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
             end
         end
     finally
-        @show Base.n_avail(ch), Base.n_avail(ch_swap)
+        # @show Base.n_avail(ch), Base.n_avail(ch_swap)
         # while Base.n_avail(ch) > 0
         #     sleep(0.1)
         # end
@@ -166,37 +159,20 @@ function _calObs_work!(obj::T, ch::Channel, ch_swap::LIFOStack;
     # instead of O(N × L) with the old FIFO scheme.
     count = 0
     to    = TimerOutput()
-    task = Union{DirectedNode,ObservableWeight}[]
+    task = DirectedEdge[]
     data = Dict{Tuple,Dict}()
     @timeit to "take!" push!(task, take!(ch))
     while !isempty(task)
         let p = pop!(task)
-            # @timeit to "update!" ans = lock(typeof(p) <: ObservableWeight ? p.lock : p.val.lock) do
-            #     _update!(p, obj)
-            # end
-            if typeof(p) <: ObservableWeight
-                @timeit to "update_w!" ans = lock(p.lock) do
-                    _update!(p, obj)
-                end
-            else
-                @timeit to "update_n!" ans = lock(p.val.lock) do 
-                    _update!(p, obj)
-                end
-            end
+            @timeit to "update!" ans = _update!(p, obj)
             if ans isa Tuple 
                 name,site,value = ans
                 !haskey(data,name) && (data[name] = Dict{Tuple,Number}())
-                @assert !haskey(data[name],site) "Observable Overcounted!"
-                data[name][site] = value
+                # @assert !haskey(data[name],site) "Observable Overcounted!",name,site
                 count += 1
-            elseif ans isa AbstractDirection
-                for a in dispatch!(p, ans)
-                    if length(task) < max_local
-                        push!(task, a)              # stay local: DFS continues
-                    else
-                        @timeit to "put!" push!(ch_swap, a)  # overflow to shared LIFO stack
-                    end
-                end
+                data[name][site] = value
+            elseif ans isa Vector
+                @timeit to "put!" push!(ch_swap, ans...)
             end
         end
     end
