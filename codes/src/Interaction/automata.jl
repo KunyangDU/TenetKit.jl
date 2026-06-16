@@ -6,11 +6,11 @@
 # 每步：从当前前沿出发，解析下一层节点，建立 LayerMap，再推进到下一层。
 
 """
-    AutomataSparseMPO(ig::InteractionGraph{L}) -> SparseMPO{L}
+    AutomataSparseMPO(ig::InteractionGraph{L,W}) -> SparseMPO{L}
 
 从 InteractionGraph 的 DAG 逐层构建 SparseMPO。
 """
-function AutomataSparseMPO(ig::InteractionGraph{L}) where L
+function AutomataSparseMPO(ig::InteractionGraph{L,W}) where {L,W}
     initialize!(ig)
     ts_vec = SparseMPOTensor[]
     prev_right = nothing

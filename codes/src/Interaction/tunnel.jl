@@ -56,8 +56,8 @@ mutable struct CompositeInteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
     strength::Float64
 end
 
-Base.getindex(obj::CompositeInteractionTunnel, i::Int64) = CompositeObservableOperator([a[i] for a in obj.A])
-composite(A::InteractionTunnel{L,T}, B::InteractionTunnel{L,T}) where {L,T <: ObservableOperator} = CompositeInteractionTunnel{L,CompositeObservableOperator{2},2}(NTuple{2,InteractionTunnel{L}}((A,B)), A.strength * B.strength)
+Base.getindex(obj::CompositeInteractionTunnel, i::Int64) = CompositeLocalOperator([a[i] for a in obj.A])
+composite(A::InteractionTunnel{L,T}, B::InteractionTunnel{L,T}) where {L,T <: LocalOperator} = CompositeInteractionTunnel{L,CompositeLocalOperator{2},2}(NTuple{2,InteractionTunnel{L}}((A,B)), A.strength * B.strength)
 
 
 Base.getindex(obj::AbstractTunnel, r::UnitRange{Int64}) = [obj[i] for i in r]

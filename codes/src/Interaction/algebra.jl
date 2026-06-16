@@ -1,5 +1,5 @@
 
-function Base.:*(objl::InteractionTunnel{L,T},objr::InteractionTunnel{L,T}) where {L,T}
+function Base.:*(objl::InteractionTunnel{L,T},objr::InteractionTunnel{L,T}) where {L,T,W}
     @assert (Z = objl.Z) == objr.Z
     
     Al,Ar = objl.A, objr.A
@@ -109,7 +109,7 @@ function Base.:-(objl::InteractionTunnel{L,T,N₁},objr::InteractionTunnel{L,T,N
     end
 end
 
-function Base.:+(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
+function Base.:+(A::InteractionGraph{L,T,W}, B::InteractionGraph{L,T,W}) where {L,T,W}
     skiplist = Int64[]
     tunnel = InteractionTunnel{L, T}[]
     for b in B.tunnel
@@ -130,7 +130,7 @@ function Base.:+(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
     return InteractionGraph(tunnel)
 end
 
-function Base.:-(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
+function Base.:-(A::InteractionGraph{L,T,W}, B::InteractionGraph{L,T,W}) where {L,T,W}
     skiplist = Int64[]
     tunnel = InteractionTunnel{L, T}[]
     for b in B.tunnel
@@ -151,7 +151,7 @@ function Base.:-(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
     return InteractionGraph(tunnel)
 end
 
-function Base.:*(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
+function Base.:*(A::InteractionGraph{L,T,W}, B::InteractionGraph{L,T,W}) where {L,T,W}
     tunnel = InteractionTunnel{L, T}[]
     for b in B.tunnel
         push!(tunnel, (A * b)...)
@@ -159,7 +159,7 @@ function Base.:*(A::InteractionGraph{L,T}, B::InteractionGraph{L,T}) where {L,T}
     return InteractionGraph(tunnel)
 end
 
-function Base.:*(A::InteractionGraph{L,T}, b::InteractionTunnel{L,T}) where {L,T}
+function Base.:*(A::InteractionGraph{L,T,W}, b::InteractionTunnel{L,T}) where {L,T,W}
     tunnel = InteractionTunnel{L, T}[]
     for a in A.tunnel
         push!(tunnel, a * b)
@@ -167,7 +167,7 @@ function Base.:*(A::InteractionGraph{L,T}, b::InteractionTunnel{L,T}) where {L,T
     return InteractionGraph(tunnel)
 end
 
-function Base.:*(b::InteractionTunnel{L,T}, A::InteractionGraph{L,T}) where {L,T}
+function Base.:*(b::InteractionTunnel{L,T}, A::InteractionGraph{L,T,W}) where {L,T,W}
     tunnel = InteractionTunnel{L, T}[]
     for a in A.tunnel
         push!(tunnel, b * a)

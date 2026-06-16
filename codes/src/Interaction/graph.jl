@@ -1,21 +1,21 @@
 
-mutable struct InteractionGraph{L,T,G <: DirectedAcyclicGraph{1,1}}
+mutable struct InteractionGraph{L, T, W, G <: DirectedAcyclicGraph{1,1}}
     graph::Union{Nothing, G}
     tunnel::Vector{AbstractTunnel{L,T}}
     values::Union{Nothing, Dict}
     L::Int64
 
-    function InteractionGraph(tunnel::Vector{<:AbstractTunnel{L,T}}) where {L,T}
-        return new{L, T, DirectedAcyclicGraph{1,1}}(nothing, tunnel, nothing, L)
+    function InteractionGraph(tunnel::Vector{<:AbstractTunnel{L,T}}; W::Type = Number) where {L,T}
+        return new{L, T, W, DirectedAcyclicGraph{1,1}}(nothing, tunnel, nothing, L)
     end
 
-    function InteractionGraph(L::Int64, T::Type = LocalOperator)
-        return new{L, T, DirectedAcyclicGraph{1,1}}(nothing, Vector{AbstractTunnel{L,T}}(), nothing, L)
+    function InteractionGraph(L::Int64, T::Type = LocalOperator, W::Type = Number)
+        return new{L, T, W, DirectedAcyclicGraph{1,1}}(nothing, Vector{AbstractTunnel{L,T}}(), nothing, L)
     end
 end
 
 # -- 初始化 InteractionGraph：建 DAG --
-function initialize!(ig::InteractionGraph{L, LocalOperator, DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where L
+function initialize!(ig::InteractionGraph{L, T, Number, DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where {L, T <: Union{LocalOperator, CompositeLocalOperator}}
     to = TimerOutput()
     @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
     @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
@@ -26,7 +26,7 @@ function initialize!(ig::InteractionGraph{L, LocalOperator, DirectedAcyclicGraph
 end
 
 
-function Base.show(io::IO, ig::InteractionGraph{L}) where L
+function Base.show(io::IO, ig::InteractionGraph{L}) where {L}
     GS = isnothing(ig.graph) ? length(ig.tunnel) * L : graphsize(ig.graph)-2
     print(io, "$(typeof(ig)) (1 - $(GS)/$(length(ig.tunnel) * L)) ≈ $(round(100*(1 - GS / length(ig.tunnel) / L);digits = 4))% compressed\n")
     println(io, " - ","graph : ", isnothing(ig.graph) ? Nothing : ig.graph)

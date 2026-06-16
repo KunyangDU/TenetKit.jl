@@ -1,4 +1,4 @@
-using MKL, TensorKit, JLD2, FiniteLattices, TimerOutputs, KrylovKit, AbstractTrees, SerializedElementArrays
+using MKL, TensorKit, JLD2, FiniteLattices, TimerOutputs, KrylovKit, SerializedElementArrays
 import LinearAlgebra: BLAS, cross
 import Statistics: std
 
@@ -58,9 +58,8 @@ include("Interaction/addIntr.jl")
 include("Interaction/automata.jl")
 include("Interaction/algebra.jl")
 
-include("Observables/tunnel.jl")
-include("Observables/graph.jl")
 include("Observables/weight.jl")
+include("Observables/graph.jl")
 include("Observables/addObs.jl")
 include("Observables/update.jl")
 include("Observables/tools.jl")

@@ -25,11 +25,11 @@ function dispatch!(edge::DirectedEdge)
     return tasks
 end
 
-function _update!(edge::DirectedEdge{T₁},obj::T₂) where {T₁ <: Union{ObservableWeight, CompositeObservableOperator}, T₂ <: Union{DenseMPS,DenseMPO}}
+function _update!(edge::DirectedEdge{T₁},obj::T₂) where {T₁ <: Union{ObservableWeight, CompositeLocalOperator}, T₂ <: Union{DenseMPS,DenseMPO}}
     from, to = edge.from, edge.to
     tasks = nothing
-    lock(from.val.lock) do 
-        lock(to.val.lock) do 
+    lock(from.lock) do
+        lock(to.lock) do
             tasks = _update!(from, edge.weight, to, edge.weight.EnvL, edge.weight.EnvR, obj)
             isnothing(tasks) && (tasks = dispatch!(edge))
         end

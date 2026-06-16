@@ -12,11 +12,12 @@ mutable struct DirectedNode{T}
     val::Union{T, Nothing}
     in_edges::Vector
     out_edges::Vector
+    lock::ReentrantLock
 end
 
-DirectedNode(val::T) where T = DirectedNode{T}(val, Vector(), Vector())
+DirectedNode(val::T) where T = DirectedNode{T}(val, Vector(), Vector(), ReentrantLock())
 
-sentinel(::Type{T}) where T = DirectedNode{T}(nothing, Vector(), Vector())
+sentinel(::Type{T}) where T = DirectedNode{T}(nothing, Vector(), Vector(), ReentrantLock())
 issentinel(n::DirectedNode) = n.val === nothing
 
 
@@ -56,5 +57,4 @@ function Base.show(io::IO, node::DirectedNode)
     # print(io, "$(typeof(node))($(tuple(map(x -> x.from.val,node.in_edges)...)) → $(node.val) → $(tuple(map(x -> x.to.val,node.out_edges)...)))")
 end
 
-isdefault(A::DirectedNode) = isdefault(A.val)
 default_val!(A::DirectedNode) = default_val!(A.val)

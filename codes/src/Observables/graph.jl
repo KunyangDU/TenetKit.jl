@@ -1,29 +1,12 @@
-ObservableGraph(L::Int64) = InteractionGraph(L,ObservableOperator)
+ObservableGraph(L::Int64) = InteractionGraph(L, LocalOperator, ObservableWeight)
 
-function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,T}}) where {L,T <: Union{ObservableOperator, CompositeObservableOperator}}
-    isempty(tunnels) && return DirectedAcyclicGraph((), ())
-    entry = sentinel(T)
-    exit_s = sentinel(T)
-    for tun in tunnels
-        prev = entry
-        for pos in 1:L
-            val = tun[pos]
-            node = DirectedNode(val)
-            add_edge!(prev, node, ObservableWeight(pos == 1 ? tun.strength : 1.0))
-            prev = node
-        end
-        add_edge!(prev, exit_s, ObservableWeight())
-    end
-    return DirectedAcyclicGraph((entry,), (exit_s,))
-end
-
-composite(A::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}, B::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}) where L = InteractionGraph([composite(a,b) for a in A.tunnel for b in B.tunnel])
+composite(A::InteractionGraph{L,LocalOperator,ObservableWeight,DirectedAcyclicGraph{1,1}}, B::InteractionGraph{L,LocalOperator,ObservableWeight,DirectedAcyclicGraph{1,1}}) where L = InteractionGraph([composite(a,b) for a in A.tunnel for b in B.tunnel];W = ObservableWeight)
 
 # -- 初始化 InteractionGraph：建 DAG --
-function initialize!(ig::InteractionGraph{L,T,DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where {L,T <: Union{ObservableOperator,CompositeObservableOperator}}
+function initialize!(ig::InteractionGraph{L,T,ObservableWeight,DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where {L,T <: Union{LocalOperator,CompositeLocalOperator}}
     to = TimerOutput()
     @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
-    @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
+    @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel; weight = ObservableWeight)
     @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph;verbose = verbose, N = N)
     merge!(to,localto;tree_point = ["optimize!"])
     show(to;title = "Observable Graph"); print("\n"); show(ig); flush(stdout)
@@ -33,7 +16,7 @@ function initialize!(ig::InteractionGraph{L,T,DirectedAcyclicGraph{1,1}};verbose
     return ig
 end
 
-function setdefault!(ig::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}}
+function setdefault!(ig::InteractionGraph{L,LocalOperator,ObservableWeight,DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}}
     # ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
     # ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
     EnvL = LeftEnvironmentTensor(_left_isometry(obj))
@@ -48,7 +31,7 @@ function setdefault!(ig::InteractionGraph{L,ObservableOperator,DirectedAcyclicGr
     end
 end
 
-function setdefault!(ig::InteractionGraph{L,CompositeObservableOperator{N},DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}, N}
+function setdefault!(ig::InteractionGraph{L,CompositeLocalOperator{N},ObservableWeight,DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}, N}
     # ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
     # ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
     EnvL = LeftEnvironmentTensor(_left_isometry(obj))
@@ -63,10 +46,10 @@ function setdefault!(ig::InteractionGraph{L,CompositeObservableOperator{N},Direc
     end
 end
 
-function isdefaultweight(ig::InteractionGraph{L,T}) where {L, T <: Union{ObservableOperator,CompositeObservableOperator{2}}}
+function isdefaultweight(ig::InteractionGraph{L,T}) where {L, T <: Union{LocalOperator,CompositeLocalOperator{2}}}
     for e in collect_edges(ig.graph)
-        !isleftdefault(e) && return true
-        !isrightdefault(e) && return true
+        !isleftdefault(e) && return false
+        !isrightdefault(e) && return false
     end
-    return false
+    return true
 end

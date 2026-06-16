@@ -1,12 +1,9 @@
 [deps]
-AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
-BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 FiniteLattices = "650210df-7c64-40ac-8e1f-94ea4f378b07"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
 LRUCache = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
 MKL = "33e6dc65-8f57-5167-99aa-e5a354878fb2"
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 SerializedElementArrays = "d3ce8812-9567-47e9-a7b5-65a6d70a3065"
 TensorKit = "07d1fe3e-3e46-537d-9eac-e9e13d0d4cec"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"

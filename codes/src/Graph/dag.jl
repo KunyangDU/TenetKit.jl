@@ -4,7 +4,7 @@ mutable struct DirectedAcyclicGraph{E₁,E₂,T} <: AbstractGraph
 end
 
 # 从 tunnels 构建未优化的 DirectedAcyclicGraph
-function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,LocalOperator}}) where L
+function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,T}}; weight::Type{W} = Number) where {L,T,W}
     isempty(tunnels) && return DirectedAcyclicGraph((), ())
     entry = sentinel(AbstractLocalOperator)
     exit_s = sentinel(AbstractLocalOperator)
@@ -13,10 +13,10 @@ function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,LocalOperator}}) 
         for pos in 1:L
             val = tun[pos]
             node = DirectedNode(val)
-            add_edge!(prev, node, pos == 1 ? tun.strength : 1.0)
+            add_edge!(prev, node, W(pos == 1 ? tun.strength : 1.0))
             prev = node
         end
-        add_edge!(prev, exit_s, 1.0)
+        add_edge!(prev, exit_s, W(1.0))
     end
     return DirectedAcyclicGraph((entry,), (exit_s,))
 end
