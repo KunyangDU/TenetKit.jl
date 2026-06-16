@@ -1,6 +1,6 @@
 
-TensorKit.usebraidcache_abelian[] = false
-TensorKit.usebraidcache_nonabelian[] = false
+# TensorKit.usebraidcache_abelian[] = false
+# TensorKit.usebraidcache_nonabelian[] = false
 
 get_num_cpus() = GLOBAL_THREADS[]["TOTAL_CPUS"]
 get_num_threads_julia() = GLOBAL_THREADS[]["JULIA_THREADS"]

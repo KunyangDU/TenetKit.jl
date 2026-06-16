@@ -59,9 +59,7 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite_AB" tAB = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u][site:site+1],1:2)...)..., EnvAB.envs[site+2])
         @timeit localto "composite_C" tC = contract(EnvC.envs[site], EnvC.layer[1][site:site+1]..., EnvC.envs[site+2])
-        @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpby!(α, tC, β, tAB); direction=:center,trunc = Alg.trunc)
-        localinfo.truncerr = truncerr
-        localinfo.bond = BondInfo(tc)
+        @timeit localto "SVD" tl, tc, tr, localinfo.truncerr, localinfo.bond = tsvd(axpby!(α, tC, β, tAB); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "push right" map([EnvAB,EnvC]) do Env
             N = length(Env.layer)
@@ -86,9 +84,7 @@ function mul!(EnvC::Environment{2}, EnvAB::Environment{3}, α::Number, β::Numbe
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite_AB" tAB = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u][site-1:site],1:2)...)..., EnvAB.envs[site+1])
         @timeit localto "composite_C" tC = contract(EnvC.envs[site-1], EnvC.layer[1][site-1:site]..., EnvC.envs[site+1])
-        @timeit localto "SVD" tl, tc, tr, truncerr = tsvd(axpby!(α, tC, β, tAB); direction=:center,trunc = Alg.trunc)
-        localinfo.truncerr = truncerr
-        localinfo.bond = BondInfo(tc)
+        @timeit localto "SVD" tl, tc, tr, localinfo.truncerr, localinfo.bond = tsvd(axpby!(α, tC, β, tAB); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "push left" map([EnvAB,EnvC]) do Env
             N = length(Env.layer)

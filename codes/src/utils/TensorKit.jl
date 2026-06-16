@@ -1,0 +1,6 @@
+tsvd(A::AbstractTensorMap,I₁::NTuple{N₁,Int64},I₂::NTuple{N₂,Int64};trunc::NamedTuple = (;)) where {N₁,N₂} = svd_trunc(permute(A,(I₁,I₂));trunc = trunc)
+leftorth(A::AbstractTensorMap,I₁::NTuple{N₁,Int64},I₂::NTuple{N₂,Int64}) where {N₁,N₂} = left_orth(permute(A,(I₁,I₂)))
+rightorth(A::AbstractTensorMap,I₁::NTuple{N₁,Int64},I₂::NTuple{N₂,Int64}) where {N₁,N₂} = right_orth(permute(A,(I₁,I₂)))
+TensorKit.permute(t::T,I₁::NTuple{N₁,Int64},I₂::NTuple{N₂,Int64}) where {N₁,N₂,T <: Union{AbstractTensorMap, TensorKit.AdjointTensorMap}} = permute(t,(I₁,I₂))
+leftorth(A::AbstractTensorMap) = left_orth(A)
+rightorth(A::AbstractTensorMap) = right_orth(A)

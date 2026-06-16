@@ -33,7 +33,7 @@ function vonNeumann(obj::DenseMPS, sites::Vector{Int64})
 end
 
 
-function vonNeumann(S::AbstractTensorMap{<:ElementarySpace,1,1})
+function vonNeumann(S::AbstractTensorMap{T,<:ElementarySpace,1,1}) where T
     _tmptrace(x) = @tensor x[1,1]
     d = sqrt(_tmptrace(S*S'))
     @assert d != 0

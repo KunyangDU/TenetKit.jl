@@ -57,7 +57,7 @@ end
 
 # Base.isequal(::AbstractLocalOperator, ::AbstractLocalOperator) = false
 Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.name == B.name && A.isstring == B.isstring)
-Base.isequal(A::LocalOperator, B::LocalOperator) = (A.A ≈ B.A && A.name == B.name && A.site == B.site && A.isstring == B.isstring)
+Base.isequal(A::LocalOperator, B::LocalOperator) = (space(A.A) == space(B.A) && A.A ≈ B.A && A.name == B.name && A.site == B.site && A.isstring == B.isstring)
 
 Base.copy(A::T) where T <: Union{LocalOperator,IdentityOperator} = T(A.A, A.name, A.site, A.isstring)
 Base.hash(A::LocalOperator, h::UInt) = hash(A.A, hash(A.name, hash(A.site, hash(A.isstring, h))))

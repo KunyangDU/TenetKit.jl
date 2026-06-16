@@ -101,7 +101,7 @@ _cbedsum(Q::AdjointMPOTensor{4},A::AdjointMPOTensor{4},direction::AbstractDirect
 # _tdvp_permute(obj::MPSTensor{3}, ::R2L) = MPSTensor(permute(obj.A,(2,1),(3,4)))
 # _tdvp_permute(obj::MPSTensor{3}, ::L2R) = MPSTensor(permute(obj.A,(1,2),(4,3)))
 
-function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TensorKit.TruncationScheme,::R2L)
+function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TruncationScheme,::R2L)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch, index_tuple = ((2,),(1,3,4)))
     # tr = _tdvp_permute(tr,R2L())
@@ -110,7 +110,7 @@ function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TensorKit.TruncationScheme,
     return tl,tc,tr,ϵ,localto
 end
 
-function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TensorKit.TruncationScheme,::L2R)
+function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TruncationScheme,::L2R)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch)
     # tl = _tdvp_permute(tl,L2R())
@@ -119,7 +119,7 @@ function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TensorKit.TruncationScheme,
     return tl,tc,tr,ϵ,localto
 end
 
-function _tdvp_tsvd(tmp::MPSTensor{3},truncsch::TensorKit.TruncationScheme,::R2L)
+function _tdvp_tsvd(tmp::MPSTensor{3},truncsch::TruncationScheme,::R2L)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch, index_tuple = ((1,),(2,3)))
     tr = MPSTensor(permute(tr.A,(1,2),(3,)))
@@ -127,7 +127,7 @@ function _tdvp_tsvd(tmp::MPSTensor{3},truncsch::TensorKit.TruncationScheme,::R2L
     return tl,tc,tr,ϵ,localto
 end
 
-function _tdvp_tsvd(tmp::MPSTensor{3},truncsch::TensorKit.TruncationScheme,::L2R)
+function _tdvp_tsvd(tmp::MPSTensor{3},truncsch::TruncationScheme,::L2R)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch)
     @timeit localto "contract" tr = tc*tr

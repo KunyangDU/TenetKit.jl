@@ -112,9 +112,9 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
-            @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
+            @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
             # localinfo.bond = BondInfo(tc)
-            merge!(localinfo, BondInfo(tc))
+            merge!(localinfo, bi)
             @timeit localto "contract" tr = contract(contract(tc,tr),Env.layer[1][site+1])
         end
         @timeit localto "pushright" pushright!(Env,tl, tr)
@@ -149,10 +149,10 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
-            @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
+            @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
             tr = MPSTensor(permute(tr.A,(1,2),(3,)))
             # localinfo.bond = BondInfo(tc)
-            merge!(localinfo, BondInfo(tc))
+            merge!(localinfo, bi)
             @timeit localto "contract" tl = contract(Env.layer[1][site-1],contract(tl,tc))
         end
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
@@ -179,9 +179,9 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             localinfo.E = E₀ + Eg |> real
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
-        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
+        @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         # localinfo.bond = BondInfo(tc)
-        merge!(localinfo, BondInfo(tc))
+        merge!(localinfo, bi)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "pushright" pushright!(Env,tl, tr)
         # push!(lsE,localinfo.E)
@@ -207,9 +207,9 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             localinfo.E = E₀ + Eg |> real
         end 
         merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
-        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(Egv; direction=:center,trunc = Alg.trunc)
+        @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
         # localinfo.bond = BondInfo(tc)
-        merge!(localinfo, BondInfo(tc))
+        merge!(localinfo, bi)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
         # push!(lsE,localinfo.E)

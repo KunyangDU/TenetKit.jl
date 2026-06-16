@@ -1,5 +1,5 @@
 
-function Base.:*(objl::InteractionTunnel{L,T},objr::InteractionTunnel{L,T}) where {L,T,W}
+function Base.:*(objl::InteractionTunnel{L,T},objr::InteractionTunnel{L,T}) where {L,T}
     @assert (Z = objl.Z) == objr.Z
     
     Al,Ar = objl.A, objr.A

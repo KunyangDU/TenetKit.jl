@@ -240,10 +240,10 @@ end
 
 BondInfo(A::AbstractTensorWrapper) = BondInfo(A.A)
 
-function BondInfo(A::TensorMap{<:GradedSpace,1,1})
+function BondInfo(A::DiagonalTensorMap{T′,<:GradedSpace}) where T′
     bondinfo = BondInfo()
     for (c,b) in blocks(A)
-        λ = diag(b)
+        λ = b isa Vector ? b : diag(b)
         bondinfo.Deff += length(λ)
         bondinfo.D += length(λ) * dim(c)
     end
@@ -251,10 +251,24 @@ function BondInfo(A::TensorMap{<:GradedSpace,1,1})
     return bondinfo
 end
 
-function BondInfo(A::TensorMap{<:ComplexSpace,1,1})
-    λ = diag(A.data)
-    return BondInfo(length(λ),length(λ),vonNeumann(A))
-end
+BondInfo(A::DiagonalTensorMap{T′,<:ComplexSpace}) where T′ = BondInfo(length(A.data),length(A.data),vonNeumann(A))
+
+
+# function BondInfo(A::DiagonalTensorMap{T′,<:ComplexSpace}) where T′
+#     λ = A.data
+#     return BondInfo(length(λ),length(λ),vonNeumann(A))
+# end
+
+# function BondInfo(A::TensorMap{T,<:GradedSpace,1,1}) where T
+#     bondinfo = BondInfo()
+#     for (c,b) in blocks(A)
+#         λ = diag(b)
+#         bondinfo.Deff += length(λ)
+#         bondinfo.D += length(λ) * dim(c)
+#     end
+#     bondinfo.S = vonNeumann(A)
+#     return bondinfo
+# end
 
 function Base.show(io::IO,info::Algebrainfo)
     println(io,info.bond,", ProjErr = $(info.err), TruncErr = $(info.truncerr)")

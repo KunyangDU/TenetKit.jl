@@ -68,8 +68,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         x₀ = deepcopy(composite(Envx.layer[2][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" ts = map(z -> contract(z.envs[site], z.layer[1][site:site+1]..., z.envs[site+2]),[Envx,Envy])
-        @timeit localto "SVD" tl, tc, tr, ~ = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
-        localinfo.bond = BondInfo(tc)
+        @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "push right" map([Envx,Envy]) do Env
             N = length(Env.layer)
@@ -93,8 +92,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         x₀ = deepcopy(composite(Envx.layer[2][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" ts = map(z -> contract(z.envs[site-1], z.layer[1][site-1:site]..., z.envs[site+1]),[Envx,Envy])
-        @timeit localto "SVD" tl, tc, tr, localinfo.err = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
-        localinfo.bond = BondInfo(tc)
+        @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "push left" map([Envx,Envy]) do Env
             N = length(Env.layer)

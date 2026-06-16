@@ -29,7 +29,7 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor
     end
 
     function MPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(fc,codomain,domain)
+        A = fc(codomain,domain)
         return new{rank(A)}(A)
     end
 
@@ -66,7 +66,7 @@ mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor
     end
 
     function AdjointMPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(fc,codomain,domain)
+        A = fc(codomain,domain)
         return new{rank(A)}(A)
     end
 
@@ -96,7 +96,7 @@ mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor
     end
 
     function CompositeMPSTensor(fc::Function, codom, dom)
-        A = TensorMap(fc,codom,dom)
+        A = fc(codom,dom)
         return new{length(codomain(A))-1, rank(A)}(A)
     end
 end
@@ -113,7 +113,7 @@ mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor
     end
 
     function AdjointCompositeMPSTensor(fc::Function,codom,dom)
-        A = TensorMap(fc,codom,dom)
+        A = fc(codom,dom)
         return new{length(domain(A))-1, rank(A)}(A)
     end
 end
@@ -136,7 +136,7 @@ mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
         return new{r}(t)
     end
     function DenseMPOTensor(fc::Function,codom,dom)
-        A = TensorMap(fc,codom,dom)
+        A = fc(codom,dom)
         return new{rank(A)}(A)
     end
 end
@@ -150,7 +150,7 @@ mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
     end
 
     function AdjointMPOTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = TensorMap(fc,codomain,domain)
+        A = fc(codomain,domain)
         return new{rank(A)}(A)
     end
 
@@ -178,7 +178,7 @@ mutable struct CompositeMPOTensor{N, R} <: AbstractMPOTensor
     end
 
     function CompositeMPOTensor(fc::Function, codom, dom)
-        A = TensorMap(fc,codom,dom)
+        A = fc(codom,dom)
         return new{length(codomain(A))-1, rank(A)}(A)
     end
 end
@@ -195,7 +195,7 @@ mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
     end
 
     function AdjointCompositeMPOTensor(fc::Function,codom,dom)
-        A = TensorMap(fc,codom,dom)
+        A = fc(codom,dom)
         return new{length(domain(A))-1, rank(A)}(A)
     end
 end

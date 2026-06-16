@@ -8,12 +8,12 @@ const PhySpace = Rep[SU₂](1//2 => 1)
 # S⋅S interaction
 const SS = let
     AuxSpace = Rep[SU₂](1 => 1)
-    OpL = TensorMap(ones, Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(3) / 2.
+    OpL = ones( Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(3) / 2.
     OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
 
-const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 3 / 4
+const S2 = ones( Float64, PhySpace, PhySpace) * 3 / 4
 end
 
 
@@ -24,7 +24,7 @@ using TensorKit
 const PhySpace = Rep[U₁](1//2 => 1, -1//2 => 1)
 
 const Sz = let 
-    Op = TensorMap(ones, PhySpace, PhySpace )
+    Op = ones( PhySpace, PhySpace )
     block(Op, Irrep[U₁](1//2)) .= 1/2
     block(Op, Irrep[U₁](-1//2)) .= -1/2
     Op
@@ -34,18 +34,18 @@ const SzSz = Sz, Sz
 
 const S₊S₋ = let 
     AuxSpace = Rep[U₁](1 => 1)
-    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpL = ones( PhySpace, AuxSpace ⊗ PhySpace)
     OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
 
 const S₋S₊ = let 
     AuxSpace = Rep[U₁](-1 => 1)
-    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpL = ones( PhySpace, AuxSpace ⊗ PhySpace)
     OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
-const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 3 / 4
+const S2 = ones( Float64, PhySpace, PhySpace) * 3 / 4
 const Sz2 = Sz*Sz
 
 end
@@ -57,7 +57,7 @@ using TensorKit
 const PhySpace = Rep[U₁](1 => 1, 0 => 1, -1 => 1)
 
 const Sz = let 
-    Op = TensorMap(zeros, PhySpace, PhySpace )
+    Op = zeros( PhySpace, PhySpace )
     block(Op, Irrep[U₁](1)) .= 1
     block(Op, Irrep[U₁](-1)) .= -1
     Op
@@ -67,18 +67,18 @@ const SzSz = Sz, Sz
 
 const S₊S₋ = let 
     AuxSpace = Rep[U₁](1 => 1)
-    OpL = sqrt(2)*TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpL = sqrt(2)*ones( PhySpace, AuxSpace ⊗ PhySpace)
     OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
 
 const S₋S₊ = let 
     AuxSpace = Rep[U₁](-1 => 1)
-    OpL = sqrt(2)*TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpL = sqrt(2)*ones( PhySpace, AuxSpace ⊗ PhySpace)
     OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
-const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 2 
+const S2 = ones( Float64, PhySpace, PhySpace) * 2 
 const Sz2 = Sz*Sz
 
 end
@@ -92,12 +92,12 @@ const PhySpace = Rep[SU₂](1 => 1)
 # S⋅S interaction
 const SS = let
     AuxSpace = Rep[SU₂](1 => 1)
-    OpL = TensorMap(ones, Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(2)
+    OpL = ones( Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(2)
     OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
 
-const S2 = TensorMap(ones, Float64, PhySpace, PhySpace) * 2
+const S2 = ones( Float64, PhySpace, PhySpace) * 2
 end
 
 
