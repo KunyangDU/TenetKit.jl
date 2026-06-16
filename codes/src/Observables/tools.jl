@@ -12,8 +12,8 @@
 #     node.val.EnvR = nothing
 #     node.val.rightdata = nothing
 # end
-rightdelfault_val!(node::DirectedNode{T}) where T <:  Union{CompositeObservableOperator,ObservableOperator{R₁,R₂}} where {R₁,R₂} = rightdelfault_val!(node.val)
-leftdelfault_val!(node::DirectedNode{T}) where T <:  Union{CompositeObservableOperator,ObservableOperator{R₁,R₂}} where {R₁,R₂} = leftdelfault_val!(node.val)
+rightdelfault_val!(node::DirectedNode{T}) where T <:  Union{CompositeObservableOperator,ObservableOperator} = rightdelfault_val!(node.val)
+leftdelfault_val!(node::DirectedNode{T}) where T <:  Union{CompositeObservableOperator,ObservableOperator} = leftdelfault_val!(node.val)
 
 function default_val!(node::T) where T <: Union{CompositeObservableOperator,ObservableOperator{R₁,R₂}} where {R₁,R₂}
     leftdelfault_val!(node)
@@ -30,11 +30,11 @@ function rightdelfault_val!(node::T) where T <:  Union{CompositeObservableOperat
     node.rightdata = nothing
 end
 
-isdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isleftdefault(node) && isrightdefault(node)
+isdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = (isleftdefault(node) && isrightdefault(node))
 # isrightdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isnothing(node.EnvL) && isnothing(node.leftdata)
 # isleftdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isnothing(node.EnvR) && isnothing(node.rightdata)
-isleftdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isnothing(node.EnvL) && isnothing(node.leftdata)
-isrightdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = isnothing(node.EnvR) && isnothing(node.rightdata)
+isleftdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = (isnothing(node.EnvL) && isnothing(node.leftdata))
+isrightdefault(node::T) where T <: Union{ObservableOperator{R₁,R₂}, CompositeObservableOperator} where {R₁,R₂} = (isnothing(node.EnvR) && isnothing(node.rightdata))
 
 _lr_merge(left::Dict,right::Dict) = map(x -> _lr_merge(left[x],right[x]), ["name","site"])
 

@@ -1,7 +1,7 @@
 
 # ========================= 逐层优化 =========================
-_lr_sig(n::DirectedNode) = (Tuple(sort!([objectid(e.from) for e in n.in_edges])), string(n.val))
-_rl_sig(n::DirectedNode) = (Tuple(sort!([objectid(e.to) for e in n.out_edges])), string(n.val))
+_lr_sig(n::DirectedNode) = (Tuple(sort!([objectid(e.from) for e in n.in_edges])), n.val)
+_rl_sig(n::DirectedNode) = (Tuple(sort!([objectid(e.to) for e in n.out_edges])), n.val)
 
 # 单层 merge
 function _lr_merge_at!(layers::Vector{Vector{DirectedNode}}, pos::Int)

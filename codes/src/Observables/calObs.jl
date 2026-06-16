@@ -4,7 +4,7 @@ function calObs!(Obs::InteractionGraph, obj::T;kwargs...) where T <: Union{Dense
     !isempty(Obs.values) && empty!(Obs.values)
     setdefault!(Obs,obj)
     
-    if get_nworker() ≤ 100
+    if get_nworker() ≤ 2
         to = _calObs_serial!(Obs,obj;kwargs...)
     else
         to = _calObs_threading!(Obs,obj;kwargs...)
@@ -17,6 +17,8 @@ function calObs!(Obs::InteractionGraph, obj::T;kwargs...) where T <: Union{Dense
     print("\n")
     show(Obs)
     flush(stdout)
+    @show TimerOutputs.todict(to)["inner_timers"]["update_w!"]["n_calls"]
+    @show TimerOutputs.todict(to)["inner_timers"]["update_n!"]["n_calls"]
 
     return Obs.values
 end
@@ -28,7 +30,11 @@ function _calObs_serial!(obs::InteractionGraph,obj::T;kwargs...) where T <: Unio
     push!(stack, obs.graph.source[1],obs.graph.sink[1])
     while !isempty(stack)
         @timeit to "pop!"    task = pop!(stack)           # LIFO: depth-first
-        @timeit to "update!" ans = _update!(task, obj)
+        if task isa DirectedNode
+            @timeit to "update_n!" ans = _update!(task, obj)
+        elseif task isa ObservableWeight
+            @timeit to "update_w!" ans = _update!(task, obj)
+        end
         if ans isa Tuple
             name,site,value = ans
             !haskey(data,name) && (data[name] = Dict{Tuple,Number}())
@@ -103,6 +109,10 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
 
     try
         @timeit to "put!" put!(ch, Obs.graph.source[1])
+        # while Base.n_avail(ch) ≠ 0 || Base.n_avail(ch_swap) ≠ 0
+        #     sleep(1e-2)
+        # end
+        # sleep(0.1)
         @timeit to "put!" put!(ch, Obs.graph.sink[1])
 
         let remain = length(paths(Obs.graph))
@@ -110,6 +120,7 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
             # showtimes=0 means silent (e.g. warmup runs). Guard against cld(total,0).
             showspacing::Int64 = showtimes > 0 ? cld(total, showtimes) : typemax(Int64)
             while remain > 0
+                # @show remain
                 info = take!(ch_info)
                 if info[1] == :err
                     isopen(ch) && close(ch)
@@ -129,6 +140,10 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
             end
         end
     finally
+        @show Base.n_avail(ch), Base.n_avail(ch_swap)
+        # while Base.n_avail(ch) > 0
+        #     sleep(0.1)
+        # end
         # Always close channels so spawned tasks (scheduler + workers) terminate.
         # Without try/finally an exception (e.g. the old DivideError from showtimes=0)
         # left ch open → the scheduler's yield()-loop became a busy-spin that maxed
@@ -156,8 +171,17 @@ function _calObs_work!(obj::T, ch::Channel, ch_swap::LIFOStack;
     @timeit to "take!" push!(task, take!(ch))
     while !isempty(task)
         let p = pop!(task)
-            @timeit to "update!" ans = lock(typeof(p) <: ObservableWeight ? p.lock : p.val.lock) do
-                _update!(p, obj)
+            # @timeit to "update!" ans = lock(typeof(p) <: ObservableWeight ? p.lock : p.val.lock) do
+            #     _update!(p, obj)
+            # end
+            if typeof(p) <: ObservableWeight
+                @timeit to "update_w!" ans = lock(p.lock) do
+                    _update!(p, obj)
+                end
+            else
+                @timeit to "update_n!" ans = lock(p.val.lock) do 
+                    _update!(p, obj)
+                end
             end
             if ans isa Tuple 
                 name,site,value = ans

@@ -46,6 +46,8 @@ end
 Base.isequal(A::T, B::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= (isequal(A.A,B.A) && isequal(A.isstring,B.isstring))
 # Base.show(io::IO,A::T) where T <: Union{ObservableOperator,CompositeObservableOperator} = show(io,A.A)
 Base.copy(A::T) where T <: Union{ObservableOperator,CompositeObservableOperator}= T(A)
+Base.hash(A::ObservableOperator, h::UInt) = hash(A.A, hash(A.isstring, hash(A.name, hash(A.site, h))))
+Base.hash(A::CompositeObservableOperator, h::UInt) = hash(A.A, hash(A.isstring, h))
 function Base.show(io::IO,A::ObservableOperator)
     print(io,"$(isnothing(A.name) ? "I" : A.name)$(String(collect("$(A.site)") .+ 8272))")
 end

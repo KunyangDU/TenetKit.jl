@@ -55,6 +55,8 @@ Base.isequal(A::IdentityOperator, B::IdentityOperator) = (A.site == B.site && A.
 Base.isequal(A::LocalOperator, B::LocalOperator) = (A.A ≈ B.A && A.name == B.name && A.site == B.site)
 
 Base.copy(A::T) where T <: Union{LocalOperator,IdentityOperator} = T(A.A, A.name, A.site)
+Base.hash(A::LocalOperator, h::UInt) = hash(A.A, hash(A.name, hash(A.site, h)))
+Base.hash(A::IdentityOperator, h::UInt) = hash(A.site, hash(A.name, h))
 
 function getIdTensor(A::AbstractLocalOperator)
     space = codomain(A.A)[1]
