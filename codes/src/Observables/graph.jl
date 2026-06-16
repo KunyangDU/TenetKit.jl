@@ -34,15 +34,39 @@ function initialize!(ig::InteractionGraph{L,T,DirectedAcyclicGraph{1,1}};verbose
 end
 
 function setdefault!(ig::InteractionGraph{L,ObservableOperator,DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}}
-    ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
-    ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
-    ig.graph.source[1].val.leftdata = Dict("site" => Int64[], "name" => String[])
-    ig.graph.sink[1].val.rightdata = Dict("site" => Int64[], "name" => String[])
+    # ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
+    # ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    EnvL = LeftEnvironmentTensor(_left_isometry(obj))
+    EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    for e in ig.graph.source[1].out_edges
+        e.weight.EnvL = EnvL
+        e.weight.leftdata = Dict("site" => Int64[], "name" => String[])
+    end
+    for e in ig.graph.sink[1].in_edges
+        e.weight.EnvR = EnvR
+        e.weight.rightdata = Dict("site" => Int64[], "name" => String[])
+    end
 end
 
 function setdefault!(ig::InteractionGraph{L,CompositeObservableOperator{N},DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}, N}
-    ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
-    ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
-    ig.graph.source[1].val.leftdata = Dict("site" => [Int64[] for _ in 1:N], "name" => [String[] for _ in 1:N])
-    ig.graph.sink[1].val.rightdata = Dict("site" => [Int64[] for _ in 1:N], "name" => [String[] for _ in 1:N])
+    # ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
+    # ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    EnvL = LeftEnvironmentTensor(_left_isometry(obj))
+    EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    for e in ig.graph.source[1].out_edges
+        e.weight.EnvL = EnvL
+        e.weight.leftdata = Dict("site" => [Int64[] for _ in 1:N], "name" => [String[] for _ in 1:N])
+    end
+    for e in ig.graph.sink[1].in_edges
+        e.weight.EnvR = EnvR
+        e.weight.rightdata = Dict("site" => [Int64[] for _ in 1:N], "name" => [String[] for _ in 1:N])
+    end
+end
+
+function isdefaultweight(ig::InteractionGraph{L,T}) where {L, T <: Union{ObservableOperator,CompositeObservableOperator{2}}}
+    for e in collect_edges(ig.graph)
+        !isleftdefault(e) && return true
+        !isrightdefault(e) && return true
+    end
+    return false
 end

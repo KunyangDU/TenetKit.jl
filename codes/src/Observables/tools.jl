@@ -103,6 +103,33 @@ function deepmerge!(d1::Dict, d2::Dict)
     return d1
 end
 
+function leftmergedata!(w::ObservableWeight,n::ObservableOperator)
+    push!(w.leftdata["name"], n.name)
+    push!(w.leftdata["site"], n.site)
+end
+
+function leftmergedata!(w::ObservableWeight,n::CompositeObservableOperator{2})
+    for i in eachindex(n.A)
+        n.isstring[i] && continue
+        # !isempty(val.leftdata["site"][i]) && val.leftdata["site"][i][end] == val.A[i].site && continue
+        push!(w.leftdata["name"][i], n.A[i].name)
+        push!(w.leftdata["site"][i], n.A[i].site)
+    end
+end
+
+function rightmergedata!(w::ObservableWeight,n::ObservableOperator)
+    push!(w.rightdata["name"], n.name)
+    push!(w.rightdata["site"], n.site)
+end
+
+function rightmergedata!(w::ObservableWeight,n::CompositeObservableOperator{2})
+    for i in eachindex(n.A)
+        n.isstring[i] && continue
+        # !isempty(val.rightdata["site"][i]) && val.rightdata["site"][i][end] == val.A[i].site && continue
+        push!(w.rightdata["name"][i], n.A[i].name)
+        push!(w.rightdata["site"][i], n.A[i].site)
+    end
+end
 
 function leftmergedata!(val::ObservableOperator)
     push!(val.leftdata["name"], val.name)
@@ -145,6 +172,12 @@ _calObs_right_contract(val::ObservableOperator, obj::T) where T <: Union{MPSTens
 _calObs_left_contract(val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(val.A[1], obj, val.A[2], obj', val.EnvL)
 _calObs_right_contract(val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = contract(val.A[1], obj, val.A[2], obj', val.EnvR)
 
+_calObs_left_contract!(w::ObservableWeight, val::ObservableOperator, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = (w.EnvL = contract(obj, isnothing(val.A) ? IdentityOperator(val.site) : LocalOperator(val.A, val.name, val.site), obj', w.EnvL) * w.strength)
+_calObs_right_contract!(w::ObservableWeight, val::ObservableOperator, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = (w.EnvR = contract(obj, isnothing(val.A) ? IdentityOperator(val.site) : LocalOperator(val.A, val.name, val.site), obj', w.EnvR) * w.strength)
+
+_calObs_left_contract!(w::ObservableWeight, val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = (w.EnvL = contract(val.A[1], obj, val.A[2], obj', w.EnvL) * w.strength)
+_calObs_right_contract!(w::ObservableWeight, val::CompositeObservableOperator{2}, obj::T) where T <: Union{MPSTensor, DenseMPOTensor} = (w.EnvR = contract(val.A[1], obj, val.A[2], obj', w.EnvR) * w.strength)
+
 _leftsite(val::ObservableOperator) = _endsite(val.leftdata["site"])
 _rightsite(val::ObservableOperator) = _endsite(val.rightdata["site"])
 _endsite(d::Vector{Int64}) = isempty(d) ? NaN : d[end] 
@@ -161,3 +194,8 @@ function observe(ig::InteractionGraph{L,LocalOperator}) where L
 end
 
 observe(t::InteractionTunnel{L, LocalOperator, N}) where {L,N} = InteractionTunnel(map(x -> ObservableOperator(x, false),t.A), t.fermionic, t.Z, t.strength, L, ObservableOperator)
+
+hasLR(node::DirectedNode) = !isleftdefault(node.val), !isrightdefault(node.val)
+hasLR(nodeL::DirectedNode, nodeR::DirectedNode) = hasLR(nodeL)..., hasLR(nodeR)...
+hasLR(w::DirectedEdge) = !isleftdefault(w), !isrightdefault(w)
+

@@ -10,15 +10,12 @@ function calObs!(Obs::InteractionGraph, obj::T;kwargs...) where T <: Union{Dense
         to = _calObs_threading!(Obs,obj;kwargs...)
     end
 
-    @timeit to "default!" map(e -> default_weight!(e,false), collect_edges(Obs.graph))
-    @timeit to "default!" map(e -> default_val!(e), collect_nodes(Obs.graph))
+    !isdefaultweight(Obs) && (@timeit to "default_weight!" map(e -> default_weight!(e,false), collect_edges(Obs.graph)); @warn "obsweight not set default correctly!")
 
     show(to,title = "calObs!")
     print("\n")
     show(Obs)
     flush(stdout)
-    # @show TimerOutputs.todict(to)["inner_timers"]["update_w!"]["n_calls"]
-    # @show TimerOutputs.todict(to)["inner_timers"]["update_n!"]["n_calls"]
 
     return Obs.values
 end
@@ -34,7 +31,7 @@ function _calObs_serial!(obs::InteractionGraph,obj::T;kwargs...) where T <: Unio
         if ans isa Tuple
             name,site,value = ans
             !haskey(data,name) && (data[name] = Dict{Tuple,Number}())
-            # @assert !haskey(data[name],site) "Observable Overcounted!",name,site
+            @assert !haskey(data[name],site) "Observable Overcounted!",name,site
             data[name][site] = value
         elseif ans isa Vector
             @timeit to "push!" push!(stack, ans...)
@@ -122,8 +119,8 @@ function _calObs_threading!(Obs::InteractionGraph, obj::Union{DenseMPO,DenseMPS}
                 end
                 data, count, tm = info[2]
                 deepmerge!(Obs.values, data)
-                # remain -= count
-                remain = total - dictsize(Obs.values)
+                remain -= count
+                # remain = total - dictsize(Obs.values)
                 merge!(to, tm)
                 if remain % showspacing == 0
                     show(to, title="$(total - remain)/$(total)")
@@ -168,7 +165,7 @@ function _calObs_work!(obj::T, ch::Channel, ch_swap::LIFOStack;
             if ans isa Tuple 
                 name,site,value = ans
                 !haskey(data,name) && (data[name] = Dict{Tuple,Number}())
-                # @assert !haskey(data[name],site) "Observable Overcounted!",name,site
+                @assert !haskey(data[name],site) "Observable Overcounted!",name,site
                 count += 1
                 data[name][site] = value
             elseif ans isa Vector
