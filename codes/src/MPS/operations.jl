@@ -4,11 +4,11 @@ function tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...)
     trunc = get(kwargs,:trunc,TruncationScheme())[:]
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);trunc = trunc)
     if direction == :center
-        return map(MPSTensor,[U,S,permute(V,(1,2),(3,))])...,ϵ^2,BondInfo(S)
+        return map(MPSTensor,[U,S,permute(V, ((1, 2), (3,)))])...,ϵ^2,BondInfo(S)
     elseif direction == :left 
-        return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ^2,BondInfo(S)
-    elseif direction == :right 
-        return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ^2,BondInfo(S)
+        return map(MPSTensor,(U*S,permute(V, ((1, 2), tuple(3:(R-1)...)))))...,ϵ^2,BondInfo(S)
+    elseif direction == :right
+        return map(MPSTensor,(U,permute(S*V, ((1, 2), tuple(3:(R-1)...)))))...,ϵ^2,BondInfo(S)
     end
 end
 
@@ -20,17 +20,17 @@ function tsvd(A::MPSTensor{3}; direction::Symbol=:center, index_tuple = ((1,2),(
         return map(MPSTensor,(U,S,V))...,ϵ^2,BondInfo(S)
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(1,),(2,3);trunc = trunc)
-        return map(MPSTensor,(U*S,permute(V,(1,2),(3,))))...,ϵ^2,BondInfo(S)
+        return map(MPSTensor,(U*S,permute(V, ((1, 2), (3,)))))...,ϵ^2,BondInfo(S)
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2),(3,);trunc = trunc)
         return map(MPSTensor,(U,S*V))...,ϵ^2,BondInfo(S)
     end
 end
 
-leftorth(A::MPSTensor{4}) = map(MPSTensor,leftorth(A.A,(1,2,4),(3,)) |> x -> (permute(x[1],(1,2),(4,3)),x[2]))
-rightorth(A::MPSTensor{4}) = map(MPSTensor,rightorth(A.A,(1,),(2,3,4)) |> x -> (x[1],permute(x[2],(1,2),(3,4)))) 
+leftorth(A::MPSTensor{4}) = map(MPSTensor,leftorth(A.A,(1,2,4),(3,)) |> x -> (permute(x[1], ((1, 2), (4,3))),x[2]))
+rightorth(A::MPSTensor{4}) = map(MPSTensor,rightorth(A.A,(1,),(2,3,4)) |> x -> (x[1],permute(x[2], ((1, 2), (3,4))))) 
 
-rightorth(A::MPSTensor{3}) = map(MPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[1],permute(x[2],(1,2),(3,)))) 
+rightorth(A::MPSTensor{3}) = map(MPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[1],permute(x[2], ((1, 2), (3,))))) 
 leftorth(A::MPSTensor{3}) = map(MPSTensor,leftorth(A.A,(1,2),(3,)))
 
 function rightorth(A::MPSTensor{3}, B::MPSTensor{3})
@@ -53,7 +53,7 @@ function leftorth!(obj::T,site::Int64) where T <: Union{DenseMPS, AdjointMPS}
 end
 
 
-rightorth(A::AdjointMPSTensor{3}) = map(AdjointMPSTensor,leftorth(A.A,(1,3),(2,)) |> x -> (x[2],permute(x[1],(1,),(3,2)))) 
+rightorth(A::AdjointMPSTensor{3}) = map(AdjointMPSTensor,leftorth(A.A,(1,3),(2,)) |> x -> (x[2],permute(x[1],((1,),(3,2))))) 
 leftorth(A::AdjointMPSTensor{3}) = map(AdjointMPSTensor,rightorth(A.A,(1,),(2,3)) |> x -> (x[2],x[1]))
 
 function rightorth(A::AdjointMPSTensor{3}, B::AdjointMPSTensor{3})

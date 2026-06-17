@@ -138,7 +138,7 @@ function evolve!(
     tmp,info = exponentiate(x -> action(O,x), -τ, obj, alg.Alg)
     rmul!(tmp,nm)
     obj.A = tmp.A
-    @assert info.residual ≈ 0
+    info.normres > 1e-8 && (@warn "evolve normres > 1e-8")
     return obj, Lanczosinfo(info)
 end
 

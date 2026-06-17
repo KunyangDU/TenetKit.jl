@@ -150,7 +150,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
-            tr = MPSTensor(permute(tr.A,(1,2),(3,)))
+            tr = MPSTensor(permute(tr.A, ((1, 2), (3,))))
             # localinfo.bond = BondInfo(tc)
             merge!(localinfo, bi)
             @timeit localto "contract" tl = contract(Env.layer[1][site-1],contract(tl,tc))

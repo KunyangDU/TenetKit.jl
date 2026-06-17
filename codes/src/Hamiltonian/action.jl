@@ -107,13 +107,13 @@ function action(O::DenseProjectiveHamiltonian{3, 2}, obj::CompositeMPOTensor{2, 
     h1 = O.H[1].A
     h2 = O.H[2].A
     @timeit to "_action2_2_2_11_11_2" @tensor tmp[-1,-2,-3,-6,-7;-5,-4] ≔ O.EnvL.A.A[-1,1,2] * h1[-2,1,4,3] * h2[-3,4,-4,5] * obj.A[5,3,2,-5,-6,-7]
-    return CompositeMPOTensor(permute(tmp * O.EnvR.A.A,(3,2,1),(6,4,5)))
+    return CompositeMPOTensor(permute(tmp * O.EnvR.A.A, ((3, 2,1), (6,4,5))))
 end
 
 function action(O::DenseProjectiveHamiltonian{3, 1}, obj::DenseMPOTensor{4})
     to = get_timer("action")
     h = O.H[1].A
     @timeit to "_action1_1_1_11_11_1" @tensor tmp[-1,-2,-5;-4,-3] ≔ O.EnvL.A.A[-1,1,2] * h[-2,1,-3,3] * obj.A[3,2,-4,-5]
-    return DenseMPOTensor(permute(tmp * O.EnvR.A.A,(2,1),(4,3)))
+    return DenseMPOTensor(permute(tmp * O.EnvR.A.A, ((2, 1), (4,3))))
 end
 

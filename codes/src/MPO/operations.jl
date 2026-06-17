@@ -7,10 +7,10 @@ function tsvd(A::DenseMPOTensor{4}; direction::Symbol=:center, index_tuple = ((1
         return map(DenseMPOTensor, (U,S,V))...,ϵ^2,BondInfo(S)
     elseif direction == :left 
         U,S,V,ϵ = tsvd(A.A,(2,),(1,3,4);trunc = trunc)
-        return map(DenseMPOTensor,(U*S,permute(V,(2,1),(3,4))))...,ϵ^2,BondInfo(S)
+        return map(DenseMPOTensor,(U*S,permute(V, ((2, 1), (3,4)))))...,ϵ^2,BondInfo(S)
     elseif direction == :right 
         U,S,V,ϵ = tsvd(A.A,(1,2,4),(3,);trunc = trunc)
-        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),S*V))...,ϵ^2,BondInfo(S)
+        return map(DenseMPOTensor,(permute(U, ((1, 2), (4,3))),S*V))...,ϵ^2,BondInfo(S)
     end
 end
 
@@ -21,11 +21,11 @@ function tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
     # d = sqrt(@tensor S[1,2] * S'[2,1])
     # d != 0 && (ϵ /= d;vns = vonNeumann(S))
     if direction == :center
-        return map(DenseMPOTensor,[permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4))])...,ϵ^2,BondInfo(S)
+        return map(DenseMPOTensor,[permute(U, ((1, 2), (4,3))),S,permute(V, ((2, 1), (3,4)))])...,ϵ^2,BondInfo(S)
     elseif direction == :left 
-        return map(DenseMPOTensor,(permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4))))...,ϵ^2,BondInfo(S)
+        return map(DenseMPOTensor,(permute(U*S, ((1, 2), (4,3))),permute(V, ((2, 1), (3,4)))))...,ϵ^2,BondInfo(S)
     elseif direction == :right 
-        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4))))...,ϵ^2,BondInfo(S)
+        return map(DenseMPOTensor,(permute(U, ((1, 2), (4,3))),permute(S*V, ((2, 1), (3,4)))))...,ϵ^2,BondInfo(S)
     end
 end
 
@@ -38,12 +38,12 @@ end
 
 function leftorth(elm::DenseMPOTensor{4})
     Q,R = leftorth(elm.A,(1,2,4),(3,))
-    return map(DenseMPOTensor,(permute(Q,(1,2),(4,3)),R))
+    return map(DenseMPOTensor,(permute(Q, ((1, 2), (4,3))),R))
 end
 
 function rightorth(A::DenseMPOTensor{4})
     L,Q = rightorth(A.A,(2,),(1,3,4))
-    return map(DenseMPOTensor,(L,permute(Q,(2,1),(3,4))))
+    return map(DenseMPOTensor,(L,permute(Q, ((2, 1), (3,4)))))
 end
 
 function leftorth(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
@@ -60,12 +60,12 @@ end
 
 function leftorth(elm::AdjointMPOTensor{4})
     L,Q = rightorth(elm.A,(1,),(2,3,4))
-    return map(AdjointMPOTensor,(permute(Q,(1,2),(3,4)),L))
+    return map(AdjointMPOTensor,(permute(Q, ((1, 2), (3,4))),L))
 end
 
 function rightorth(A::AdjointMPOTensor{4})
     Q,R = leftorth(A.A,(1,2,3),(4,))
-    return map(AdjointMPOTensor,(R,permute(Q,(1,2),(3,4))))
+    return map(AdjointMPOTensor,(R,permute(Q, ((1, 2), (3,4)))))
 end
 
 function leftorth(A::AdjointMPOTensor{4}, B::AdjointMPOTensor{4})

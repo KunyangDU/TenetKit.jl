@@ -69,8 +69,8 @@ end
 
 function _cbedsum(Q::MPSTensor{3},A::MPSTensor{3},direction::AbstractDirection)
     if typeof(direction) <: L2R
-        ~,Q = rightorth(catcodomain(map(x -> permute(x.A,(1,),(2,3)),(Q,A))...))
-        Q = MPSTensor(permute(Q,(1,2),(3,)))
+        ~,Q = rightorth(catcodomain(map(x -> permute(x.A,((1,),(2,3))),(Q,A))...))
+        Q = MPSTensor(permute(Q, ((1, 2), (3,))))
     elseif typeof(direction) <: R2L
         Q,~ = leftorth(catdomain(Q.A,A.A))
         Q = MPSTensor(Q)
@@ -80,11 +80,11 @@ end
 
 function _cbedsum(Q::DenseMPOTensor{4},A::DenseMPOTensor{4},direction::AbstractDirection)
     if typeof(direction) <: L2R
-        Q = catcodomain(map(x -> permute(x.A,(2,),(1,3,4)),(Q,A))...)
-        ~,Q = rightorth(DenseMPOTensor(permute(Q,(2,1),(3,4))))
+        Q = catcodomain(map(x -> permute(x.A,((2,),(1,3,4))),(Q,A))...)
+        ~,Q = rightorth(DenseMPOTensor(permute(Q, ((2, 1), (3,4)))))
     elseif typeof(direction) <: R2L
-        Q = catdomain(map(x -> permute(x.A,(1,2,4),(3,)),(Q,A))...)
-        Q,~ = leftorth(DenseMPOTensor(permute(Q,(1,2),(4,3))))
+        Q = catdomain(map(x -> permute(x.A, ((1, 2,4), (3,))),(Q,A))...)
+        Q,~ = leftorth(DenseMPOTensor(permute(Q, ((1, 2), (4,3)))))
     end
     return Q
 end
@@ -105,7 +105,7 @@ function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TruncationScheme,::R2L)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch, index_tuple = ((2,),(1,3,4)))
     # tr = _tdvp_permute(tr,R2L())
-    tr = DenseMPOTensor(permute(tr.A,(2,1),(3,4)))
+    tr = DenseMPOTensor(permute(tr.A, ((2, 1), (3,4))))
     @timeit localto "contract" tl = tl*tc
     return tl,tc,tr,ϵ,localto
 end
@@ -114,7 +114,7 @@ function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TruncationScheme,::L2R)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch)
     # tl = _tdvp_permute(tl,L2R())
-    tl = DenseMPOTensor(permute(tl.A,(1,2),(4,3)))
+    tl = DenseMPOTensor(permute(tl.A, ((1, 2), (4,3))))
     @timeit localto "contract" tr = tc*tr
     return tl,tc,tr,ϵ,localto
 end
@@ -122,7 +122,7 @@ end
 function _tdvp_tsvd(tmp::MPSTensor{3},truncsch::TruncationScheme,::R2L)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch, index_tuple = ((1,),(2,3)))
-    tr = MPSTensor(permute(tr.A,(1,2),(3,)))
+    tr = MPSTensor(permute(tr.A, ((1, 2), (3,))))
     @timeit localto "contract" tl = tl*tc
     return tl,tc,tr,ϵ,localto
 end
