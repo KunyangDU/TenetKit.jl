@@ -81,19 +81,19 @@ mutable struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     end
 end
 
-mutable struct LKANalgo{N,M} <: AbstractAlgorithm where {N,M}
-    order::Int64
-    mode::Symbol
-    filepath::String
-    tailname::String
-    solver::SolverAlgo
-    scale::Number
-    algo::SolverAlgo
-    count::Int64
-    function LKANalgo(order::Int64, mode::Symbol, filepath::String, tailname::String, solver::SolverAlgo, scale::Number = 1., algo::SolverAlgo = mode == :dmrg ? DMRGDefaultLanczos : HamiltonianBoundDefaultLanczos, count::Int64 = 0)
-        new{order,mode}(order, mode, filepath, tailname, solver, scale, algo, count)
-    end
-end
+# mutable struct LKANalgo{N,M} <: AbstractAlgorithm where {N,M}
+#     order::Int64
+#     mode::Symbol
+#     filepath::String
+#     tailname::String
+#     solver::SolverAlgo
+#     scale::Number
+#     algo::SolverAlgo
+#     count::Int64
+#     function LKANalgo(order::Int64, mode::Symbol, filepath::String, tailname::String, solver::SolverAlgo, scale::Number = 1., algo::SolverAlgo = mode == :dmrg ? DMRGDefaultLanczos : HamiltonianBoundDefaultLanczos, count::Int64 = 0)
+#         new{order,mode}(order, mode, filepath, tailname, solver, scale, algo, count)
+#     end
+# end
 
 #= ========================= =#
 
@@ -116,5 +116,11 @@ mutable struct XTRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
         alg.isdisk = isdisk
         new{typeof(scheme),typeof(alg)}(scheme,alg,N,H,isdisk)
     end
+end
+
+mutable struct Myhillalgo <: AbstractAlgorithm
+    nodes::Vector{Vector{Vector{Int64}}}    # layers → groups → tunnel indices
+    weight::Type                            # edge weight type
+    Myhillalgo(weight::Type=Number) = new(Vector{Vector{Int64}}[], weight)
 end
 

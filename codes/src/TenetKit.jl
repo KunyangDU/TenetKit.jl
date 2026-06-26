@@ -29,9 +29,11 @@ include("ProcessControl/information.jl")
 include("ProcessControl/scheme.jl")
 include("ProcessControl/structure.jl")
 
-include("Graph/optimize.jl")
+# include("Graph/optimize.jl")
+include("Graph/bipartite.jl")
 include("Graph/iterator.jl")
-include("Graph/operations.jl")
+include("Graph/myhill.jl")
+# include("Graph/operations.jl")
 
 include("Defaults.jl")
 

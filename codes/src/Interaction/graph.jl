@@ -18,9 +18,8 @@ end
 function initialize!(ig::InteractionGraph{L, T, Number, DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where {L, T <: Union{LocalOperator, CompositeLocalOperator}}
     to = TimerOutput()
     @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
-    @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel)
-    @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph;verbose = verbose, N = N)
-    merge!(to,localto;tree_point = ["optimize!"])
+    @timeit to "build!" ig.graph,to′ = DirectedAcyclicGraph(ig.tunnel,Number)
+    merge!(to,to′;tree_point = ["build!"])
     verbose && (show(to;title = "Interaction Graph"); print("\n"); show(ig); flush(stdout))
     return ig
 end

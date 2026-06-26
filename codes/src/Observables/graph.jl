@@ -6,9 +6,8 @@ composite(A::InteractionGraph{L,LocalOperator,ObservableWeight,DirectedAcyclicGr
 function initialize!(ig::InteractionGraph{L,T,ObservableWeight,DirectedAcyclicGraph{1,1}};verbose::Bool = false, N::Int64 = 1) where {L,T <: Union{LocalOperator,CompositeLocalOperator}}
     to = TimerOutput()
     @assert !isempty(ig.tunnel) "No Interaction Tunnel!"
-    @timeit to "build!" ig.graph = DirectedAcyclicGraph(ig.tunnel; weight = ObservableWeight)
-    @timeit to "optimize!" ig.graph,localto = optimize!(ig.graph;verbose = verbose, N = N)
-    merge!(to,localto;tree_point = ["optimize!"])
+    @timeit to "build!" ig.graph,to′ = DirectedAcyclicGraph(ig.tunnel, ObservableWeight)
+    merge!(to,to′;tree_point = ["build!"])
     show(to;title = "Observable Graph"); print("\n"); show(ig); flush(stdout)
     ig.graph.source[1].val = T(0)
     ig.graph.sink[1].val = T(L + 1)

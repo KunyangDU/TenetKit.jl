@@ -3,22 +3,9 @@ mutable struct DirectedAcyclicGraph{E₁,E₂,T} <: AbstractGraph
     sink::NTuple{E₂,T}
 end
 
-# 从 tunnels 构建未优化的 DirectedAcyclicGraph
-function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,T}}; weight::Type{W} = Number) where {L,T,W}
-    isempty(tunnels) && return DirectedAcyclicGraph((), ())
-    entry = sentinel(AbstractLocalOperator)
-    exit_s = sentinel(AbstractLocalOperator)
-    for tun in tunnels
-        prev = entry
-        for pos in 1:L
-            val = tun[pos]
-            node = DirectedNode(val)
-            add_edge!(prev, node, W(pos == 1 ? tun.strength : 1.0))
-            prev = node
-        end
-        add_edge!(prev, exit_s, W(1.0))
-    end
-    return DirectedAcyclicGraph((entry,), (exit_s,))
+# 默认：无算法 → Myhill
+function DirectedAcyclicGraph(tunnels::Vector{AbstractTunnel{L,T}}, weight::Type{W}) where {L,T,W}
+    return DirectedAcyclicGraph(tunnels, Myhillalgo(weight))
 end
 
 # -- 从 DAG source 出发收集全部节点 --
@@ -78,6 +65,19 @@ function Base.show(io::IO, dag::DirectedAcyclicGraph)
     layers = _extract_layers(dag)
     sizes = [length(l) for l in layers]
     print(io, "$(typeof(dag)): ", join(sizes, " → "))
+end
+
+# 从 DAG 的 source 出发，逐层收集物理节点
+function _extract_layers(dag::DirectedAcyclicGraph)
+    layers = Vector{DirectedNode}[]
+    cur = [dag.source[1]]
+    while true
+        push!(layers, cur)
+        nxt = _next_nodes(cur)
+        isempty(nxt) && break
+        cur = nxt
+    end
+    return layers
 end
 
 graphsize(ig::DirectedAcyclicGraph) = length(collect_nodes(ig))

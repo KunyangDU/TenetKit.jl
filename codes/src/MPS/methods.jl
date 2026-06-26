@@ -7,7 +7,7 @@ function randMPS(PhySpaces::Vector,AuxSpaces::Vector;
     push!(AuxSpaces, tailSpace)
     tmp = Vector{MPSTensor}(undef,L)
     for i in 1:L
-        tmp[i] = MPSTensor(randn,AuxSpaces[i] ⊗ PhySpaces[i],AuxSpaces[i+1])
+        tmp[i] = MPSTensor(ones,AuxSpaces[i] ⊗ PhySpaces[i],AuxSpaces[i+1])
     end
 
     obj = DenseMPS{L,type}(tmp;isdisk=isdisk)
