@@ -77,6 +77,7 @@ include("tools/lattice.jl")
 include("tools/vonNeumann.jl")
 include("tools/swap.jl")
 include("tools/KrylovKit.jl")
+include("tools/show.jl")
 
 include("Algebra/inner.jl")
 include("Algebra/mul.jl")

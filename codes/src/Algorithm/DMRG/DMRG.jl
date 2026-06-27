@@ -17,7 +17,8 @@ function DMRG1!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = DMRGalgo(SingleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite,isdisk)
+    verbose = get(kwargs, :verbose, false)
+    alg = DMRGalgo(SingleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite,verbose,isdisk)
     try
         lsE,lsinfo = DMRG!(Env,alg)
         return lsE,lsinfo
@@ -42,7 +43,8 @@ function DMRG2!(ψ::DenseMPS,H::Union{DenseMPO,SparseMPO};kwargs...)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite,isdisk)
+    verbose = get(kwargs, :verbose, false)
+    alg = DMRGalgo(DoubleSite(),subalgo,trunc,N,Etol,Stol,solver,GCsweep,GCsite,verbose,isdisk)
     try
         lsE,lsinfo = DMRG!(Env,alg)
         return lsE,lsinfo
@@ -95,6 +97,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
     localto = TimerOutput()
     # lsE = []
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
         if alg <: CBEalgo 
@@ -121,6 +124,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         # push!(info.E,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
     # info.σE = std(filter(!isnan,lsE))
     # info.E = lsE[end]
@@ -132,6 +136,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
     localto = TimerOutput()
     # lsE = []
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
         if alg <: CBEalgo 
@@ -159,6 +164,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
     # info.σE = std(filter(!isnan,lsE))
     # info.E = lsE[end]
@@ -170,6 +176,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
     localto = TimerOutput()
     # lsE = []
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
         @timeit localto "Krylov" begin
@@ -187,6 +194,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
     # info.σE = std(filter(!isnan,lsE))
     # info.E = lsE[end]
@@ -198,6 +206,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
     localto = TimerOutput()
     # lsE = []
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
         @timeit localto "Krylov" begin
@@ -215,6 +224,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
     # info.σE = std(filter(!isnan,lsE))
     # info.E = lsE[end]

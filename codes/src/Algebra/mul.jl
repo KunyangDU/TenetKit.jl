@@ -1,7 +1,5 @@
 function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},DenseMPS{L₁}}, B::Union{DenseMPO{L₂},SparseMPO{L₂},AdjointMPO{L₂},RefMPO{L₂}}, α::Number, Alg::Algebraalgo; kwargs...) where {L₁,L₂}
 
-    verbose = get(kwargs,:verbose,true)
-
     @assert L₁ == L₂
     to = TimerOutput()
     __init_io__()
@@ -19,21 +17,29 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},D
 
             l2rinfo = Algebrasweepinfo(L2R())
             mto = mul!(EnvAB,α,Alg,l2rinfo)
+
+            show(mto;title = ">>> mul! - $(info.n) / $(Alg.N) >>>")
+            print("\n")
+            show(l2rinfo)
+            flush(stdout)
+
             merge!(localto,mto)
             merge!(info,l2rinfo)
 
             r2linfo = Algebrasweepinfo(R2L())
             mto = mul!(EnvAB,α,Alg,r2linfo)
+
+            show(mto;title = "<<< mul! - $(info.n) / $(Alg.N) <<<")
+            print("\n")
+            show(r2linfo)
+            flush(stdout)
+
             merge!(localto,mto)
             merge!(info,r2linfo)
-            if verbose
-                _merge_io!(localto)
-                show(localto;title = "mul! - $(info.n) / $(Alg.N)")
-                print("\n")
-                show(info)
-                flush(stdout)
-            end
+
+            _merge_io!(localto)
             merge!(to,localto)
+
             info.err < Alg.tol && break
         end
         return xp!(C′, C), to, info
@@ -47,6 +53,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
     localto = TimerOutput()
     L = length(EnvAB.layer[1])
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(EnvAB.layer[3][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
@@ -61,6 +68,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         x = composite(EnvAB.layer[3][site:site+1]...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
 
     return localto
@@ -70,6 +78,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
     localto = TimerOutput()
     L = length(EnvAB.layer[1])
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(EnvAB.layer[3][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
@@ -84,6 +93,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         x = composite(EnvAB.layer[3][site-1:site]...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
 
     return localto
@@ -93,6 +103,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
     localto = TimerOutput()
     L = length(EnvAB.layer[1])
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite((EnvAB.layer[3][site:site+1])...))
         @assert (x2 = norm(x₀)^2) ≠ 0
@@ -119,6 +130,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         localinfo.err = norm(x-x₀)^2/x2
 
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
 
     return localto
@@ -128,6 +140,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
     localto = TimerOutput()
     L = length(EnvAB.layer[1])
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite((EnvAB.layer[3][site-1:site])...))
         @assert (x2 = norm(x₀)^2) ≠ 0
@@ -152,6 +165,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         x = composite((EnvAB.layer[3][site-1:site])...)
         localinfo.err = norm(x-x₀)^2/x2
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
 
     return localto
@@ -165,7 +179,8 @@ function mul!(C::Union{DenseMPO,DenseMPS}, A::Union{DenseMPO,DenseMPS}, B::Union
     λ = get(kwargs,:λ,1.2)
     Nfull = get(kwargs,:Nfull,4)
     Nmul = get(kwargs,:Nmul,3)
-    alg = get(kwargs,:alg,Algebraalgo(SingleSite(),CBEalgo(dynamicSVD(λ,Nfull),NoStruc(),0,D),trunc,Nmul,ϵ))
+    verbose = get(kwargs,:verbose,false)
+    alg = get(kwargs,:alg,Algebraalgo(SingleSite(),CBEalgo(dynamicSVD(λ,Nfull),NoStruc(),0,D),trunc,Nmul,ϵ,verbose))
     
     return mul!(C,A,B,α,alg)
 end

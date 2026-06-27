@@ -34,9 +34,10 @@ end
 
 
 function vonNeumann(S::AbstractTensorMap{T,<:ElementarySpace,1,1}) where T
-    _tmptrace(x) = @tensor x[1,1]
-    d = sqrt(_tmptrace(S*S'))
+    # _tmptrace(x) = @tensor x[1,1]
+    xlogx(x::Real) = iszero(x) ? zero(x) : x * log(x)
+    d = norm(S)
     @assert d != 0
     A = S/d |> x -> x*x'
-    return real(_tmptrace(-A*log(A)))
+    return -real(sum(xlogx, diag(convert(Array, A))))
 end

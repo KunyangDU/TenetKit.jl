@@ -7,13 +7,13 @@ struct Krylovalgo <: SolverAlgo
     Krylovalgo(Alg::KrylovKit.KrylovAlgorithm) = new(Alg)
 end
 
-struct Chebyshev <: SolverAlgo
-    tol::Float64
-    maxiter::Int
-    function Chebyshev(; tol::Float64=1e-10, maxiter::Int=200)
-        new(tol, maxiter)
-    end
-end
+# struct Chebyshev <: SolverAlgo
+#     tol::Float64
+#     maxiter::Int
+#     function Chebyshev(; tol::Float64=1e-10, maxiter::Int=200)
+#         new(tol, maxiter)
+#     end
+# end
 
 struct SETTNalgo{Sch} <: AbstractAlgorithm where {Sch}
     scheme::AbstractScheme
@@ -36,9 +36,10 @@ struct DMRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     solver::AbstractAlgorithm
     GCsweep::Bool
     GCsite::Bool
+    verbose::Bool
     isdisk::Bool
-    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, Etol::Number, Stol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool,isdisk::Bool=IS_DISK[])
-        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,Etol,Stol,solver,GCsweep,GCsite,isdisk)
+    function DMRGalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, N::Int64, Etol::Number, Stol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool,verbose::Bool,isdisk::Bool=IS_DISK[])
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,Etol,Stol,solver,GCsweep,GCsite,verbose,isdisk)
     end
 end
 
@@ -51,9 +52,10 @@ mutable struct TDVPalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     solver::AbstractAlgorithm
     GCsweep::Bool
     GCsite::Bool
+    verbose::Bool
     isdisk::Bool
-    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, τ::Number, tol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool,isdisk::Bool=IS_DISK[])
-        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,τ,tol,solver,GCsweep,GCsite,isdisk)
+    function TDVPalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme, τ::Number, tol::Number, solver::AbstractAlgorithm,GCsweep::Bool,GCsite::Bool,verbose::Bool,isdisk::Bool=IS_DISK[])
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,τ,tol,solver,GCsweep,GCsite,verbose,isdisk)
     end
 end
 
@@ -75,9 +77,10 @@ mutable struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     trunc::TruncationScheme
     N::Int64
     tol::Number
+    verbose::Bool
     isdisk::Bool
-    function Algebraalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme,N::Int64, tol::Number,isdisk::Bool=IS_DISK[])
-        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol,isdisk)
+    function Algebraalgo(scheme::AbstractScheme, alg::AbstractAlgorithm, trunc::TruncationScheme,N::Int64, tol::Number,verbose::Bool,isdisk::Bool=IS_DISK[])
+        new{typeof(scheme),typeof(alg)}(scheme,alg,trunc,N,tol,verbose,isdisk)
     end
 end
 

@@ -11,8 +11,9 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L};kwargs...
     trunc = get(kwargs,:trunc,notrunc())
     N  = get(kwargs,:N,3)
     tol = get(kwargs,:tol,1e-8)
+    verbose = get(kwargs,:verbose,false)
     isdisk = get(kwargs,:isdisk,IS_DISK[])
-    algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol,isdisk)
+    algo = Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,N,tol,verbose,isdisk)
     return axpby!(α,x,β,y,algo;kwargs...)
 end
 
@@ -35,18 +36,27 @@ function axpby!(α::Number, x::DenseMPO{L}, β::Number, y::DenseMPO{L}, Alg::Alg
 
             l2rinfo = Algebrasweepinfo(L2R())
             mto = axpby!(α,Envx,β,Envy,Alg,l2rinfo)
+
+            show(mto;title = ">>> axpby! >>>")
+            print("\n")
+            show(l2rinfo)
+            flush(stdout)
+
             merge!(localto,mto)
             merge!(info,l2rinfo)
 
             r2linfo = Algebrasweepinfo(R2L())
             mto = axpby!(α,Envx,β,Envy,Alg,r2linfo)
+
+            show(mto;title = "<<< axpby! <<<")
+            print("\n")
+            show(r2linfo)
+            flush(stdout)
+
             merge!(localto,mto)
             merge!(info,r2linfo)
 
             _merge_io!(localto)
-            show(localto;title = "axpby!")
-            print("\n")
-            show(info)
             merge!(to,localto)
 
             info.err < Alg.tol && break
@@ -64,12 +74,13 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
     localto = TimerOutput()
     L = length(Envx.layer[1])
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(Envx.layer[2][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" ts = map(z -> contract(z.envs[site], z.layer[1][site:site+1]..., z.envs[site+2]),[Envx,Envy])
         @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
-        @timeit localto "contract" tr = contract(tc,tr) 
+        @timeit localto "contract" tr = contract(tc,tr)
         @timeit localto "push right" map([Envx,Envy]) do Env
             N = length(Env.layer)
             Env.layer[N][site:site+1] = adjoint.([tl, tr])
@@ -80,6 +91,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         localinfo.err = norm(x-x₀)^2/x2
 
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
     return localto
 end
@@ -88,12 +100,13 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
     localto = TimerOutput()
     L = length(Envx.layer[1])
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(Envx.layer[2][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "composite" ts = map(z -> contract(z.envs[site-1], z.layer[1][site-1:site]..., z.envs[site+1]),[Envx,Envy])
         @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
-        @timeit localto "contract" tl = contract(tl,tc) 
+        @timeit localto "contract" tl = contract(tl,tc)
         @timeit localto "push left" map([Envx,Envy]) do Env
             N = length(Env.layer)
             Env.layer[N][site-1:site] = adjoint.([tl, tr])
@@ -104,6 +117,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         localinfo.err = norm(x-x₀)^2/x2
 
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
     return localto
 end
@@ -112,10 +126,11 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
     localto = TimerOutput()
     L = length(Envx.layer[1])
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(Envx.layer[1][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-        if alg <: CBEalgo 
+        if alg <: CBEalgo
             cbeinfo = CBEinfo(L2R())
             @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfo)
             @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfo)
@@ -154,6 +169,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         localinfo.err = norm(x-x₀)^2/x2
 
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
     return localto
 end
@@ -162,6 +178,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
     localto = TimerOutput()
     L = length(Envx.layer[1])
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(Envx.layer[1][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
@@ -203,6 +220,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         localinfo.err = norm(x-x₀)^2/x2
 
         merge!(sweepinfo,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
     end
     return localto
 end
@@ -218,17 +236,10 @@ function axpby!(::Number, ::Nothing, β::Number, y::CompositeMPOTensor)
     return y
 end
 
-function axpy!(α::Number, x::DenseMPO, y::DenseMPO;kwargs...)
-    return axpby!(α,x,1,y;kwargs...)
-end
-
-function axpy!(α::Number, x::CompositeMPOTensor, y::CompositeMPOTensor)
-    return axpby!(α,x,1,y)
-end
-
-function xpy!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO}
-    return axpby!(1,x,1,y)
-end
+axpy!(α::Number, x::DenseMPO, y::DenseMPO;kwargs...) = axpby!(α,x,1,y;kwargs...)
+axpy!(α::Number, x::DenseMPO, y::DenseMPO, algo::Algebraalgo;kwargs...) = axpby!(α,x,1,y,algo;kwargs...)
+axpy!(α::Number, x::CompositeMPOTensor, y::CompositeMPOTensor) = axpby!(α,x,1,y)
+xpy!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO} = axpby!(1,x,1,y)
 
 function xp!(x::T, y::T) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS}
     y[:] = x[:]

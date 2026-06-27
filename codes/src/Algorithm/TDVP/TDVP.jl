@@ -13,8 +13,9 @@ function TDVP1!(Env::Environment{3}, lst::AbstractVector;kwargs...)
     subalgo = get(kwargs,:subalgo,CBEalgo(dynamicSVD(λ,Nfull),DSA(),1,_getdim(trunc)))
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
-    
+    verbose = get(kwargs, :verbose, false)
+    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite,verbose)
+
     for i in 2:length(lst)
         τ = (lst[i]-lst[i-1])/2
         println("t = $(abs(lst[i]))")
@@ -43,7 +44,8 @@ function TDVP2!(Env::Environment{3}, lst::AbstractVector;kwargs...)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
+    verbose = get(kwargs, :verbose, false)
+    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite,verbose)
     
     for i in 2:length(lst)
         τ = (lst[i]-lst[i-1])/2
@@ -100,6 +102,7 @@ end
 function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepinfo{L2R}) where L
     localto = TimerOutput()
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = TDVPsiteinfo()
         @timeit localto "evolve" tmp,localinfo.solver = evolve!(composite(Env.layer[1][site:site+1]...), proj2(Env,site,site+1;E₀ = info.E), Alg.τ, Alg.solver)
         merge!(localto,get_timer("action");tree_point = ["evolve"])
@@ -113,9 +116,10 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
         merge!(localto,get_timer("action");tree_point = ["back evolve"])
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
 
         Alg.GCsite && @timeit localto "GC" GC.gc()
-    end    
+    end
     @timeit localto "evolve" ~,solver = evolve!(Env.layer[1][L], proj1(Env,L;E₀ = info.E), Alg.τ, Alg.solver)
     rmul!(Env.layer[1][L],exp(-Alg.τ * info.E))
     merge!(localto,get_timer("action");tree_point = ["evolve"])
@@ -129,6 +133,7 @@ end
 function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepinfo{R2L}) where L
     localto = TimerOutput()
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = TDVPsiteinfo()
         @timeit localto "evolve" tmp, localinfo.solver = evolve!(composite(Env.layer[1][site-1:site]...), proj2(Env,site-1,site;E₀ = info.E), Alg.τ, Alg.solver)
         merge!(localto,get_timer("action");tree_point = ["evolve"])
@@ -142,6 +147,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{DoubleSite},info::TDVPsweepin
         merge!(localto,get_timer("action");tree_point = ["back evolve"])
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
 
         Alg.GCsite && @timeit localto "GC" GC.gc()
     end
@@ -158,8 +164,9 @@ end
 function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPsweepinfo{L2R}) where {L,alg}
     localto = TimerOutput()
     for site in 1:L-1
+        Alg.verbose && (time₀ = time())
         localinfo = TDVPsiteinfo()
-        if alg <: CBEalgo 
+        if alg <: CBEalgo
             @timeit localto "CBE" begin
                 cbeinfo = CBEinfo(L2R())
                 cbeto = CBE!(Env,Alg.alg,cbeinfo)
@@ -175,12 +182,13 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
             tl,tc,tr,localinfo.err,svdto = _tdvp_tsvd(tmp,Alg.trunc,L2R())
             merge!(localto,svdto;tree_point = ["orthogonalize"])
             merge!(localinfo,BondInfo(tc))
-        end 
+        end
         to,solver = pushright!(Env,tl,rmul!(tr,nmt),Alg,info)
         merge!(localto,to)
         merge!(localto,get_timer("action");tree_point = ["back evolve"])
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
 
         Alg.GCsite && @timeit localto "GC" GC.gc()
     end
@@ -197,8 +205,9 @@ end
 function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPsweepinfo{R2L}) where {L,alg}
     localto = TimerOutput()
     for site in L:-1:2
+        Alg.verbose && (time₀ = time())
         localinfo = TDVPsiteinfo()
-        if alg <: CBEalgo 
+        if alg <: CBEalgo
             @timeit localto "CBE" begin
                 cbeinfo = CBEinfo(R2L())
                 cbeto = CBE!(Env,Alg.alg,cbeinfo)
@@ -220,6 +229,7 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localto,get_timer("action");tree_point = ["back evolve"])
         merge!(localinfo.solver,solver)
         merge!(info,localinfo)
+        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
 
         Alg.GCsite && @timeit localto "GC" GC.gc()
     end
@@ -309,7 +319,8 @@ function tanTRG2!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     subalgo = get(kwargs,:subalgo,NoAlgorithm())
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
+    verbose = get(kwargs, :verbose, false)
+    alg = TDVPalgo(DoubleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite,verbose)
 
     lsobj = []
     lsF = Float64[]
@@ -346,7 +357,8 @@ function tanTRG1!(Env::Environment{3}, lsβ::AbstractVector;kwargs...)
     subalgo = get(kwargs,:subalgo,CBEalgo(randSVD(λ),DSA(),1,_getdim(trunc)))
     GCsweep = get(kwargs, :GCsweep, true)
     GCsite = get(kwargs, :GCsite, false)
-    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite)
+    verbose = get(kwargs, :verbose, false)
+    alg = TDVPalgo(SingleSite(),subalgo,trunc,0,tol,solver,GCsweep,GCsite,verbose)
 
     lsobj = []
     lsF = Float64[]

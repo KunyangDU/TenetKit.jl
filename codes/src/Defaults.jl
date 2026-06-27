@@ -17,7 +17,7 @@ global TDVPDefaultLanczos = Krylovalgo(KrylovKit.Lanczos(;
      verbosity = 0
 ))
 
-global TDVPDefaultChebyshev = Chebyshev(tol=1e-10, maxiter=500)
+# global TDVPDefaultChebyshev = Chebyshev(tol=1e-10, maxiter=500)
 
 global HamiltonianBoundDefaultLanczos = Krylovalgo(KrylovKit.Lanczos(krylovdim=16, maxiter=2, tol=1e-4, orth=ModifiedGramSchmidt(), eager=true, verbosity=0))
 
