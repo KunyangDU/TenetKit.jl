@@ -1,15 +1,15 @@
-function TensorKit.inner(A::Union{DenseMPO{L₁},DenseMPS{L₁}},B::Union{AdjointMPO{L₂},AdjointMPS{L₂}}) where {L₁,L₂}
+function TensorKit.inner(A::Union{DenseMPO{L₁},DenseMPS{L₁}},B::Union{AdjointMPO{L₂},AdjointMPS{L₂}};kwargs...) where {L₁,L₂}
     @assert L₁ == L₂
     return let env = Environment([A,B])
-        initialize!(env)
+        initialize!(env;kwargs...)
         _scalar(env)
     end
 end
 
-function TensorKit.inner(A::Union{DenseMPO{L₁},DenseMPS{L₁}},O::SparseMPO,B::Union{AdjointMPO{L₂},AdjointMPS{L₂}}) where {L₁,L₂}
+function TensorKit.inner(A::Union{DenseMPO{L₁},DenseMPS{L₁}},O::SparseMPO,B::Union{AdjointMPO{L₂},AdjointMPS{L₂}};kwargs...) where {L₁,L₂}
     @assert L₁ == L₂
     return let env = Environment([A,O,B])
-        initialize!(env)
+        initialize!(env;kwargs...)
         _scalar(env)
     end
 end

@@ -27,7 +27,7 @@ function Base.:*(objl::InteractionTunnel{L,T},objr::InteractionTunnel{L,T}) wher
                         push!(A, Al[s])
                         push!(fermionic, ferml[s])
                     end
-                    push!(A, l * r)
+                    push!(A, splice(l,r))
                     push!(fermionic, lf ⊻ rf)
                 else                
                     for s in k+1:i
@@ -46,7 +46,7 @@ function Base.:*(objl::InteractionTunnel{L,T},objr::InteractionTunnel{L,T}) wher
         push!(A, Al[s])
         push!(fermionic, ferml[s])
     end
-    return InteractionTunnel{L,T}(Tuple(A),Tuple(fermionic),Z,strength)
+    return InteractionTunnel(Tuple(A),Tuple(fermionic),Z,strength,L,T)
 end
 
 function Base.:+(objl::InteractionTunnel{L,T,N₁},objr::InteractionTunnel{L,T,N₂}) where {L,T,N₁,N₂}
@@ -73,7 +73,7 @@ function Base.:+(objl::InteractionTunnel{L,T,N₁},objr::InteractionTunnel{L,T,N
         end
     end
     if !isdiff
-        return objl.strength + objr.strength ≈ 0 ? InteractionTunnel{L,T,N₁}[] : InteractionTunnel{L,T}(Tuple(A),Tuple(fermionic),Z, objl.strength + objr.strength)
+        return objl.strength + objr.strength ≈ 0 ? InteractionTunnel{L,T}[] : InteractionTunnel{L,T}(Tuple(A),Tuple(fermionic),Z, objl.strength + objr.strength)
     else
         return InteractionTunnel{L,T}(Tuple(A),Tuple(fermionic),Z, 1.0)
     end
@@ -103,7 +103,7 @@ function Base.:-(objl::InteractionTunnel{L,T,N₁},objr::InteractionTunnel{L,T,N
         end
     end
     if !isdiff
-        return objl.strength - objr.strength ≈ 0 ? InteractionTunnel{L,T,N₁}[] : InteractionTunnel{L,T}(Tuple(A),Tuple(fermionic),Z, objl.strength - objr.strength)
+        return objl.strength - objr.strength ≈ 0 ? InteractionTunnel{L,T}[] : InteractionTunnel{L,T}(Tuple(A),Tuple(fermionic),Z, objl.strength - objr.strength)
     else
         return InteractionTunnel{L,T}(Tuple(A),Tuple(fermionic),Z, 1.0)
     end
@@ -177,4 +177,38 @@ end
 
 commutate(H::InteractionGraph, O::InteractionTunnel) = InteractionGraph(filter(x -> !isempty(intersect(_site(x),_site(O))), H.tunnel)) |> x -> (x * O - O * x)
 commutate(O::InteractionTunnel, H::InteractionGraph) = InteractionGraph(filter(x -> !isempty(intersect(_site(x),_site(O))), H.tunnel)) |> x -> (O * x - x * O)
+
+function swap(A::TensorMap{T,S′,1,2},B::TensorMap{T,S′,2,2}) where {T,S′}
+    @tensor O[-2 -6;-1 -4 -5 ] ≔ A[-1,1,-5] * B[-2,1,-4,-6]
+    U,S,V = svd_trunc(O;trunc = (atol = 1e-6,))
+    return permute(U * sqrt(S),((1,),(3,2))) , permute(sqrt(S) * V,((2,1),(3,4)))
+end
+
+function swap(A::TensorMap{T,S′,2,2},B::TensorMap{T,S′,2,1}) where {T,S′}
+    @tensor O[-2 -3 -6;-1 -5 ] ≔ A[-1,-3,1,-5] * B[-2,1,-6]
+    U,S,V = svd_trunc(O;trunc = (atol = 1e-6,))
+    return permute(U * sqrt(S),((1,2),(4,3))) , permute(sqrt(S) * V,((2,1),(3,)))
+end
+
+function swap(A::TensorMap{T,S′,2,2},B::TensorMap{T,S′,2,2}) where {T,S′}
+    @tensor O[-2 -3 -6;-1 -4 -5 ] ≔ A[-1,-3,1,-5] * B[-2,1,-4,-6]
+    U,S,V = svd_trunc(O;trunc = (atol = 1e-6,))
+    return permute(U * sqrt(S),((1,2),(4,3))) , permute(sqrt(S) * V,((2,1),(3,4)))
+end
+
+function swap(A::TensorMap{T,S′,2,1},B::TensorMap{T,S′,1,2}) where {T,S′}
+    @tensor O[-2 -3 -6;-1 -4 -5 ] ≔ A[-1,-3,-5] * B[-2,-4,-6]
+    U,S,V = svd_trunc(O;trunc = (atol = 1e-6,))
+    return permute(U * sqrt(S),((1,2),(4,3))) , permute(sqrt(S) * V,((2,1),(3,4)))
+end
+
+swap(A::TensorMap{T,S′,1,1},B::TensorMap{T,S′,1,1}) where {T,S′} = B,A
+
+function swap!(A::LocalOperator, B::LocalOperator)
+    B.A,A.A = swap(A.A,B.A)
+end
+
+# splice(A::TensorMap{T,S′,1,1},B::TensorMap{T,S′,1,1}) where {T,S′} = A * B 
+splice(A::LocalOperator{1, 1}, B::LocalOperator{1, 1}) = A * B
+# splice(A::TensorMap{T,S′,1,1},B::TensorMap{T,S′,1,1}) where {T,S′} = A * B 
 

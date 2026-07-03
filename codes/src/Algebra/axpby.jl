@@ -131,9 +131,10 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         x₀ = deepcopy(composite(Envx.layer[1][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo
-            cbeinfo = CBEinfo(L2R())
-            @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfo)
-            @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfo)
+            cbeinfox = CBEinfo(L2R())
+            cbeinfoy = CBEinfo(L2R())
+            @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfox)
+            @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
             tLX₀,tRX₀ = Envx.layer[2][site:site+1]
             tLY₀,tRY₀ = Envy.layer[2][site:site+1]
             @timeit localto "after-orthogonalize" orthogonalize!(tRY₀,tRX₀,L2R())
@@ -145,7 +146,8 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
             map([Envx,Envy]) do env
                 env.envs[site+1] = pushleft(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site+2],site+1)
             end
-            merge!(localinfo,cbeinfo)
+            merge!(localinfo,cbeinfox)
+            merge!(localinfo,cbeinfoy)
             merge!(localto,cbetoX,tree_point = ["CBE_X"])
             merge!(localto,cbetoY,tree_point = ["CBE_Y"])
         end
@@ -156,7 +158,6 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
 
         @timeit localto "orthogonalize" begin
             tl,tr = leftorth(axpby!(α, ts[1], β, ts[2]))
-            localinfo.bond = BondInfo(tr)
             tr = contract(tr,Envx.layer[2][site+1]')
         end
         @timeit localto "push right" map([Envx,Envy]) do Env
@@ -183,9 +184,10 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         x₀ = deepcopy(composite(Envx.layer[1][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
         if alg <: CBEalgo 
-            cbeinfo = CBEinfo(R2L())
-            @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfo)
-            @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfo)
+            cbeinfox = CBEinfo(R2L())
+            cbeinfoy = CBEinfo(R2L())
+            @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfox)
+            @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
             tLX₀,tRX₀ = Envx.layer[2][site-1:site]
             tLY₀,tRY₀ = Envy.layer[2][site-1:site]
             @timeit localto "after-orthogonalize" orthogonalize!(tLX₀,tLY₀,R2L())
@@ -197,7 +199,8 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
             map([Envx,Envy]) do env
                 env.envs[site] = pushright(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site-1],site-1)
             end
-            merge!(localinfo,cbeinfo)
+            merge!(localinfo,cbeinfox)
+            merge!(localinfo,cbeinfoy)
             merge!(localto,cbetoX,tree_point = ["CBE_X"])
             merge!(localto,cbetoY,tree_point = ["CBE_Y"])
         end
@@ -207,7 +210,6 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         end
         @timeit localto "orthogonalize" begin
             tl,tr = rightorth(axpby!(α, ts[1], β, ts[2]))
-            localinfo.bond = BondInfo(tl)
             tl = contract(Envx.layer[2][site-1]',tl)
         end
         @timeit localto "push left" map([Envx,Envy]) do Env

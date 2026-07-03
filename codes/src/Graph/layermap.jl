@@ -2,7 +2,7 @@
 #   D₁ = 入射维数 (|A|), D₂ = 出射维数 (|B|)
 #   N=1: 相邻层直连映射，路径元组长度 1
 #   N≥2: compose 产生的多阶层间映射，路径保留全部中间节点
-#   T  = weight 类型 (Float64)
+#   T  = weight 类型 (Number)
 #
 #   fwd[a]: 从源节点 a 出发的全部路径，每条路径 = N 元组 (n₁, n₂, ..., n_N)
 #           其中 n_N 为目标层节点，n₁..n_{N-1} 为中间层节点
@@ -89,7 +89,7 @@ function LayerMap(edges::Function, nA::Int, nB::Int)
     end
     fwd_w = [fill(1.0, length(fwd[a])) for a in 1:nA]
     rev_w = [fill(1.0, length(rev[b])) for b in 1:nB]
-    return LayerMap{1,nA,nB,Float64}(fwd, rev, fwd_w, rev_w)
+    return LayerMap{1,nA,nB,Number}(fwd, rev, fwd_w, rev_w)
 end
 
 # 从正向邻接字典构建 1 阶 LayerMap (兼容旧接口)
@@ -110,7 +110,7 @@ function LayerMap(fwd_dict::Dict{Int64,Vector{Int64}}, nA::Int, nB::Int)
     end
     fwd_w = [fill(1.0, length(fwd[a])) for a in 1:nA]
     rev_w = [fill(1.0, length(rev[b])) for b in 1:nB]
-    return LayerMap{1,nA,nB,Float64}(fwd, rev, fwd_w, rev_w)
+    return LayerMap{1,nA,nB,Number}(fwd, rev, fwd_w, rev_w)
 end
 
 # 关系复合: R₁: A→B (N₁阶), R₂: B→C (N₂阶) → R₁∘R₂: A→C (N₁+N₂阶)
@@ -171,17 +171,17 @@ function LayerMap(src::Vector{<:DirectedNode}, dst::Vector{<:DirectedNode})
     node2idx = Dict{Any,Int64}(n => Int64(i) for (i, n) in enumerate(dst))
 
     fwd = Vector{Vector{NTuple{1,Int64}}}(undef, nA)
-    fwd_w = Vector{Vector{Float64}}(undef, nA)
+    fwd_w = Vector{Vector{Number}}(undef, nA)
     rev = Vector{Vector{NTuple{1,Int64}}}(undef, nB)
-    rev_w = Vector{Vector{Float64}}(undef, nB)
+    rev_w = Vector{Vector{Number}}(undef, nB)
     for b in 1:nB
         rev[b] = NTuple{1,Int64}[]
-        rev_w[b] = Float64[]
+        rev_w[b] = Number[]
     end
 
     for a in 1:nA
         # (target_idx, weight) pairs
-        pairs = Tuple{Int64,Float64}[]
+        pairs = Tuple{Int64,Number}[]
         for e in src[a].out_edges
             for r in _resolve_forward(e.to)
                 ci = get(node2idx, r, nothing)
@@ -190,7 +190,7 @@ function LayerMap(src::Vector{<:DirectedNode}, dst::Vector{<:DirectedNode})
         end
         sort!(pairs, by = x -> x[1])
         uniq_fwd = NTuple{1,Int64}[]
-        uniq_fwd_w = Float64[]
+        uniq_fwd_w = Number[]
         for (ci, w) in pairs
             if !isempty(uniq_fwd) && uniq_fwd[end][1] == ci
                 uniq_fwd_w[end] += w
@@ -213,5 +213,5 @@ function LayerMap(src::Vector{<:DirectedNode}, dst::Vector{<:DirectedNode})
         end
     end
 
-    return LayerMap{1,nA,nB,Float64}(fwd, rev, fwd_w, rev_w)
+    return LayerMap{1,nA,nB,Number}(fwd, rev, fwd_w, rev_w)
 end

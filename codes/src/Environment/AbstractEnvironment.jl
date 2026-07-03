@@ -200,6 +200,10 @@ mutable struct DenseLeftEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
     function DenseLeftEnvironmentTensor(t::LeftEnvironmentTensor)
         return new{rank(t.A)}(t)
     end
+
+    function DenseLeftEnvironmentTensor{r}(t::LeftEnvironmentTensor) where r
+        return new{r}(t)
+    end
 end
 
 mutable struct DenseRightEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
@@ -215,6 +219,10 @@ mutable struct DenseRightEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
 
     function DenseRightEnvironmentTensor(t::RightEnvironmentTensor)
         return new{rank(t.A)}(t)
+    end
+
+    function DenseRightEnvironmentTensor{r}(t::RightEnvironmentTensor) where r
+        return new{r}(t)
     end
 end
 

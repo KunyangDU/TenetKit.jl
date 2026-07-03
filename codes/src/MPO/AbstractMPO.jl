@@ -2,18 +2,18 @@
 mutable struct SparseMPO{L}
     ts::Vector{SparseMPOTensor}
     D::NTuple{L,NTuple{3,Int64}}
-
+    auxspace::Union{Nothing,<:NTuple{2,Union{Nothing,ElementarySpace}}}
     function SparseMPO(ts::Vector{<:SparseMPOTensor})
         D_tuple = ntuple(i -> (Int64(length(ts[i].left.fwd)), Int64(length(ts[i].A)), Int64(length(ts[i].right.rev))), length(ts))
-        return new{length(ts)}(ts, D_tuple)
+        return new{length(ts)}(ts, D_tuple, nothing)
     end
 
     function SparseMPO(t::SparseMPOTensor{DL,D,DR}) where {DL,D,DR}
-        return new{1}([t], ((Int64(DL), Int64(D), Int64(DR)),))
+        return new{1}([t], ((Int64(DL), Int64(D), Int64(DR)),), nothing)
     end
 
-    function SparseMPO(ts::Vector{<:SparseMPOTensor}, D::NTuple{L,NTuple{3,Int64}}) where L
-        return new{L}(ts, D)
+    function SparseMPO(ts::Vector{<:SparseMPOTensor}, D::NTuple{L,NTuple{3,Int64}}, auxspace::T) where T <:NTuple{2,Union{Nothing,ElementarySpace}} where L
+        return new{L}(ts, D, auxspace)
     end
 end
 
@@ -102,7 +102,7 @@ mutable struct RefMPO{L} <: AbstractMPO
     ts::AbstractVector{DenseMPOTensor}
     center::Vector{Int64}
     mapping::Function
-    pointer::DenseMPO
+    pointer::DenseMPO{L}
     RefMPO(A::DenseMPO{L},mapping::Function = identity) where L = new{L}(A.ts,deepcopy(A.center),mapping,A)
 end
 

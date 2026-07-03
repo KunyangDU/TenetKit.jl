@@ -7,6 +7,7 @@ mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
 
     LocalOperator(A::AbstractTensorMap, name::String, site::Int64, isstring::Bool = false) = new{length(codomain(A)),length(domain(A))}(A, name, site, isstring)
     LocalOperator{R₁,R₂}(A::AbstractTensorMap, name::String, site::Int64, isstring::Bool = false) where {R₁,R₂} = new{R₁,R₂}(A, name, site, isstring)
+    LocalOperator{R₁′,R₂′}(mapping::Function, A::LocalOperator{R₁′,R₂′}) where {R₁′,R₂′} = new{R₁′,R₂′}(mapping(A.A),A.name,A.site,A.isstring)
 end
 
 function Base.show(io::IO,A::LocalOperator)
@@ -19,31 +20,22 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
     name::Union{Nothing,String}
     site::Int64
     isstring::Bool
-    function IdentityOperator(A::AbstractTensorMap,site::Int64)
-        return new{length(codomain(A))}(nothing, nothing, site, true)
-   end
-    function IdentityOperator(site::Int64, isstring::Bool)
-        return new{1}(nothing, nothing, site, isstring)
-    end
-    function IdentityOperator(site::Int64, name::String, isstring::Bool = true)
-        return new{1}(nothing, name, site, isstring)
-    end
-
-    function IdentityOperator(site::Int64)
-        return new{1}(nothing, nothing, site, true)
-    end
+    IdentityOperator(A::AbstractTensorMap,site::Int64) = new{length(codomain(A))}(A, nothing, site, true)
+    IdentityOperator(site::Int64, isstring::Bool) = new{1}(nothing, nothing, site, isstring)
+    IdentityOperator(site::Int64, name::String, isstring::Bool = true) = new{1}(nothing, name, site, isstring)
+    IdentityOperator(site::Int64) = new{1}(nothing, nothing, site, true)
+    IdentityOperator(S::ElementarySpace, site::Int64) = new{1}(isometry(S,S), nothing, site, true)
+    IdentityOperator(::Nothing, site::Int64) = new{1}(nothing, nothing, site, true)
 
     function IdentityOperator(A::LocalOperator)
         A′ = getIdTensor(A)
-        return new{length(codomain(A′))}(nothing, nothing, A.site, A.isstring)
+        return new{length(codomain(A′))}(A′, nothing, A.site, A.isstring)
     end
 
-    function IdentityOperator(A::IdentityOperator)
-        return A
-    end
-
+    IdentityOperator(A::IdentityOperator) = A
     IdentityOperator() = IdentityOperator(0)
     IdentityOperator{R}(::Nothing,::Nothing,site::Int64,isstring::Bool = true) where R = new{R}(nothing,nothing,site,isstring)
+    IdentityOperator{R}(::Function,A::IdentityOperator{R}) where R = new{R}(A.A,A.name,A.site,A.isstring)
 end
 
 function Base.show(io::IO,A::IdentityOperator)

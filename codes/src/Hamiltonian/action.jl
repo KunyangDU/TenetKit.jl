@@ -41,6 +41,11 @@ function action(O::DenseProjectiveHamiltonian{2,1}, obj::DenseMPOTensor{4})
     return DenseMPOTensor(x)
 end
 
+function action(O::DenseProjectiveHamiltonian{2,2}, obj::CompositeMPOTensor{2,6})
+    @tensor x[-1 -2 -3;-4 -5 -6] ≔ O.EnvL.A.A[-3,1] * obj.A[-1,-2,1,2,-5,-6] * O.EnvR.A.A[2,-4]
+    return CompositeMPOTensor(x)
+end
+
 function action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2})
     x = nothing
     to = get_timer("action")
@@ -56,25 +61,25 @@ end
 
 # dirty detail, threads free
 
-function _action(O::SparseProjectiveHamiltonian{0}, obj::T, ind::Tuple{Vector{Int64},Nothing,Vector{Int64},Vector{Float64},Vector{Float64}}) where T <: Union{MPSTensor{2},DenseMPOTensor{2}}
+function _action(O::SparseProjectiveHamiltonian{0}, obj::T, ind::Tuple{Vector{Int64},Nothing,Vector{Int64},Vector{Number},Vector{Number}}) where T <: Union{MPSTensor{2},DenseMPOTensor{2}}
     l_inds, ~, r_inds, wl, wr = ind
     tmp,localto = _action0(obj, _wsum(O.EnvL, l_inds, wl), _wsum(O.EnvR, r_inds, wr))
     return tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{1}, obj::T, ind::Tuple{Vector{Int64},Int64,Vector{Int64},Vector{Float64},Vector{Float64}}) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
+function _action(O::SparseProjectiveHamiltonian{1}, obj::T, ind::Tuple{Vector{Int64},Int64,Vector{Int64},Vector{Number},Vector{Number}}) where T <: Union{MPSTensor{3},DenseMPOTensor{4}}
     l_inds, j, r_inds, wl, wr = ind
     tmp,localto = _action1(obj, _wsum(O.EnvL, l_inds, wl), O.H[1][j], _wsum(O.EnvR, r_inds, wr))
     return tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple{Vector{Int64},Tuple{Int64,Int64},Vector{Int64},Vector{Float64},Float64,Vector{Float64}}) where T <: Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
+function _action(O::SparseProjectiveHamiltonian{2}, obj::T, ind::Tuple{Vector{Int64},Tuple{Int64,Int64},Vector{Int64},Vector{Number},Number,Vector{Number}}) where T <: Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}}
     l_inds, (j,k), r_inds, wl, w_mid, wr = ind
     tmp,localto = _action2(obj, _wsum(O.EnvL, l_inds, wl), O.H[1][j], O.H[2][k], _wsum(O.EnvR, r_inds, wr))
     return w_mid * tmp, localto
 end
 
-function _action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2}, ind::Tuple{Vector{Int64},Tuple{Int64,Int64},Vector{Int64},Vector{Float64},Float64,Vector{Float64}})
+function _action(O::SparseProjectiveHamiltonian{2}, obj::SparseMPO{2}, ind::Tuple{Vector{Int64},Tuple{Int64,Int64},Vector{Int64},Vector{Number},Number,Vector{Number}})
     l_inds, (j,k), r_inds, wl, w_mid, wr = ind
     localto = TimerOutput()
     @timeit localto "_action2_EL1=El_H1" EL1 = contract(_wsum(O.EnvL, l_inds, wl), obj[1][j])

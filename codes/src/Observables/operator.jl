@@ -3,8 +3,8 @@ mutable struct CompositeLocalOperator{N} <: AbstractLocalOperator{0,0}
     isstring::NTuple{N,Bool}
     CompositeLocalOperator(A::NTuple{N,AbstractLocalOperator}, isstring::NTuple{N,Bool}) where N = new{N}(A, isstring)
     CompositeLocalOperator{N}(A::CompositeLocalOperator{N}) where N = new{N}(A.A, A.isstring)
-    CompositeLocalOperator(A::Vector{<:AbstractLocalOperator}) = CompositeLocalOperator(NTuple{length(A),AbstractLocalOperator}([isnothing(a.A) ? IdentityOperator(a.site) : LocalOperator(a.A, a.name, a.site) for a in A]), Tuple([a.isstring for a in A]))
-    CompositeLocalOperator{N}(i::Int64) where N = CompositeLocalOperator([LocalOperator(i) for _ in 1:N])
+    CompositeLocalOperator(A::Vector{<:AbstractLocalOperator}) = CompositeLocalOperator(NTuple{length(A),AbstractLocalOperator}([isidentity(a) ? IdentityOperator(a.site) : LocalOperator(a.A, a.name, a.site) for a in A]), Tuple([a.isstring for a in A]))
+    CompositeLocalOperator{N}(i::Int64) where N = CompositeLocalOperator([IdentityOperator(i) for _ in 1:N])
 end
 
 function composite(A::LocalOperator, B::LocalOperator)
@@ -17,3 +17,5 @@ end
 Base.isequal(A::T, B::T) where T <: CompositeLocalOperator = (isequal(A.A, B.A) && isequal(A.isstring, B.isstring))
 Base.copy(A::T) where T <: CompositeLocalOperator = T(A)
 Base.hash(A::CompositeLocalOperator, h::UInt) = hash(A.A, hash(A.isstring, h))
+isidentity(::IdentityOperator) = true 
+isidentity(::LocalOperator) = false

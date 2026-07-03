@@ -4,17 +4,18 @@
 # ============================================================
 
 # -- 单个预分组的处理（纯函数，无副作用） --
-function _process_group!(tunnels::Vector{<:AbstractTunnel}, tis::Vector{Int64},
+function _process_group!(tunnels::Vector{<: AbstractTunnel}, tis::Vector{Int64},
                          l::Int, L::Int)
     to = TimerOutput()
     m::Int = length(tis)
+    T′ = first(tunnels) isa InteractionTunnel ? InteractionTunnelSegment : CompositeInteractionTunnelSegment
 
     @timeit to "labels" begin
-    local labels = Vector{Tuple{InteractionTunnelSegment, InteractionTunnelSegment}}(undef, m)
+    local labels = Vector{Tuple{T′, T′}}(undef, m)
     for (i, ti) in enumerate(tis)
         tun = tunnels[ti]
-        labels[i] = (InteractionTunnelSegment(tun, 1, l-1),
-                     InteractionTunnelSegment(tun, l+1, L))
+        labels[i] = (T′(tun, 1, l-1),
+                     T′(tun, l+1, L))
     end
     end  # labels
 
@@ -26,8 +27,8 @@ function _process_group!(tunnels::Vector{<:AbstractTunnel}, tis::Vector{Int64},
     end  # bipartite
 
     @timeit to "cover_extract" begin
-    L2idx = Dict{InteractionTunnelSegment, Vector{Int}}()
-    R2idx = Dict{InteractionTunnelSegment, Vector{Int}}()
+    L2idx = Dict{T′, Vector{Int}}()
+    R2idx = Dict{T′, Vector{Int}}()
     for (i, (ll, rr)) in enumerate(labels)
         push!(get!(L2idx, ll, Int[]), i)
         push!(get!(R2idx, rr, Int[]), i)

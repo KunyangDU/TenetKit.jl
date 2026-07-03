@@ -70,6 +70,7 @@ projright2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.la
 projleft2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site-1],env.envs[site+1],SparseMPO(env.layer[2][site-1:site]),E₀) : DenseProjectiveHamiltonian(env.envs[site-1],env.envs[site+1],env.layer[2][site-1:site],E₀)
 proj2(EnvL::SparseLeftEnvironmentTensor,hl::SparseMPOTensor,hr::SparseMPOTensor,EnvR::SparseRightEnvironmentTensor;E₀::Number = 0.) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO([hl,hr]),E₀)
 proj2(EnvL::DenseLeftEnvironmentTensor,hl::DenseMPOTensor,hr::DenseMPOTensor,EnvR::DenseRightEnvironmentTensor;E₀::Number = 0.) = DenseProjectiveHamiltonian(EnvL,EnvR,[hl,hr],E₀)
+proj2(EnvL::DenseLeftEnvironmentTensor{2}, ::Nothing, ::Nothing, EnvR::DenseRightEnvironmentTensor{2};E₀::Number = 0.) = DenseProjectiveHamiltonian{2,2}(EnvL,EnvR,E₀)
 
 function proj2(env::Environment{2},site1::Int64,site2::Int64;E₀::Number = 0.0)
     !issparse(env.layer[1]) && return nothing

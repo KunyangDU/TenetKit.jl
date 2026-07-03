@@ -3,7 +3,7 @@ mutable struct InteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
     A::NTuple{N,T}
     fermionic::NTuple{N,Bool}
     Z::Union{Nothing,AbstractTensorMap}
-    strength::Float64
+    strength::Number
     function InteractionTunnel(
         As::NTuple{N,AbstractTensorMap},
         sites::NTuple{N,Int64},
@@ -17,9 +17,9 @@ mutable struct InteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
         perm = sortperm([sites...])
         ops = ntuple(i -> T(As[perm[i]], names[perm[i]], sites[perm[i]]), N)
         ferm = ntuple(i -> fermionic[perm[i]], N)
-        new{L,T,N}(ops, ferm, Z, Float64(strength))
+        new{L,T,N}(ops, ferm, Z, strength)
     end
-    function InteractionTunnel{L,T}(A::NTuple{N,T}, fermionic::NTuple{N,Bool}, Z::Union{Nothing,AbstractTensorMap}, strength::Float64) where {L,T,N}
+    function InteractionTunnel{L,T}(A::NTuple{N,T}, fermionic::NTuple{N,Bool}, Z::Union{Nothing,AbstractTensorMap}, strength::Number) where {L,T,N}
         return new{L,T,N}(A,fermionic,Z,strength)
     end
 
@@ -39,7 +39,7 @@ mutable struct InteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
         A::NTuple{N,T},
         fermionic::NTuple{N,Bool},
         Z::Union{Nothing,AbstractTensorMap},
-        strength::Float64, L::Int64,T′::Type = T
+        strength::Number, L::Int64,T′::Type = T
     ) where {N,T}
         @assert T <: T′
         return new{L,T′,N}(A,fermionic,Z,strength)
@@ -62,7 +62,7 @@ end
 
 mutable struct CompositeInteractionTunnel{L,T,N} <: AbstractTunnel{L,T}
     A::NTuple{N,InteractionTunnel{L}}
-    strength::Float64
+    strength::Number
 end
 
 Base.getindex(obj::CompositeInteractionTunnel, i::Int64) = CompositeLocalOperator([a[i] for a in obj.A])
@@ -98,6 +98,7 @@ struct InteractionTunnelSegment{L,T}
     tunnel::InteractionTunnel{L,T}
     from::Int64
     to::Int64
+    InteractionTunnelSegment(tunnel::InteractionTunnel{L,T}, from::Int64, to::Int64) where {L,T} = new{L,T}(tunnel,from,to)
 end
 
 # isequal 三步走（利用稀疏性，不逐位比较）：
@@ -174,3 +175,20 @@ function Base.hash(s::InteractionTunnelSegment{L,T}, h::UInt) where {L,T}
     end
     return h
 end
+
+
+# ============================================================
+# CompositeInteractionTunnelSegment: 每个子 tunnel 各取一个 Segment 组成的 Tuple
+# ============================================================
+struct CompositeInteractionTunnelSegment{L,T,N}
+    segments::NTuple{N,InteractionTunnelSegment{L,T}}
+    CompositeInteractionTunnelSegment(segments::NTuple{N,InteractionTunnelSegment{L,T}}) where {L,T,N} = new{L,T,N}(segments)
+end
+
+function CompositeInteractionTunnelSegment(tunnel::CompositeInteractionTunnel{L,T,N}, from::Int64, to::Int64) where {L,T,N}
+    segments = ntuple(n -> InteractionTunnelSegment(tunnel.A[n], from, to), N)
+    return CompositeInteractionTunnelSegment(segments)
+end
+
+Base.isequal(a::CompositeInteractionTunnelSegment, b::CompositeInteractionTunnelSegment) = isequal(a.segments, b.segments)
+Base.hash(s::CompositeInteractionTunnelSegment, h::UInt) = hash(s.segments, h)

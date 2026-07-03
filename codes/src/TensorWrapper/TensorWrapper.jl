@@ -85,6 +85,8 @@ showdomain(A::AbstractTensorWrapper) = showdomain(A.A)
 Base.isapprox(A::AbstractTensorWrapper,B::AbstractTensorWrapper) = isapprox(A.A , B.A)
 TensorKit.space(A::AbstractTensorWrapper) = space(A.A)
 TensorKit.space(A::AbstractLocalOperator) = space(A.A)
+TensorKit.space(A::AbstractTensorWrapper,i::Int64) = space(A.A,i)
+TensorKit.space(A::AbstractLocalOperator,i::Int64) = space(A.A,i)
 
 TensorKit.dims(A::AbstractTensorWrapper) = dims(A.A)
 
@@ -184,11 +186,9 @@ Base.copy(A::T) where T <: AbstractTensorWrapper = T(copy(A.A))
 rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
 
 Base.getindex(obj::T, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "deserialize" obj.ts[i]) : obj.ts[i]
-Base.getindex(obj::RefMPO, i::Int64) = obj.mapping(obj.ts[i])
-Base.getindex(obj::RefMPS, i::Int64) = obj.mapping(obj.ts[i])
+Base.getindex(obj::T, i::Int64) where T <: Union{RefMPO, RefMPS} = obj.mapping(obj.ts[i])
 Base.getindex(obj::T, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "deserialize" [obj.ts[i] for i in stp]) : [obj.ts[i] for i in stp]
-Base.getindex(obj::RefMPO, stp::UnitRange) = obj.mapping.([obj.ts[i] for i in stp])
-Base.getindex(obj::RefMPS, stp::UnitRange) = obj.mapping.([obj.ts[i] for i in stp])
+Base.getindex(obj::T, stp::UnitRange) where T <: Union{RefMPO, RefMPS} = obj.mapping.([obj.ts[i] for i in stp])
 Base.setindex!(obj::T, val, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "serialize" obj.ts[i] = val) : (obj.ts[i] = val)
 Base.setindex!(obj::T, vals, stp::UnitRange) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "serialize" for (i, v) in zip(stp, vals); obj.ts[i] = v; end) : (for (i, v) in zip(stp, vals); obj.ts[i] = v; end)
 Base.setindex!(::RefMPO, val, i::Int64) = nothing
@@ -196,22 +196,27 @@ Base.setindex!(::RefMPS, val, i::Int64) = nothing
 Base.setindex!(::RefMPS, vals, stp::UnitRange) = nothing
 
 Base.getindex(obj::T, ::Colon) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? [obj.ts[i] for i in 1:length(obj.ts)] : obj.ts[:]
-Base.getindex(obj::RefMPO, ::Colon) = obj.mapping.(obj.ts[:])
-Base.getindex(obj::RefMPS, ::Colon) = obj.mapping.(obj.ts[:])
+Base.getindex(obj::T, ::Colon) where T <: Union{RefMPO, RefMPS} = obj.mapping.(obj.ts[:])
 Base.setindex!(obj::T, vals, ::Colon) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (for (i, v) in enumerate(vals); obj.ts[i] = v; end) : (obj.ts[:] = vals)
 Base.setindex!(::RefMPS, vals, ::Colon) = nothing
 
-function Base.getindex(obj::SparseMPO{L}, i::Int64) where L
-    1 <= i <= L || throw(BoundsError(obj, i))
-    return obj.ts[i]
-end
+# function Base.getindex(obj::SparseMPO{L}, i::Int64) where L
+#     1 <= i <= L || throw(BoundsError(obj, i))
+#     return obj.ts[i]
+# end
 
 Base.getindex(obj::T, i::Int64) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = obj.A[i]
 Base.getindex(obj::T, inds::AbstractVector{Int64}) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = [obj.A[i] for i in inds]
+Base.getindex(obj::T, i::Int...) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = obj.A[i...]
+
 Base.setindex!(obj::SparseLeftEnvironmentTensor, A::LeftEnvironmentTensor,i::Int64) = (obj.A[i] = A)
 Base.setindex!(obj::SparseRightEnvironmentTensor, A::RightEnvironmentTensor,i::Int64) = (obj.A[i] = A)
+Base.setindex!(obj::T, val, i::Int...) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = (obj.A[i...] = val)
 
-Base.getindex(obj::SparseMPOTensor, i::Int64) = obj.A[i]
+Base.length(obj::T) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = length(obj.A)
+Base.size(obj::T) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = size(obj.A)
+
+Base.iterate(obj::T, args...) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = iterate(obj.A, args...)
 
 
 # function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)

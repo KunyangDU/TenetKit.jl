@@ -1,5 +1,5 @@
 
-function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{L2R};kwargs...) where sch <: randSVD
+function CBE!(env::Environment{2}, alg::CBEalgo{randSVD,DA,2}, info::CBEinfo{L2R};kwargs...) 
     
     to = TimerOutput()
     site = env.center[1]
@@ -29,7 +29,7 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{L2R};kw
     return to
 end
 
-function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{R2L};kwargs...) where sch <: randSVD
+function CBE!(env::Environment{2}, alg::CBEalgo{randSVD,DA,2}, info::CBEinfo{R2L};kwargs...)
 
     to = TimerOutput()
     site = env.center[1]
@@ -59,5 +59,54 @@ function CBE!(env::Environment{2}, alg::CBEalgo{sch,DA,2}, info::CBEinfo{R2L};kw
     return localto
 end
 
+function CBE!(env::Environment{2}, alg::CBEalgo{fullSVD,DA,2}, info::CBEinfo{L2R};kwargs...) 
+    
+    to = TimerOutput()
+    site = env.center[1]
+
+    tL₀,tR₀ = env.layer[1][site:site+1]
+    EnvL = env.envs[site]
+    EnvR = env.envs[site + 2]
+
+    D_i = dims(tL₀)[2][1]
+    D_f = alg.D
+    D_i ≥ D_f && return to
+
+    CBEenv = CBEenvironment(tL₀,tR₀,nothing,nothing,D_i,D_f,nothing,EnvL,EnvR,nothing)
+
+    localto = CBE!(CBEenv,alg,info)
+
+    merge!(to,localto)
+    env.layer[2][site] = CBEenv.tL'
+    env.layer[2][site+1] = CBEenv.tR'
+
+    env.envs[site+1] = pushleft(map(x -> env.layer[x],1:2)...,env.envs[site+2],site+1)
+    return to
+end
+
+function CBE!(env::Environment{2}, alg::CBEalgo{fullSVD, DA, 2}, info::CBEinfo{R2L};kwargs...)
+    
+    to = TimerOutput()
+    site = env.center[1]
+
+    tL₀,tR₀ = env.layer[1][site-1:site]
+    EnvL = env.envs[site - 1]
+    EnvR = env.envs[site + 1]
+
+    D_i = dims(tL₀)[2][1]
+    D_f = alg.D
+    D_i ≥ D_f && return to
+
+    CBEenv = CBEenvironment(tL₀,tR₀,nothing,nothing,D_i,D_f,nothing,EnvL,EnvR,nothing)
+
+    localto = CBE!(CBEenv,alg,info)
+
+    merge!(to,localto)
+    env.layer[2][site-1] = CBEenv.tL'
+    env.layer[2][site] = CBEenv.tR'
+
+    env.envs[site] = pushright(map(x -> env.layer[x],1:2)...,env.envs[site-1],site-1)
+    return localto
+end
 
 

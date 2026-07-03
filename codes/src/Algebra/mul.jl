@@ -6,7 +6,7 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::Union{DenseMPO{L₁},D
     C′ = C'
     @timeit to "initialize ABC Env" begin
         EnvAB = Environment([A,B,C′];isdisk=Alg.isdisk)
-        initialize!(EnvAB)
+        initialize!(EnvAB;kwargs...)
     end
 
     info = Algebrainfo()

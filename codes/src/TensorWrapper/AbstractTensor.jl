@@ -200,10 +200,10 @@ mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
     end
 end
 
-Base.adjoint(t::CompositeMPOTensor) = return AdjointCompositeMPOTensor(t.A')
-Base.adjoint(t::AdjointCompositeMPOTensor) = return CompositeMPOTensor(t.A')
-Base.adjoint(ts::Vector{CompositeMPOTensor}) = return convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
-Base.adjoint(ts::AbstractVector{CompositeMPOTensor}) = return convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
+Base.adjoint(t::CompositeMPOTensor) = AdjointCompositeMPOTensor(t.A')
+Base.adjoint(t::AdjointCompositeMPOTensor) = CompositeMPOTensor(t.A')
+Base.adjoint(ts::Vector{CompositeMPOTensor}) = convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
+Base.adjoint(ts::AbstractVector{CompositeMPOTensor}) = convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::AbstractVector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 
@@ -216,3 +216,4 @@ end
 
 Base.length(::SparseMPOTensor{DL,D,DR,T}) where {DL,D,DR,T} = D
 Base.eachindex(h::SparseMPOTensor) = Base.OneTo(length(h))
+Base.getindex(obj::SparseMPOTensor, i::Int64) = obj.A[i]

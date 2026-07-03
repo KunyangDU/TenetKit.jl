@@ -51,10 +51,11 @@ mutable struct DMRGsiteinfo <: AlgorithmInfo
 end
 
 mutable struct CBEinfo{Dir} <: AlgorithmInfo where Dir
+    bond::BondInfo
     direction::SweepDirection
     err::Number
-    CBEinfo(direction::SweepDirection,ϵ::Number) = new{typeof(direction)}(direction,ϵ)
-    CBEinfo(direction::SweepDirection) = new{typeof(direction)}(direction,0)
+    CBEinfo(direction::SweepDirection,ϵ::Number) = new{typeof(direction)}(BondInfo(),direction,ϵ)
+    CBEinfo(direction::SweepDirection) = new{typeof(direction)}(BondInfo(),direction,0)
 end
 
 mutable struct TDVPinfo <: AlgorithmInfo
@@ -119,7 +120,7 @@ mutable struct Algebrainfo <: AlgorithmInfo
     truncerr::Number
     Algebrainfo(bond::BondInfo, n::Int64, ϵ::Number,truncerr::Number = 0) = new(bond,n,ϵ,truncerr)
     Algebrainfo(info::Algebrainfo) = new(BondInfo(),info.n,0,0)
-    Algebrainfo() = new(BondInfo(),0,0,0)
+    Algebrainfo() = new(BondInfo(),1,0,0)
 end
 
 mutable struct Algebrasweepinfo{Dir} <: AlgorithmInfo where Dir
@@ -201,10 +202,12 @@ end
 
 function TimerOutputs.merge!(info1::DMRGsiteinfo, info2::CBEinfo)
     info1.err = max(info1.err, info2.err)
+    merge!(info1.bond, info2.bond)
 end
 
 function TimerOutputs.merge!(info1::TDVPsiteinfo, info2::CBEinfo)
     info1.err = info1.err + info2.err
+    merge!(info1.bond, info2.bond)
 end
 
 function TimerOutputs.merge!(info1::T,info2::BondInfo) where T<:Union{DMRGsiteinfo,TDVPsiteinfo}
@@ -212,7 +215,10 @@ function TimerOutputs.merge!(info1::T,info2::BondInfo) where T<:Union{DMRGsitein
     info1.S = info2.S
 end
 
-TimerOutputs.merge!(::Algebrasiteinfo, ::CBEinfo) = nothing
+function TimerOutputs.merge!(info1::Algebrasiteinfo, info2::CBEinfo)
+    info1.err = max(info1.err, info2.err)
+    merge!(info1.bond, info2.bond)
+end
 
 #= ========================= =#
 

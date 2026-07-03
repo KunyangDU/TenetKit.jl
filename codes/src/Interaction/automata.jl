@@ -19,8 +19,19 @@ function AutomataSparseMPO(ig::InteractionGraph{L,W}) where {L,W}
         push!(ts_vec, SparseMPOTensor(A, l, right))
         prev_right = right
     end
+
+    als = ElementarySpace[]
+    ars = ElementarySpace[]
+    for t in ig.tunnel
+        al,ar = auxspace(t)
+        al ∉ als && !isnothing(al) && push!(als,al)
+        ar ∉ ars && !isnothing(ar) && push!(ars,ar)
+    end
+    alr = map(x -> isempty(x) ? nothing : reduce(⊗,x),(als,ars))
+
     D_tuple = ntuple(L) do i
         (Int64(length(ts_vec[i].left.fwd)), Int64(length(ts_vec[i].A)), Int64(length(ts_vec[i].right.rev)))
     end
-    return SparseMPO(ts_vec, D_tuple)
+
+    return SparseMPO(ts_vec, D_tuple, alr)
 end

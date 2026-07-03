@@ -63,7 +63,7 @@ function _validind(obj₁::SparseMPOTensor{DL₁,D₁,DR₁,T₁}, obj₂::Spars
     @assert obj₁.right == obj₂.left "LayerMap not compatible!"
     left_map = _validind2(obj₁, R2L())
     right_map = _validind2(obj₂, L2R())
-    result = Tuple{Vector{Int64}, Tuple{Int64,Int64}, Vector{Int64}, Vector{Float64}, Float64, Vector{Float64}}[]
+    result = Tuple{Vector{Int64}, Tuple{Int64,Int64}, Vector{Int64}, Vector{Number}, Number, Vector{Number}}[]
     for j in 1:D₁
         for (pi_mid, (m,)) in enumerate(obj₁.right.fwd[j])
             w_mid = obj₁.right.fwd_w[j][pi_mid]

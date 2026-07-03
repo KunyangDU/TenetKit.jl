@@ -7,14 +7,6 @@ struct Krylovalgo <: SolverAlgo
     Krylovalgo(Alg::KrylovKit.KrylovAlgorithm) = new(Alg)
 end
 
-# struct Chebyshev <: SolverAlgo
-#     tol::Float64
-#     maxiter::Int
-#     function Chebyshev(; tol::Float64=1e-10, maxiter::Int=200)
-#         new(tol, maxiter)
-#     end
-# end
-
 struct SETTNalgo{Sch} <: AbstractAlgorithm where {Sch}
     scheme::AbstractScheme
     alg::AbstractAlgorithm
