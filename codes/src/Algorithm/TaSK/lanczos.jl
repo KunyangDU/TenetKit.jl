@@ -1,45 +1,45 @@
-function lanczos(action::Function, v₀; maxdim::Int=100, tol::Float64=1e-12)
+function lanczos(action::Function, v₀::T, algo::LanczosAlgorithm) where T
     normalize!(v₀)
 
-    basis = [v₀]
-    a = Float64[]
-    b = Float64[]
+    info = LanczosInformation(v₀)
 
-    for i in 1:maxdim
-        w = action(basis[i])
+    for _ in 1:algo.maxdim
+        @timeit info.to "lanczos!" lanczos!(action, info, algo)
+        info.b[end] < algo.tol && break
+    end
 
-        push!(a, real(inner(basis[i], w)))
+    length(info.a) < length(info.basis) && push!(info.a, real(inner(info.basis[end], action(info.basis[end]))))
+    show(to;title = "Lanczos"); print("\n"); flush(stdout)
+    return info
+end
 
-        for _ in 1:2
-            for k in 1:i
-                w = w - inner(basis[k], w) * basis[k]
-            end
-            fixgauge!(w)
+function lanczos!(action::Function, info::LanczosInformation, algo::LanczosAlgorithm)
+    to = TimerOutput()
+    @timeit to "action!" w,to′ = action(info.basis[end])
+    merge!(to,to′;tree_point = ["action!"])
+    push!(info.a, real(inner(info.basis[end], w)))
+    @timeit to "orthogonalize" for _ in 1:algo.North
+        @timeit to "orthogonalize" for k in eachindex(info.basis)
+            schmidtorth!(w,info.basis[k])
         end
-        push!(b, norm(w)) 
-        normalize!(w)
-
-        @show i,b[end]
-
-        b[end] < tol && break
-        push!(basis, w)
+        @timeit to "fixgauge!" fixgauge!(w)
     end
-
-    if length(a) < length(basis)
-        w_last = action(basis[end])
-        push!(a, real(inner(basis[end], w_last)))
-    end
-
-    return (a=a, b=b, basis=basis, converged = b[end] < tol)
+    push!(info.b, norm(w)) 
+    @timeit to "normalize!" normalize!(w)
+    push!(info.basis, w)
+    @timeit to "GC" GC.gc()
+    merge!(info.to,to)
+    algo.verbose && mod(length(info),algo.showtimes) == 0 && (show(to;title = "Lanczos - $(length(info)) / $(algo.maxdim)"); print("\n"); flush(stdout))
 end
-
-function laneig(result, n::Int=length(result.a))
-    T = diagm(0 => result.a, 1 => result.b, -1 => conj(result.b))
-    F = eigen(T)
-    return F.values[1:n], F.vectors[:, 1:n]
-end
-
 
 normalize!(A::Vector{Float64}) = (A[:] = A/norm(A))
 fixgauge!(env::TaSKEnvironment) = orthogonalize!(env)
 fixgauge!(::Vector{Float64}) = nothing
+
+function schmidtorth!(w::TaSKEnvironment{L}, v::TaSKEnvironment{L}) where L
+    c = inner(v, w)
+    for i in 1:L
+        w.TC[i] = w.TC[i] - c * v.TC[i]
+    end
+    return w
+end

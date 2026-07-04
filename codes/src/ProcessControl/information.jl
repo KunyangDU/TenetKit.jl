@@ -351,3 +351,31 @@ function Base.show(io::IO,info::XTRGsweepinfo)
     println(io,info.bond,", ProjErr = $(info.err), TruncErr = $(info.truncerr), lnZ = $(info.lnZ), E = $(info.E)")
 end
 
+mutable struct LanczosInformation{T} <: AlgorithmInfo
+    basis::Vector{T}
+    a::Vector{Float64}
+    b::Vector{Float64}
+    to::TimerOutput
+    LanczosInformation(b₀::T) where T = new{T}([b₀,],Vector{Float64}(),Vector{Float64}(),TimerOutput())
+end
+
+function Base.getindex(info::LanczosInformation, ::Colon)
+    ω,V = info[end]
+    return Dict(
+        "a" => info.a,
+        "b" => info.b,
+        "ω" => ω,
+        "V" => V,
+        "S" => V[1,:] .^ 2
+    )
+end
+
+function Base.getindex(info::LanczosInformation, i::Int64)
+    L = length(info)
+    F = eigen(diagm(0 => info.a, 1 => info.b[1:L-1], -1 => conj(info.b[1:L-1])))
+    return F.values[1:i], F.vectors[:,1:i]
+end
+
+Base.lastindex(info::LanczosInformation) = length(info)
+Base.length(info::LanczosInformation) = length(info.a)
+

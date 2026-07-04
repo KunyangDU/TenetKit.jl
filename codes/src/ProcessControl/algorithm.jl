@@ -95,3 +95,11 @@ mutable struct Myhillalgo <: AbstractAlgorithm
     Myhillalgo(weight::Type=Number) = new(Vector{Vector{Int64}}[], weight)
 end
 
+mutable struct LanczosAlgorithm <: AbstractAlgorithm
+    maxdim::Int64
+    tol::Float64
+    North::Int64 
+    verbose::Bool
+    showtimes::Int64
+    LanczosAlgorithm(N::Int64, tol::Float64 = 1e-12, North::Int64 = 2, verbose::Bool = true, showtimes::Int64 = 10) = new(N,tol,North,verbose,showtimes)
+end

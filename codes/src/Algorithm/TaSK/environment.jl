@@ -35,7 +35,7 @@ function Base.show(io::IO, env::TaSKEnvironment{L,T,T′}) where {L,T,T′}
     println(io, " - ","n : $(env.n)")
 end
 
-function TaSKEnvironment(A::T, Eg::Float64 = 0.0) where T <: Union{DenseMPS{L}, DenseMPO{L}} where L
+function TaSKEnvironment(A::T, H::SparseMPO{L}, Eg::Float64 = 0.0) where T <: Union{DenseMPS{L}, DenseMPO{L}} where L
     Tt = typeof(A[1])
     TC = Tt[]
     TL = Tt[]
@@ -50,11 +50,10 @@ function TaSKEnvironment(A::T, Eg::Float64 = 0.0) where T <: Union{DenseMPS{L}, 
         push!(TC,A[i])
     end
     push!(TL,leftorth(A[end])[1])
+    canonicalize!(A,1)
 
     env = TaSKEnvironment(TC,TL,TR,H,Eg)
     initialize!(env)
-    d = normalize!(env)
-    return env,TC,d
+    normalize!(env)
+    return env
 end
-
-
