@@ -16,10 +16,13 @@ function pushright!(env::Environment{R}) where R
     ( env.center[1] > env.center[2] ) && ( env.center[2] += 1 )
 end
 
-function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRightEnvironmentTensor{1}, site::Int64)
-    @assert mpo.D[site][3] == EnvR.D[1]
-    tmpEnvR = Vector{Any}(nothing, mpo.D[site][2])
-    r_map = _validind1(mpo[site], R2L())
+pushleft(A::DenseMPS, mpo::SparseMPO, B::T, EnvR::SparseRightEnvironmentTensor{1}, i::Int64) where T <: Union{AdjointMPS,RefMPS} = pushleft(A[i],mpo[i],B[i],EnvR)
+pushright(A::DenseMPS, mpo::SparseMPO, B::T, EnvL::SparseLeftEnvironmentTensor{1}, i::Int64) where T <: Union{AdjointMPS,RefMPS} = pushright(A[i],mpo[i],B[i],EnvL)
+
+function pushleft(A::MPSTensor{3}, mpo::SparseMPOTensor{DL,D,DR}, B::AdjointMPSTensor{3}, EnvR::SparseRightEnvironmentTensor{1}) where {DL,D,DR}
+    @assert DR == EnvR.D[1]
+    tmpEnvR = Vector{Any}(nothing, D)
+    r_map = _validind1(mpo, R2L())
     validind = [(j, r_pairs) for (j, r_pairs) in enumerate(r_map) if !isempty(r_pairs)]
     Nthr = get_nworker()
     if Nthr > 1
@@ -31,7 +34,7 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
                 ct > length(validind) && break
                 j, r_pairs = validind[ct]
                 weighted_env = sum(w * EnvR[b] for (b, w) in r_pairs)
-                x = contract(A[site], mpo[site][j], B[site], weighted_env)
+                x = contract(A, mpo[j], B, weighted_env)
                 lock(Lock)
                 try
                     tmpEnvR[j] = axpy!(1, x, tmpEnvR[j])
@@ -45,16 +48,16 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
     else
         for (j, r_pairs) in validind
             weighted_env = sum(w * EnvR[b] for (b, w) in r_pairs)
-            tmpEnvR[j] = axpy!(1, contract(A[site], mpo[site][j], B[site], weighted_env), tmpEnvR[j])
+            tmpEnvR[j] = axpy!(1, contract(A, mpo[j], B, weighted_env), tmpEnvR[j])
         end
     end
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor}, tmpEnvR))
 end
 
-function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseLeftEnvironmentTensor{1}, site::Int64)
-    @assert mpo.D[site][1] == EnvL.D[1]
-    tmpEnvL = Vector{Any}(nothing, mpo.D[site][2])
-    l_map = _validind1(mpo[site], L2R())
+function pushright(A::MPSTensor{3}, mpo::SparseMPOTensor{DL,D,DR}, B::AdjointMPSTensor{3}, EnvL::SparseLeftEnvironmentTensor{1}) where {DL,D,DR}
+    @assert DL == EnvL.D[1]
+    tmpEnvL = Vector{Any}(nothing, D)
+    l_map = _validind1(mpo, L2R())
     validind = [(j, l_pairs) for (j, l_pairs) in enumerate(l_map) if !isempty(l_pairs)]
     Nthr = get_nworker()
     if Nthr > 1
@@ -66,7 +69,7 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
                 ct > length(validind) && break
                 j, l_pairs = validind[ct]
                 weighted_env = sum(w * EnvL[b] for (b, w) in l_pairs)
-                x = contract(A[site], mpo[site][j], B[site], weighted_env)
+                x = contract(A, mpo[j], B, weighted_env)
                 lock(Lock)
                 try
                     tmpEnvL[j] = axpy!(1, x, tmpEnvL[j])
@@ -80,28 +83,11 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
     else
         for (j, l_pairs) in validind
             weighted_env = sum(w * EnvL[b] for (b, w) in l_pairs)
-            tmpEnvL[j] = axpy!(1, contract(A[site], mpo[site][j], B[site], weighted_env), tmpEnvL[j])
+            tmpEnvL[j] = axpy!(1, contract(A, mpo[j], B, weighted_env), tmpEnvL[j])
         end
     end
     return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor}, tmpEnvL))
 end
-
-# function pushright!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
-#     @show "test"
-#     @assert (site = env.center[1] ) == env.center[2]
-#     env.layer[end][site:site+1] = map(adjoint,[tl,tr])
-#     env.layer[end].center = env.center
-#     map(v -> canonicalize!(env.layer[v],site + 1),1:N-1)
-#     pushright!(env)
-# end
-
-# function pushleft!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
-#     @assert (site = env.center[1] ) == env.center[2]
-#     env.layer[end][site-1:site] = map(adjoint,[tl,tr])
-#     env.layer[end].center = env.center
-#     map(v -> canonicalize!(env.layer[v],site - 1),1:N-1)
-#     pushleft!(env)
-# end
 
 pushleft(A::DenseMPO, B::AdjointMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvR.A))
 pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvL.A))
@@ -109,10 +95,12 @@ pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site:
 pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR.A))
 pushright(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL.A))
 
-pushleft(A::DenseMPO, B::SparseMPO, C::T, EnvR::SparseRightEnvironmentTensor, site::Int64) where T <: Union{AdjointMPO,RefMPO} = SparseRightEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvR))
-pushright(A::DenseMPO, B::SparseMPO, C::T, EnvL::SparseLeftEnvironmentTensor, site::Int64) where T <: Union{AdjointMPO,RefMPO} = SparseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B,C))..., EnvL))
-
+pushleft(A::DenseMPO, B::SparseMPO, C::T, EnvR::SparseRightEnvironmentTensor, site::Int64) where T <: Union{AdjointMPO,RefMPO} = pushleft(A[i],B[i],C[i],EnvR)
+pushright(A::DenseMPO, B::SparseMPO, C::T, EnvL::SparseLeftEnvironmentTensor, site::Int64) where T <: Union{AdjointMPO,RefMPO} = pushright(A[i],B[i],C[i],EnvL)
+pushleft(A::DenseMPOTensor{4}, B::SparseMPOTensor, C::AdjointMPOTensor{4}, EnvR::SparseRightEnvironmentTensor) = SparseRightEnvironmentTensor(contract(A, B, C, EnvR))
+pushright(A::DenseMPOTensor{4}, B::SparseMPO, C::AdjointMPOTensor{4}, EnvL::SparseLeftEnvironmentTensor) = SparseLeftEnvironmentTensor(contract(A, B, C, EnvL))
 pushleft(A::DenseMPS, B::AdjointMPS, EnvR::DenseRightEnvironmentTensor{2}, site::Int64) = DenseRightEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvR.A))
+pushright(A::DenseMPS, B::AdjointMPS, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64) = DenseLeftEnvironmentTensor(contract(map(x -> x[site],(A,B))..., EnvL.A))
 
 #= Env4 =#
 

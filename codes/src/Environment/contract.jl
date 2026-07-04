@@ -221,6 +221,11 @@ function contract(A::MPSTensor{3}, A′::AdjointMPSTensor{3}, EnvR::RightEnviron
     return RightEnvironmentTensor(tmp)
 end
 
+function contract(A::MPSTensor{3}, A′::AdjointMPSTensor{3}, EnvL::LeftEnvironmentTensor{2})
+    @tensor tmp[-1;-2] ≔ A.A[2,3,-2] * A′.A[-1,1,3] * EnvL.A[1,2]
+    return LeftEnvironmentTensor(tmp)
+end
+
 function contract(EnvL::DenseLeftEnvironmentTensor, A::MPSTensor, B::AdjointMPSTensor, EnvR::DenseRightEnvironmentTensor)
     return contract(EnvL.A, A, B, EnvR.A)
 end

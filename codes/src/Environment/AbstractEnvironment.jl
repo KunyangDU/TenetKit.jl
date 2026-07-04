@@ -108,7 +108,7 @@ end
 
 
 mutable struct SparseLeftEnvironmentTensor{N} <: AbstractLeftEnvironmentTensor
-    A::Union{Array{LeftEnvironmentTensor},Array{LeftCompositeEnvironmentTensor}}
+    A::Union{Array{<:LeftEnvironmentTensor},Array{<:LeftCompositeEnvironmentTensor}}
     D::NTuple{N,Int}
 
     function SparseLeftEnvironmentTensor(t::Array{LeftEnvironmentTensor},D::Int64)
@@ -144,10 +144,12 @@ mutable struct SparseLeftEnvironmentTensor{N} <: AbstractLeftEnvironmentTensor
         end
         return new{1}(A, (n,))
     end
+
+    SparseLeftEnvironmentTensor{N}(A::Union{Array{<:LeftEnvironmentTensor},Array{<:LeftCompositeEnvironmentTensor}}) where N = new{N}(A, size(A))
 end
 
 mutable struct SparseRightEnvironmentTensor{N} <: AbstractRightEnvironmentTensor
-    A::Union{Array{RightEnvironmentTensor},Array{RightCompositeEnvironmentTensor}}
+    A::Union{Array{<:RightEnvironmentTensor},Array{<:RightCompositeEnvironmentTensor}}
     D::NTuple{N,Int}
 
     function SparseRightEnvironmentTensor(t::Array{RightEnvironmentTensor},D::Int64)
@@ -183,6 +185,8 @@ mutable struct SparseRightEnvironmentTensor{N} <: AbstractRightEnvironmentTensor
         end
         return new{1}(A, (n,))
     end
+
+    SparseRightEnvironmentTensor{N}(A::Union{Array{<:RightEnvironmentTensor},Array{<:RightCompositeEnvironmentTensor}}) where N = new{N}(A, size(A))
 end
 
 

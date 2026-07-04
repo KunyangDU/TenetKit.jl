@@ -43,14 +43,7 @@ function axpy!(α::Number, A::T, B::T) where {T<:AbstractTensorWrapper}
     B.A = α * A.A + B.A
     return B
 end
-# axpy!(::Number, ::Nothing, A::AbstractTensorWrapper) = A
-# axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
-# axpby!(α::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
-# axpby!(α::Number, A::AbstractTensorWrapper, β::Number, ::Nothing) = axpy!(α, A, nothing)
 
-# axpy!(α::Number, A::AbstractTensorWrapper, ::Nothing) = α * A
-# axpby!(::Number, ::Nothing, β::Number, A::AbstractTensorWrapper) = rmul!(A, β)
-# axpby!(α::Number, A::AbstractTensorWrapper, β::Number, ::Nothing) = axpy!(α, A, nothing)
 function axpby!(α::Number, A::AbstractTensorWrapper, β::Number, B::AbstractTensorWrapper)
     B.A = α * A.A + β * B.A
     return B
@@ -200,11 +193,6 @@ Base.getindex(obj::T, ::Colon) where T <: Union{RefMPO, RefMPS} = obj.mapping.(o
 Base.setindex!(obj::T, vals, ::Colon) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (for (i, v) in enumerate(vals); obj.ts[i] = v; end) : (obj.ts[:] = vals)
 Base.setindex!(::RefMPS, vals, ::Colon) = nothing
 
-# function Base.getindex(obj::SparseMPO{L}, i::Int64) where L
-#     1 <= i <= L || throw(BoundsError(obj, i))
-#     return obj.ts[i]
-# end
-
 Base.getindex(obj::T, i::Int64) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = obj.A[i]
 Base.getindex(obj::T, inds::AbstractVector{Int64}) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = [obj.A[i] for i in inds]
 Base.getindex(obj::T, i::Int...) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = obj.A[i...]
@@ -219,38 +207,6 @@ Base.size(obj::T) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnviro
 Base.iterate(obj::T, args...) where T <: Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor} = iterate(obj.A, args...)
 
 
-# function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
-#     return A + (-1) * B
-# end
-
-# function Base.:-(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
-#     return A + (-1)*B
-# end
-
-# function Base.:-(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
-#     return A + (-1)*B
-# end
-
-# function Base.:-(A::RightCompositeEnvironmentTensor{N₁, R₁}, B::RightCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
-#     @assert N₁ == N₂ && R₁ == R₂
-#     return RightCompositeEnvironmentTensor(A.A - B.A)
-# end
-
-# function Base.:-(A::LeftCompositeEnvironmentTensor{N₁, R₁}, B::LeftCompositeEnvironmentTensor{N₂, R₂}) where {N₁,N₂,R₁,R₂}
-#     @assert N₁ == N₂ && R₁ == R₂
-#     return LeftCompositeEnvironmentTensor(A.A - B.A)
-# end
-
-
-# function Base.:+(A::LeftCompositeEnvironmentTensor,
-#     B::LeftCompositeEnvironmentTensor)
-#     return LeftCompositeEnvironmentTensor(A.A + B.A)
-# end
-
-# function Base.:+(A::RightCompositeEnvironmentTensor,
-#     B::RightCompositeEnvironmentTensor)
-#     return RightCompositeEnvironmentTensor(A.A + B.A)
-# end
 
 function Base.:+(A::LeftEnvironmentTensor,
     B::LeftEnvironmentTensor)
@@ -272,85 +228,3 @@ axpy!(α::Number, A::RightEnvironmentTensor, ::Nothing) = α * A
 axpy!(::Number, ::Nothing, B::LeftEnvironmentTensor) = B
 axpy!(::Number, ::Nothing, B::RightEnvironmentTensor) = B
 
-# function Base.:+(A::CompositeMPOTensor{N₁, R₁}, B::CompositeMPOTensor{N₂, R₂}) where {N₁, N₂, R₁, R₂}
-#     @assert N₁ == N₂ && R₁ == R₂
-#     return CompositeMPOTensor(A.A + B.A)
-# end
-
-# function Base.:+(A::DenseMPOTensor{R₁}, B::DenseMPOTensor{R₂}) where {R₁, R₂}
-#     @assert R₁ == R₂
-#     return DenseMPOTensor(A.A + B.A)
-# end
-
-# function Base.:+(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
-#     @assert R₁ == R₂
-#     return MPSTensor(A.A + B.A)
-# end
-# function Base.:+(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
-#     return CompositeMPSTensor(A.A + B.A)
-# end
-
-# function Base.:+(::Nothing,A::DenseMPOTensor)
-#     return A
-# end
-
-# function Base.:+(A::DenseMPOTensor,::Nothing)
-#     return A
-# end
-
-
-# function Base.:*(α::Number, A::CompositeMPOTensor)
-#     return  CompositeMPOTensor(α*A.A)
-# end
-
-# function Base.:*(α::Number, A::DenseMPOTensor)
-#     return  DenseMPOTensor(α*A.A)
-# end
-
-# function Base.:*(n::Number, A::MPSTensor)
-#     return MPSTensor(A.A*n)
-# end
-
-# function Base.:*(n::Number, A::MPSTensor)
-#     return MPSTensor(A.A*n)
-# end
-
-# function Base.:*(n::Number, A::CompositeMPSTensor)
-#     return CompositeMPSTensor(n*A.A)
-# end
-
-# function Base.:/(A::AbstractMPOTensor, α::Number)
-#     return  (1/α) * A
-# end
-
-# function Base.:/(A::CompositeMPSTensor, n::Number)
-#     return (1/n) * A
-# end
-
-# function Base.:/(A::MPSTensor, n::Number)
-#     @assert n ≠ 0
-#     return (1/n)*A
-# end
-
-
-# function normalize!(obj::Union{DenseMPOTensor,MPSTensor})
-#     tmp = norm(obj.A)
-#     obj.A = obj.A / tmp
-#     return tmp
-# end
-
-#= function Base.:*(A::CompositeMPSTensor{2, 4}, B::AdjointCompositeMPSTensor{2, 4})
-    return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
-end
-
-function Base.:*(A::MPSTensor{3}, Ad::AdjointMPSTensor{3})
-    return @tensor A.A[1,2,3] * Ad.A[3,1,2]
-end
-
-function Base.:*(A::CompositeMPOTensor{2,6}, B::AdjointCompositeMPOTensor{2,6})
-    return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
-end
-
-function Base.:*(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4})
-    return  @tensor A.A[1,2,3,4] * B.A[3,4,1,2]
-end =#

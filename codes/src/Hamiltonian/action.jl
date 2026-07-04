@@ -41,6 +41,10 @@ function action(O::DenseProjectiveHamiltonian{2,1}, obj::DenseMPOTensor{4})
     return DenseMPOTensor(x)
 end
 
+function action(H::DenseProjectiveHamiltonian{2, 1}, A::MPSTensor{3})
+    return MPSTensor(@tensor tmp[-1,-2;-3] ≔ A.A[1,-2,2] * H.EnvL.A.A[-1,1] * H.EnvR.A.A[2,-3])
+end
+
 function action(O::DenseProjectiveHamiltonian{2,2}, obj::CompositeMPOTensor{2,6})
     @tensor x[-1 -2 -3;-4 -5 -6] ≔ O.EnvL.A.A[-3,1] * obj.A[-1,-2,1,2,-5,-6] * O.EnvR.A.A[2,-4]
     return CompositeMPOTensor(x)

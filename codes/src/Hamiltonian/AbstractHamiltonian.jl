@@ -104,3 +104,4 @@ end
 
 proj1(env::Environment{2},site::Int64) = DenseProjectiveHamiltonian{2,1}(env.envs[site],env.envs[site+1])
 
+proj1(EnvL::SparseLeftEnvironmentTensor, H::SparseMPOTensor, EnvR::SparseRightEnvironmentTensor, E₀::Float64 = 0.0) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO(H),E₀)

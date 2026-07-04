@@ -39,7 +39,7 @@ function setdefault!(env::Environment{2},A::T₁,B::T₂;kwargs...)where {T₁ <
     env.envs[end] = DenseRightEnvironmentTensor(ones(ars[1], ars[2]))
 end
 
-auxspace(A::T) where T <: Union{DenseMPS,DenseMPO,AdjointMPS,AdjointMPO} = left_auxspace(A[1]),right_auxspace(A[end])
+auxspace(A::T) where T <: Union{DenseMPS,DenseMPO,AdjointMPS,AdjointMPO,RefMPS,RefMPO} = left_auxspace(A[1]),right_auxspace(A[end])
 auxspace(A::InteractionTunnel) = left_auxspace(A.A[1]),right_auxspace(A.A[end])
 auxspace(A::SparseMPO) = A.auxspace
 
@@ -61,7 +61,10 @@ right_auxspace(A::LocalOperator{2,2}) = space(A,3)'
 
 TensorKit.:⊗(::Nothing, A::T) where T <: Union{ElementarySpace,ProductSpace} = A
 TensorKit.:⊗(A::T, ::Nothing) where T <: Union{ElementarySpace,ProductSpace} = A
-auxspace(args...) = map(auxspace, args) .|> identity |> collect |> x -> (first.(x), last.(x))
+auxspace(a, b, args...) = begin
+    xs = map(auxspace, (a, b, args...))
+    return (map(first, xs), map(last, xs))
+end
 
 # function setdefault!(env::Environment{3};kwargs...)
 #     if issparse(env.layer[2])

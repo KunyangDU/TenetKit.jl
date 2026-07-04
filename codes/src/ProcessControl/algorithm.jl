@@ -76,30 +76,6 @@ mutable struct Algebraalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     end
 end
 
-# mutable struct LKANalgo{N,M} <: AbstractAlgorithm where {N,M}
-#     order::Int64
-#     mode::Symbol
-#     filepath::String
-#     tailname::String
-#     solver::SolverAlgo
-#     scale::Number
-#     algo::SolverAlgo
-#     count::Int64
-#     function LKANalgo(order::Int64, mode::Symbol, filepath::String, tailname::String, solver::SolverAlgo, scale::Number = 1., algo::SolverAlgo = mode == :dmrg ? DMRGDefaultLanczos : HamiltonianBoundDefaultLanczos, count::Int64 = 0)
-#         new{order,mode}(order, mode, filepath, tailname, solver, scale, algo, count)
-#     end
-# end
-
-#= ========================= =#
-
-# function merge!(A::Krylovalgo,B::Krylovalgo)
-#     @assert A.A == B.A "KrylovAlgorithm mistmatch" 
-# end
-# function merge(A::Krylovalgo,B::Krylovalgo)
-#     @assert A.A == B.A "KrylovAlgorithm mistmatch" 
-#     return A
-# end
-
 
 mutable struct XTRGalgo{Sch,Alg} <: AbstractAlgorithm where {Sch,Alg}
     scheme::AbstractScheme
