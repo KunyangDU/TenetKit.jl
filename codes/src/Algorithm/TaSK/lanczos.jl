@@ -1,7 +1,6 @@
 function lanczos(action::Function, v₀::T, algo::LanczosAlgorithm) where T
-    normalize!(v₀)
 
-    info = LanczosInformation(v₀)
+    info = LanczosInformation(v₀,algo.isdisk)
 
     for _ in 1:algo.maxdim
         @timeit info.to "lanczos!" lanczos!(action, info, algo)
@@ -24,7 +23,7 @@ function lanczos!(action::Function, info::LanczosInformation, algo::LanczosAlgor
         end
         @timeit to "fixgauge!" fixgauge!(w)
     end
-    push!(info.b, norm(w)) 
+    push!(info.b, norm(w))
     @timeit to "normalize!" normalize!(w)
     push!(info.basis, w)
     @timeit to "GC" GC.gc()
@@ -41,5 +40,11 @@ function schmidtorth!(w::TaSKEnvironment{L}, v::TaSKEnvironment{L}) where L
     for i in 1:L
         w.TC[i] = w.TC[i] - c * v.TC[i]
     end
+    return w
+end
+
+function schmidtorth!(w::Vector{Float64}, v::Vector{Float64})
+    c = inner(v,w)
+    w[:] = w - c * v
     return w
 end

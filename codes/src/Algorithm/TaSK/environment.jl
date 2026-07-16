@@ -10,17 +10,18 @@ mutable struct TaSKEnvironment{L, T <: AbstractTensorWrapper, T′ <: Union{Dens
     H::T′
     Eg::Float64
     n::Int64
-    function TaSKEnvironment(TC::Vector{T}, TL::Vector{T}, TR::Vector{T}, H::SparseMPO{L}, Eg::Float64 = 0.0) where {T <: Union{MPSTensor,DenseMPOTensor},L}
+    isdisk::Bool
+    function TaSKEnvironment(TC::Vector{T}, TL::Vector{T}, TR::Vector{T}, H::SparseMPO{L}, Eg::Float64 = 0.0, isdisk::Bool = IS_DISK[]) where {T <: Union{MPSTensor,DenseMPOTensor},L}
         @assert L == length(TC) == length(TL) == length(TR)
         return new{L,T,SparseMPO}(
             TC,TL,TR,
             Vector{AbstractLeftEnvironmentTensor}(),Vector{AbstractRightEnvironmentTensor}(),
             Vector{AbstractLeftEnvironmentTensor}(),Vector{AbstractRightEnvironmentTensor}(),
-            H,Eg,0
+            H,Eg,0,isdisk
         )
     end
     function TaSKEnvironment(env::TaSKEnvironment{L,T,T′}) where {L,T,T′}
-        return new{L,T,T′}(deepcopy(env.TC),env.TL,env.TR,env.EnvL,env.EnvR,env.OrthL,env.OrthR,env.H,env.Eg,env.n)
+        return new{L,T,T′}(deepcopy(env.TC),env.TL,env.TR,env.EnvL,env.EnvR,env.OrthL,env.OrthR,env.H,env.Eg,env.n,env.isdisk)
     end
 end
 
@@ -35,7 +36,7 @@ function Base.show(io::IO, env::TaSKEnvironment{L,T,T′}) where {L,T,T′}
     println(io, " - ","n : $(env.n)")
 end
 
-function TaSKEnvironment(A::T, H::SparseMPO{L}, Eg::Float64 = 0.0) where T <: Union{DenseMPS{L}, DenseMPO{L}} where L
+function TaSKEnvironment(A::T, O::SparseMPO{L}, Eg::Float64 = 0.0) where T <: Union{DenseMPS{L}, DenseMPO{L}} where L
     Tt = typeof(A[1])
     TC = Tt[]
     TL = Tt[]
@@ -52,8 +53,7 @@ function TaSKEnvironment(A::T, H::SparseMPO{L}, Eg::Float64 = 0.0) where T <: Un
     push!(TL,leftorth(A[end])[1])
     canonicalize!(A,1)
 
-    env = TaSKEnvironment(TC,TL,TR,H,Eg)
+    env = TaSKEnvironment(TC,TL,TR,O,Eg)
     initialize!(env)
-    normalize!(env)
     return env
 end

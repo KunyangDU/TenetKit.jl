@@ -39,6 +39,12 @@ function setdefault!(env::Environment{2},A::T₁,B::T₂;kwargs...)where {T₁ <
     env.envs[end] = DenseRightEnvironmentTensor(ones(ars[1], ars[2]))
 end
 
+function setdefault!(env::Environment{3},A::T₁,H::T₂,B::T₃;kwargs...) where {T₁ <: Union{DenseMPS{L},DenseMPO{L}}, T₂ <: Union{RefMPS{L},RefMPO{L}}, T₃ <: Union{AdjointMPS{L},AdjointMPO{L},RefMPS{L},RefMPO{L}}} where L
+    als, ars = auxspace(A,H,B)
+    env.envs[1] = DenseLeftEnvironmentTensor(ones(als[1] ⊗ als[2], als[3]))
+    env.envs[end] = DenseRightEnvironmentTensor(ones(ars[1], ars[2] ⊗ ars[3]))
+end
+
 auxspace(A::T) where T <: Union{DenseMPS,DenseMPO,AdjointMPS,AdjointMPO,RefMPS,RefMPO} = left_auxspace(A[1]),right_auxspace(A[end])
 auxspace(A::InteractionTunnel) = left_auxspace(A.A[1]),right_auxspace(A.A[end])
 auxspace(A::SparseMPO) = A.auxspace

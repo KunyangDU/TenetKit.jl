@@ -21,8 +21,8 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
         EnvR::SparseRightEnvironmentTensor{1},
         H::SparseMPO{1},E₀::Number = 0.0)
         DL,D,DR = H.D[1]
-        @assert EnvL.D[1] == DL
-        @assert EnvR.D[1] == DR
+        @assert EnvL.D[1] == DL EnvL.D[1],DL
+        @assert EnvR.D[1] == DR EnvR.D[1],DR
 
         return new{1}(EnvL,EnvR,H,Tuple(_validind(H[1])),E₀)
     end

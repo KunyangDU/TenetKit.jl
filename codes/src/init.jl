@@ -25,6 +25,7 @@ function __multithreading_init__()
         BLAS.set_num_threads(1)
         GLOBAL_THREADS[]["BLAS_THREADS"] = BLAS.get_num_threads()
         GLOBAL_THREADS[]["BLAS_THREADS_DEFAULT"] = GLOBAL_THREADS[]["BLAS_THREADS"]
+        GLOBAL_THREADS[]["NWORKER"] = div(GLOBAL_THREADS[]["TOTAL_CPUS"], GLOBAL_THREADS[]["BLAS_THREADS_DEFAULT"])
     else
         # check if n_mkl * n_threads ≤ n_cpus
         if GLOBAL_THREADS[]["BLAS_THREADS_DEFAULT"] * GLOBAL_THREADS[]["NWORKER"] > GLOBAL_THREADS[]["TOTAL_CPUS"]

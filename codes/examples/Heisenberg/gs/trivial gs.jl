@@ -3,26 +3,24 @@ using TensorKit
 include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/trivial"
-IS_DISK[] = true
-diskdir!()
-
-D = 128
-Lx = 8
+axpy!(::Number, ::Nothing, ::Nothing) = nothing
+D = 256
+Lx = 6
 Ly = 6
-params = (J=1, Δ = 1, hz = 0.001)
+params = (J = 1.0 ,J′ = 0.0,Hy = 0.0)
 
-Latt = YCSqua(Lx,Ly)
+Latt = YCRect(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 ψ = let 
     AuxSpace = repeat([ℂ^1,], Lx*Ly)
-    randMPS(TrivialSpinOneHalf.PhySpace ,AuxSpace, isdisk = true)
+    randMPS(TrivialSpinOneHalf.PhySpace ,AuxSpace)
 end
 
 H = TrivialHamiltonian(Latt;params...)
 
-lsEg,lsinfo = DMRG1!(ψ, H;trunc = truncdim(D) & truncbelow(1e-12), Etol = 1e-20, N = 10,isdisk = true)
-@save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
-@save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
-@save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
+lsEg,lsinfo = DMRG2!(ψ, H; trunc = truncdim(D), N = 10)
+# @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
+# @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
+# @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ
 

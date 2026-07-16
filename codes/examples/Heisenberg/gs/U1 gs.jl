@@ -3,16 +3,16 @@ include("../../../src/TenetKit.jl")
 include("../model.jl")
 dataname = "examples/Heisenberg/data/U1"
 
-D = 2^8
-params = (Jz = 1,Jxy = 0.5)
+D = 512
+params = (Jz = 1.0,Jxy = 0.5,Hz = 2.0,J′ = 1.0)
 
-Lx = 8
-Ly = 8
+Lx = 6
+Ly = 6
 Latt = YCSqua(Lx,Ly)
 @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 
 ψ = let 
-    AuxSpace = vcat(Rep[U₁](0 => 1),repeat([Rep[U₁](i => 1 for i in -size(Latt):1//2:size(Latt) ),], size(Latt)-1))
+    AuxSpace = vcat(Rep[U₁](0 => 1),repeat([Rep[U₁](i => 1 for i in -1:1//2:1 ),], size(Latt)-1))
     randMPS(U₁Spin.PhySpace ,AuxSpace)
 end
 

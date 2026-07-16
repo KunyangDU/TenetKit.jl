@@ -92,8 +92,8 @@ function SETTN!(β::Number,H::SparseMPO{L},Hn::DenseMPO,ρ::DenseMPO,order::Int6
     _merge_io!(to)
     @timeit to "mul!" ~,multo,minfo = mul!(Hn,Hn,H,1,Alg.alg)
     _merge_io!(to)
-    @timeit to "axpy!" ~,axpyto,ainfo = axpy!((-β) ^ order / factorial(order),Hn ,ρ , Alg.alg)
-    # @timeit to "axpy!" ~,axpyto,ainfo = axpy!((-β) ^ order / factorial(order),Hn ,ρ ; trunc = Alg.trunc, tol = Alg.tol, verbose = Alg.alg.verbose, isdisk = Alg.alg.isdisk)
+    # @timeit to "axpy!" ~,axpyto,ainfo = axpy!((-β) ^ order / factorial(order),Hn ,ρ , Alg.alg)
+    @timeit to "axpy!" ~,axpyto,ainfo = axpy!((-β) ^ order / factorial(order),Hn ,ρ ; trunc = Alg.trunc, tol = Alg.tol, verbose = Alg.alg.verbose, isdisk = Alg.alg.isdisk)
     @timeit to "calculate lnZ" info.lnZ = log(tr(ρ))
     # F = - log(tr(ρ)) / 2 / β
 

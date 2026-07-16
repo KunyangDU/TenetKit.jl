@@ -137,8 +137,9 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
             @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
             tLX₀,tRX₀ = Envx.layer[2][site:site+1]
             tLY₀,tRY₀ = Envy.layer[2][site:site+1]
-            @timeit localto "after-orthogonalize" orthogonalize!(tRY₀,tRX₀,L2R())
-            @timeit localto "direct-sum" tR = _cbedsum(tRY₀,tRX₀,L2R())
+            tR₀ = deepcopy(tRX₀)
+            @timeit localto "after-orthogonalize" orthogonalize!(tR₀,tRX₀,L2R())
+            @timeit localto "direct-sum" tR = _cbedsum(tR₀,tRX₀,L2R())
             @timeit localto "splice" tLY = splice(tLY₀,tRY₀,tR,L2R())
             @timeit localto "splice" tLX = splice(tLX₀,tRX₀,tR,L2R())
             Envx.layer[2][site:site+1] .= tLX,tR 
@@ -190,8 +191,9 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
             @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
             tLX₀,tRX₀ = Envx.layer[2][site-1:site]
             tLY₀,tRY₀ = Envy.layer[2][site-1:site]
-            @timeit localto "after-orthogonalize" orthogonalize!(tLX₀,tLY₀,R2L())
-            @timeit localto "direct-sum" tL = _cbedsum(tLX₀,tLY₀,R2L())
+            tL₀ = deepcopy(tLX₀)
+            @timeit localto "after-orthogonalize" orthogonalize!(tL₀,tLX₀,R2L())
+            @timeit localto "direct-sum" tL = _cbedsum(tL₀,tLX₀,R2L())
             @timeit localto "splice" tRX = splice(tLX₀,tRX₀,tL,R2L())
             @timeit localto "splice" tRY = splice(tLY₀,tRY₀,tL,R2L())
             Envx.layer[2][site-1:site] .= tL,tRX 

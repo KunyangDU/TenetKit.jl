@@ -99,7 +99,8 @@ mutable struct LanczosAlgorithm <: AbstractAlgorithm
     maxdim::Int64
     tol::Float64
     North::Int64 
+    isdisk::Bool
     verbose::Bool
     showtimes::Int64
-    LanczosAlgorithm(N::Int64, tol::Float64 = 1e-12, North::Int64 = 2, verbose::Bool = true, showtimes::Int64 = 10) = new(N,tol,North,verbose,showtimes)
+    LanczosAlgorithm(N::Int64, tol::Float64 = 1e-12, North::Int64 = 2, isdisk::Bool = IS_DISK[], verbose::Bool = true, showtimes::Int64 = 10) = new(N,tol,North,isdisk,verbose,showtimes)
 end

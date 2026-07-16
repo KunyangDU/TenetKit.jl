@@ -29,7 +29,7 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor
     end
 
     function MPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
-        A = fc(codomain,domain)
+        A = fc(Float64,codomain,domain)
         return new{rank(A)}(A)
     end
 

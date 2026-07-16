@@ -355,8 +355,14 @@ mutable struct LanczosInformation{T} <: AlgorithmInfo
     basis::Vector{T}
     a::Vector{Float64}
     b::Vector{Float64}
+    d::Number
     to::TimerOutput
-    LanczosInformation(b₀::T) where T = new{T}([b₀,],Vector{Float64}(),Vector{Float64}(),TimerOutput())
+    isdisk::Bool
+    function LanczosInformation(b₀::T, isdisk::Bool = IS_DISK[]) where T
+        d = norm(b₀)
+        normalize!(b₀)
+        return new{T}([b₀,],Vector{Float64}(),Vector{Float64}(),d,TimerOutput(),isdisk)
+    end 
 end
 
 function Base.getindex(info::LanczosInformation, ::Colon)
@@ -366,7 +372,8 @@ function Base.getindex(info::LanczosInformation, ::Colon)
         "b" => info.b,
         "ω" => ω,
         "V" => V,
-        "S" => V[1,:] .^ 2
+        "S" => V[1,:] .^ 2,
+        "d" => info.d
     )
 end
 

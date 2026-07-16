@@ -20,7 +20,9 @@ function YCRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0),θ::Rea
 end
 
 function TrivialHamiltonian(Latt::AbstractLattice;
-    J::Number=1, Hx::Number=0, Hy::Number=0, Hz::Number=0, Δ::Number=1, hxd::Number=0.0,
+    J::Number=1,  Δ::Number=1, 
+    # Jxy::Number = 1.0, Jz::Number = 1.0,
+    Hx::Number=0, Hy::Number=0, Hz::Number=0, hxd::Number=0.0,
     Δ′::Number = 1.0, J′::Number = 0.0,
     hx::Number=0, hy::Number=0, hz::Number=0,
     pinh::Vector=repeat([zeros(3),],2*get_cellsize(Latt)[2]),
@@ -33,15 +35,15 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     ig = InteractionGraph(L)
 
     for pair in neighbor(Latt)
-        addIntr!(ig, LocalSpace.SxSx, pair, ("Sx","Sx"), (false,false), nothing, J)
-        addIntr!(ig, LocalSpace.SySy, pair, ("Sy","Sy"), (false,false), nothing, J)
-        addIntr!(ig, LocalSpace.SzSz, pair, ("Sz","Sz"), (false,false), nothing, J*Δ)
+        addIntr!(ig, LocalSpace.S₋S₊, pair, ("S-","S+"), (false,false), nothing, J / 2)
+        addIntr!(ig, LocalSpace.S₊S₋, pair, ("S+","S-"), (false,false), nothing, J / 2)
+        addIntr!(ig, LocalSpace.SzSz, pair, ("Sz","Sz"), (false,false), nothing, J * Δ)
     end
 
     for pair in neighbor(Latt;level = 2)
-        addIntr!(ig, LocalSpace.SxSx, pair, ("Sx","Sx"), (false,false), nothing, J′)
-        addIntr!(ig, LocalSpace.SySy, pair, ("Sy","Sy"), (false,false), nothing, J′)
-        addIntr!(ig, LocalSpace.SzSz, pair, ("Sz","Sz"), (false,false), nothing, J′*Δ′)
+        addIntr!(ig, LocalSpace.S₋S₊, pair, ("S-","S+"), (false,false), nothing, J′ / 2)
+        addIntr!(ig, LocalSpace.S₊S₋, pair, ("S+","S-"), (false,false), nothing, J′ / 2)
+        addIntr!(ig, LocalSpace.SzSz, pair, ("Sz","Sz"), (false,false), nothing, J′ * Δ)
     end
 
     # for pair in neighbor(Latt;level = 3)
@@ -84,7 +86,7 @@ function TrivialHamiltonian(Latt::AbstractLattice;
     end
 end
 
-function U1Hamiltonian(Latt::AbstractLattice; Jz::Number=1, Jxy::Number=1/2, h::Number=0, H::Number=0)
+function U1Hamiltonian(Latt::AbstractLattice; Jz::Number=1, Jxy::Number=1/2, Hz::Number=0, J′::Number=0)
     H = let
         L = size(Latt)
         LocalSpace = U₁Spin
@@ -96,8 +98,26 @@ function U1Hamiltonian(Latt::AbstractLattice; Jz::Number=1, Jxy::Number=1/2, h::
             addIntr!(ig, LocalSpace.S₋S₊, pair, ("S₋","S₊"),   (false,false), nothing, Jxy)
         end
 
+        for pair in neighbor(Latt;level = 2)
+            addIntr!(ig, LocalSpace.SzSz,  pair, ("Sz","Sz"),   (false,false), nothing, J′)
+            addIntr!(ig, LocalSpace.S₊S₋, pair, ("S₊","S₋"),   (false,false), nothing, J′ / 2)
+            addIntr!(ig, LocalSpace.S₋S₊, pair, ("S₋","S₊"),   (false,false), nothing, J′ / 2)
+        end
+
+        for pair in neighbor(Latt;level = 3)
+            addIntr!(ig, LocalSpace.SzSz,  pair, ("Sz","Sz"),   (false,false), nothing, J′)
+            addIntr!(ig, LocalSpace.S₊S₋, pair, ("S₊","S₋"),   (false,false), nothing, J′ / 2)
+            addIntr!(ig, LocalSpace.S₋S₊, pair, ("S₋","S₊"),   (false,false), nothing, J′ / 2)
+        end
+
+        for pair in neighbor(Latt;level = 4)
+            addIntr!(ig, LocalSpace.SzSz,  pair, ("Sz","Sz"),   (false,false), nothing, J′)
+            addIntr!(ig, LocalSpace.S₊S₋, pair, ("S₊","S₋"),   (false,false), nothing, J′ / 2)
+            addIntr!(ig, LocalSpace.S₋S₊, pair, ("S₋","S₊"),   (false,false), nothing, J′ / 2)
+        end
+
         for i in 1:L
-            addIntr!(ig, LocalSpace.Sz, i, "Sz", false, nothing, -H)
+            addIntr!(ig, LocalSpace.Sz, i, "Sz", false, nothing, -Hz)
         end
 
         AutomataSparseMPO(ig)
@@ -115,4 +135,18 @@ function SU2Hamiltonian(Latt::AbstractLattice; J::Number=1)
     end
 
     return AutomataSparseMPO(ig)
+end
+
+function currentindex2(J::Matrix, h::Vector)
+    ans = []
+    
+    ϵ = zeros(3,3,3)
+    ϵ[1,2,3] = ϵ[2,3,1] = ϵ[3,1,2] = 1
+    ϵ[3,2,1] = ϵ[1,3,2] = ϵ[2,1,3] = -1
+    
+    for α in 1:3,β in 1:3,γ in 1:3,γ′ in 1:3
+        j′ = J[α,β] * h[γ] * ϵ[γ,α,γ′]
+        j′ ≠ 0 && (push!(ans,(j′,(γ′,β)),(-j′,(β,γ′))))
+    end
+    return ans
 end
