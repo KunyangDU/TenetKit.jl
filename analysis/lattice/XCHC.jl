@@ -15,7 +15,7 @@ xticks = (1/2 .+ (1:1/2:Lx+1),string.(1:2Lx+1))
 
 # plotLatt!(ax,Latt,[0,1];pairs = pairsx)
 # plotLatt!(ax,Latt,[0,1];pairs = pairsy)
-plotLatt!(ax,Latt,[0,sqrt(3)/2];site = true,tplevel=1)
+plotLatt!(ax,Latt;site = true,tplevel=1)
 
 resize_to_layout!(fig)
 display(fig)

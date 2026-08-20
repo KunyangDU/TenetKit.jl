@@ -1,6 +1,8 @@
 *private*/
 *BCAO*/
 *NNBO*/
+NCTO/
+CoX2/
 
 .vscode/
 *.DS_Store
@@ -38,3 +40,13 @@ temp/
 deprecate/
 Kitaev/
 reference/
+
+.claude
+*.zip
+notes/
+TODO*
+err.*
+jl_*
+lab*/
+
+codes/docs

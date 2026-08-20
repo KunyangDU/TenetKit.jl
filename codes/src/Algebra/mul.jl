@@ -57,7 +57,8 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(EnvAB.layer[3][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite" t = contract(EnvAB.envs[site], vcat(map(u -> EnvAB.layer[u][site:site+1],1:2)...)..., EnvAB.envs[site+2])
+        @timeit localto "projection" projH = proj2(EnvAB, site, site+1)
+        @timeit localto "action" t = actionb(projH, composite(EnvAB.layer[1][site:site+1]...))
         @timeit localto "SVD" tl, tc, tr, localinfo.truncerr, localinfo.bond = tsvd(axpy!(α,t,nothing); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tr = contract(tc,tr) 
         @timeit localto "push right" begin
@@ -82,7 +83,8 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(EnvAB.layer[3][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite" t = contract(EnvAB.envs[site-1], vcat(map(u -> EnvAB.layer[u][site-1:site],1:2)...)..., EnvAB.envs[site+1])
+        @timeit localto "projection" projH = proj2(EnvAB, site-1, site)
+        @timeit localto "action" t = actionb(projH, composite(EnvAB.layer[1][site-1:site]...))
         @timeit localto "SVD" tl, tc, tr, localinfo.truncerr, localinfo.bond = tsvd(axpy!(α, t, nothing); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tl = contract(tl,tc) 
         @timeit localto "push left" begin
@@ -114,7 +116,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
             merge!(localto,cbetoAB,tree_point = ["CBE_AB"])
         end
         @timeit localto "projection" projH = proj1(EnvAB,site)
-        @timeit localto "action" t = action(projH,EnvAB.layer[1][site])
+        @timeit localto "action" t = actionb(projH,EnvAB.layer[1][site])
         @timeit localto "orthogonalize" begin
             # tl,tr = leftorth(axpy!(α, t, nothing))
             tl,tr,localinfo.truncerr,localinfo.bond = tsvd(axpy!(α, t, nothing); direction=:right,trunc = Alg.trunc)
@@ -151,7 +153,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
             merge!(localto,cbetoAB,tree_point = ["CBE_AB"])
         end
         @timeit localto "projection" projH = proj1(EnvAB,site)
-        @timeit localto "action" t = action(projH,EnvAB.layer[1][site])
+        @timeit localto "action" t = actionb(projH,EnvAB.layer[1][site])
         @timeit localto "orthogonalize" begin
             # tl,tr = rightorth(axpy!(α, t, nothing))
             tl,tr,localinfo.truncerr,localinfo.bond = tsvd(axpy!(α, t, nothing); direction=:left,trunc = Alg.trunc)

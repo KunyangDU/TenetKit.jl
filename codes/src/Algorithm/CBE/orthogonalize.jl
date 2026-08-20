@@ -167,8 +167,6 @@ end
 
 
 
-orthogonalize!(H::DenseMPOTensor,A::DenseMPOTensor{4},A′::DenseMPOTensor{4},EnvL::DenseLeftEnvironmentTensor) = contract(EnvL.A,A,H) |> x -> x - contract(x,A′)
-orthogonalize!(H::DenseMPOTensor,B::DenseMPOTensor{4},B′::DenseMPOTensor{4},EnvR::DenseRightEnvironmentTensor)= contract(B,H,EnvR.A) |> x -> x - contract(x,B′)
-
-
+orthogonalize!(H::T,A::T′,A′::T′,EnvL::DenseLeftEnvironmentTensor) where {T <: Union{DenseMPOTensor{4},AdjointMPOTensor{4}}, T′ <: Union{DenseMPOTensor{4}, MPSTensor{3}}} = contract(EnvL.A,A,H) |> x -> x - contract(x,A′)
+orthogonalize!(H::T,B::T′,B′::T′,EnvR::DenseRightEnvironmentTensor) where {T <: Union{DenseMPOTensor{4},AdjointMPOTensor{4}}, T′ <: Union{DenseMPOTensor{4}, MPSTensor{3}}} = contract(B,H,EnvR.A) |> x -> x - contract(x,B′)
 

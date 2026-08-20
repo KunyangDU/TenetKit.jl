@@ -78,7 +78,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(Envx.layer[2][site:site+1]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite" ts = map(z -> contract(z.envs[site], z.layer[1][site:site+1]..., z.envs[site+2]),[Envx,Envy])
+        @timeit localto "action" ts = map(z -> actionb(proj2(z.envs[site], nothing, nothing, z.envs[site+2]), composite(z.layer[1][site:site+1]...)), [Envx, Envy])
         @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tr = contract(tc,tr)
         @timeit localto "push right" map([Envx,Envy]) do Env
@@ -104,7 +104,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         localinfo = Algebrasiteinfo()
         x₀ = deepcopy(composite(Envx.layer[2][site-1:site]...))
         @assert (x2 = norm(x₀)^2) ≠ 0
-        @timeit localto "composite" ts = map(z -> contract(z.envs[site-1], z.layer[1][site-1:site]..., z.envs[site+1]),[Envx,Envy])
+        @timeit localto "action" ts = map(z -> actionb(proj2(z.envs[site-1], nothing, nothing, z.envs[site+1]), composite(z.layer[1][site-1:site]...)), [Envx, Envy])
         @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
         @timeit localto "contract" tl = contract(tl,tc)
         @timeit localto "push left" map([Envx,Envy]) do Env
@@ -122,112 +122,112 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
     return localto
 end
 
-function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{2}, Alg::Algebraalgo{SingleSite,alg}, sweepinfo::Algebrasweepinfo{L2R};kwargs...) where alg
-    localto = TimerOutput()
-    L = length(Envx.layer[1])
-    for site in 1:L-1
-        Alg.verbose && (time₀ = time())
-        localinfo = Algebrasiteinfo()
-        x₀ = deepcopy(composite(Envx.layer[1][site:site+1]...))
-        @assert (x2 = norm(x₀)^2) ≠ 0
-        if alg <: CBEalgo
-            cbeinfox = CBEinfo(L2R())
-            cbeinfoy = CBEinfo(L2R())
-            @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfox)
-            @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
-            tLX₀,tRX₀ = Envx.layer[2][site:site+1]
-            tLY₀,tRY₀ = Envy.layer[2][site:site+1]
-            tR₀ = deepcopy(tRX₀)
-            @timeit localto "after-orthogonalize" orthogonalize!(tR₀,tRX₀,L2R())
-            @timeit localto "direct-sum" tR = _cbedsum(tR₀,tRX₀,L2R())
-            @timeit localto "splice" tLY = splice(tLY₀,tRY₀,tR,L2R())
-            @timeit localto "splice" tLX = splice(tLX₀,tRX₀,tR,L2R())
-            Envx.layer[2][site:site+1] .= tLX,tR 
-            Envy.layer[2][site:site+1] .= tLY,tR 
-            map([Envx,Envy]) do env
-                env.envs[site+1] = pushleft(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site+2],site+1)
-            end
-            merge!(localinfo,cbeinfox)
-            merge!(localinfo,cbeinfoy)
-            merge!(localto,cbetoX,tree_point = ["CBE_X"])
-            merge!(localto,cbetoY,tree_point = ["CBE_Y"])
-        end
-        ts = map([Envx,Envy]) do Env 
-            @timeit localto "projection" projH = proj1(Env,site)
-            action(projH,Env.layer[1][site])
-        end
+# function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{2}, Alg::Algebraalgo{SingleSite,alg}, sweepinfo::Algebrasweepinfo{L2R};kwargs...) where alg
+#     localto = TimerOutput()
+#     L = length(Envx.layer[1])
+#     for site in 1:L-1
+#         Alg.verbose && (time₀ = time())
+#         localinfo = Algebrasiteinfo()
+#         x₀ = deepcopy(composite(Envx.layer[1][site:site+1]...))
+#         @assert (x2 = norm(x₀)^2) ≠ 0
+#         if alg <: CBEalgo
+#             cbeinfox = CBEinfo(L2R())
+#             cbeinfoy = CBEinfo(L2R())
+#             @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfox)
+#             @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
+#             tLX₀,tRX₀ = Envx.layer[2][site:site+1]
+#             tLY₀,tRY₀ = Envy.layer[2][site:site+1]
+#             tR₀ = deepcopy(tRX₀)
+#             @timeit localto "after-orthogonalize" orthogonalize!(tR₀,tRX₀,L2R())
+#             @timeit localto "direct-sum" tR = _cbedsum(tR₀,tRX₀,L2R())
+#             @timeit localto "splice" tLY = splice(tLY₀,tRY₀,tR,L2R())
+#             @timeit localto "splice" tLX = splice(tLX₀,tRX₀,tR,L2R())
+#             Envx.layer[2][site:site+1] .= tLX,tR 
+#             Envy.layer[2][site:site+1] .= tLY,tR 
+#             map([Envx,Envy]) do env
+#                 env.envs[site+1] = pushleft(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site+2],site+1)
+#             end
+#             merge!(localinfo,cbeinfox)
+#             merge!(localinfo,cbeinfoy)
+#             merge!(localto,cbetoX,tree_point = ["CBE_X"])
+#             merge!(localto,cbetoY,tree_point = ["CBE_Y"])
+#         end
+#         ts = map([Envx,Envy]) do Env 
+#             @timeit localto "projection" projH = proj1(Env,site)
+#             action(projH,Env.layer[1][site])
+#         end
 
-        @timeit localto "orthogonalize" begin
-            tl,tr = leftorth(axpby!(α, ts[1], β, ts[2]))
-            tr = contract(tr,Envx.layer[2][site+1]')
-        end
-        @timeit localto "push right" map([Envx,Envy]) do Env
-            N = length(Env.layer)
-            Env.layer[N][site:site+1] = adjoint.([tl, tr])
-            map(v -> canonicalize!(Env.layer[v],site + 1),1:N)
-            pushright!(Env)
-        end
-        x = composite(Envx.layer[1][site:site+1]...)
-        localinfo.err = norm(x-x₀)^2/x2
+#         @timeit localto "orthogonalize" begin
+#             tl,tr = leftorth(axpby!(α, ts[1], β, ts[2]))
+#             tr = contract(tr,Envx.layer[2][site+1]')
+#         end
+#         @timeit localto "push right" map([Envx,Envy]) do Env
+#             N = length(Env.layer)
+#             Env.layer[N][site:site+1] = adjoint.([tl, tr])
+#             map(v -> canonicalize!(Env.layer[v],site + 1),1:N)
+#             pushright!(Env)
+#         end
+#         x = composite(Envx.layer[1][site:site+1]...)
+#         localinfo.err = norm(x-x₀)^2/x2
 
-        merge!(sweepinfo,localinfo)
-        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
-    end
-    return localto
-end
+#         merge!(sweepinfo,localinfo)
+#         Alg.verbose && vbshow(site, time₀, localinfo, Alg)
+#     end
+#     return localto
+# end
 
-function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{2}, Alg::Algebraalgo{SingleSite,alg}, sweepinfo::Algebrasweepinfo{R2L};kwargs...) where alg
-    localto = TimerOutput()
-    L = length(Envx.layer[1])
-    for site in L:-1:2
-        Alg.verbose && (time₀ = time())
-        localinfo = Algebrasiteinfo()
-        x₀ = deepcopy(composite(Envx.layer[1][site-1:site]...))
-        @assert (x2 = norm(x₀)^2) ≠ 0
-        if alg <: CBEalgo 
-            cbeinfox = CBEinfo(R2L())
-            cbeinfoy = CBEinfo(R2L())
-            @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfox)
-            @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
-            tLX₀,tRX₀ = Envx.layer[2][site-1:site]
-            tLY₀,tRY₀ = Envy.layer[2][site-1:site]
-            tL₀ = deepcopy(tLX₀)
-            @timeit localto "after-orthogonalize" orthogonalize!(tL₀,tLX₀,R2L())
-            @timeit localto "direct-sum" tL = _cbedsum(tL₀,tLX₀,R2L())
-            @timeit localto "splice" tRX = splice(tLX₀,tRX₀,tL,R2L())
-            @timeit localto "splice" tRY = splice(tLY₀,tRY₀,tL,R2L())
-            Envx.layer[2][site-1:site] .= tL,tRX 
-            Envy.layer[2][site-1:site] .= tL,tRY 
-            map([Envx,Envy]) do env
-                env.envs[site] = pushright(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site-1],site-1)
-            end
-            merge!(localinfo,cbeinfox)
-            merge!(localinfo,cbeinfoy)
-            merge!(localto,cbetoX,tree_point = ["CBE_X"])
-            merge!(localto,cbetoY,tree_point = ["CBE_Y"])
-        end
-        ts = map([Envx,Envy]) do Env 
-            @timeit localto "projection" projH = proj1(Env,site)
-            action(projH,Env.layer[1][site])
-        end
-        @timeit localto "orthogonalize" begin
-            tl,tr = rightorth(axpby!(α, ts[1], β, ts[2]))
-            tl = contract(Envx.layer[2][site-1]',tl)
-        end
-        @timeit localto "push left" map([Envx,Envy]) do Env
-            N = length(Env.layer)
-            Env.layer[N][site-1:site] = adjoint.([tl, tr])
-            map(v -> canonicalize!(Env.layer[v],site - 1),1:N)
-            pushleft!(Env)
-        end
-        x = composite(Envx.layer[1][site-1:site]...)
-        localinfo.err = norm(x-x₀)^2/x2
+# function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{2}, Alg::Algebraalgo{SingleSite,alg}, sweepinfo::Algebrasweepinfo{R2L};kwargs...) where alg
+#     localto = TimerOutput()
+#     L = length(Envx.layer[1])
+#     for site in L:-1:2
+#         Alg.verbose && (time₀ = time())
+#         localinfo = Algebrasiteinfo()
+#         x₀ = deepcopy(composite(Envx.layer[1][site-1:site]...))
+#         @assert (x2 = norm(x₀)^2) ≠ 0
+#         if alg <: CBEalgo 
+#             cbeinfox = CBEinfo(R2L())
+#             cbeinfoy = CBEinfo(R2L())
+#             @timeit localto "CBE_X" cbetoX = CBE!(Envx, CBEalgo(Alg.alg,DA(),2), cbeinfox)
+#             @timeit localto "CBE_Y" cbetoY = CBE!(Envy, CBEalgo(Alg.alg,DA(),2), cbeinfoy)
+#             tLX₀,tRX₀ = Envx.layer[2][site-1:site]
+#             tLY₀,tRY₀ = Envy.layer[2][site-1:site]
+#             tL₀ = deepcopy(tLX₀)
+#             @timeit localto "after-orthogonalize" orthogonalize!(tL₀,tLX₀,R2L())
+#             @timeit localto "direct-sum" tL = _cbedsum(tL₀,tLX₀,R2L())
+#             @timeit localto "splice" tRX = splice(tLX₀,tRX₀,tL,R2L())
+#             @timeit localto "splice" tRY = splice(tLY₀,tRY₀,tL,R2L())
+#             Envx.layer[2][site-1:site] .= tL,tRX 
+#             Envy.layer[2][site-1:site] .= tL,tRY 
+#             map([Envx,Envy]) do env
+#                 env.envs[site] = pushright(map(x -> env.layer[x],1:length(env.layer))...,env.envs[site-1],site-1)
+#             end
+#             merge!(localinfo,cbeinfox)
+#             merge!(localinfo,cbeinfoy)
+#             merge!(localto,cbetoX,tree_point = ["CBE_X"])
+#             merge!(localto,cbetoY,tree_point = ["CBE_Y"])
+#         end
+#         ts = map([Envx,Envy]) do Env 
+#             @timeit localto "projection" projH = proj1(Env,site)
+#             action(projH,Env.layer[1][site])
+#         end
+#         @timeit localto "orthogonalize" begin
+#             tl,tr = rightorth(axpby!(α, ts[1], β, ts[2]))
+#             tl = contract(Envx.layer[2][site-1]',tl)
+#         end
+#         @timeit localto "push left" map([Envx,Envy]) do Env
+#             N = length(Env.layer)
+#             Env.layer[N][site-1:site] = adjoint.([tl, tr])
+#             map(v -> canonicalize!(Env.layer[v],site - 1),1:N)
+#             pushleft!(Env)
+#         end
+#         x = composite(Envx.layer[1][site-1:site]...)
+#         localinfo.err = norm(x-x₀)^2/x2
 
-        merge!(sweepinfo,localinfo)
-        Alg.verbose && vbshow(site, time₀, localinfo, Alg)
-    end
-    return localto
-end
+#         merge!(sweepinfo,localinfo)
+#         Alg.verbose && vbshow(site, time₀, localinfo, Alg)
+#     end
+#     return localto
+# end
 
 function axpby!(α::Number, x::CompositeMPOTensor{N₁,R₁}, β::Number, y::CompositeMPOTensor{N₂,R₂}) where {N₁,R₁,N₂,R₂}
     @assert N₁ == N₂ && R₁ == R₂

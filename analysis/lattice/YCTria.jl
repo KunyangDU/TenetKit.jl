@@ -2,7 +2,7 @@ using FiniteLattices,CairoMakie
 
 include("../analysis/analysis.jl")
 
-Lx = 5
+Lx = 12
 Ly = 4
 Latt = YCTria(Lx,Ly)
 # pairsx,pairsy = _ShastrySutherPairs(Latt)
@@ -13,7 +13,7 @@ xticks = (1:0.5:Lx+0.5,string.(1:2Lx)),yticks = (1:0.5:Ly+0.5,string.(1:2Ly)))
 
 # plotLatt!(ax,Latt,[0,1];pairs = pairsx)
 # plotLatt!(ax,Latt,[0,1];pairs = pairsy)
-plotLatt!(ax,Latt,[0,1];site = true,tplevel=1)
+plotLatt!(ax,Latt;site = true,tplevel=1)
 
 resize_to_layout!(fig)
 display(fig)

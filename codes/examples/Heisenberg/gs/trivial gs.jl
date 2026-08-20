@@ -20,6 +20,7 @@ end
 H = TrivialHamiltonian(Latt;params...)
 
 lsEg,lsinfo = DMRG2!(ψ, H; trunc = truncdim(D), N = 10)
+
 # @save "$(dataname)/Latt_$(Lx)x$(Ly).jld2" Latt
 # @save "$(dataname)/lsEg_$(Lx)x$(Ly)_$(D)_$(params).jld2" lsEg
 # @save "$(dataname)/ψ_$(Lx)x$(Ly)_$(D)_$(params).jld2" ψ

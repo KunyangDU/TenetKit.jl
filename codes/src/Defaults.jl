@@ -1,6 +1,6 @@
 
 global DMRGDefaultLanczos = Krylovalgo(KrylovKit.Lanczos(;
-     krylovdim = 8,
+     krylovdim = 16,
      maxiter = 1,
      tol = 1e-6,
      orth = ModifiedGramSchmidt(),

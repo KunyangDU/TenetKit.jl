@@ -4,7 +4,7 @@ include("../model.jl")
 dataname = "examples/Heisenberg/data/U1"
 
 D = 512
-params = (Jz = 1.0,Jxy = 0.5,Hz = 2.0,J′ = 1.0)
+params = (Jz = 1.0,Jxy = 0.5,Hz = 0.0,J′ = 0.0)
 
 Lx = 6
 Ly = 6

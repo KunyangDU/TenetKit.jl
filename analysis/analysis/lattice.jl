@@ -32,6 +32,35 @@ function YCRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0),θ::Rea
     end
     return SquareLattice(e, sites, BC)
 end
+
+function OpenRect(L::Int64, W::Int64, (a,b)::NTuple{2,Float64} = (1.0,1.0))
+    #  L < W && @warn "L = $(L) < $(W) = W?"
+     e = ((a, 0.0), (0.0, b))
+     sites = [(x, y) for x in 1:L for y in 1:W]
+     return SquareLattice(e, sites)
+end
+
+function OpenZZHoneyComb(L::Int64,W::Int64)
+    shift₀ = [[-1/2sqrt(3),1/2],[0.0,0.0],[1/sqrt(3),0.0],[sqrt(3)/2,1/2]]
+    shift = vcat([map(x -> x + (i-1)*[0.0,1.0],shift₀) for i in 1:W]...,map(x -> x .+ W*[0.0,1.0],[[0.0,0.0],[1/sqrt(3),0.0]]))
+    return CompositeLattice([OpenRect(L,1,(sqrt(3),W*1.0)) for _ in 1:4W+2]..., Tuple(Tuple.(shift))) |> Snake!  
+end
+
+function OpenXCHoneyComb(L::Int64,W::Int64)
+    shift₀ = [[1/2,-1/2sqrt(3)],[0.0,0.0],[0.0,1/sqrt(3)],[1/2,sqrt(3)/2]]
+    shift = vcat([map(x -> x + (i-1)*[1.0,0.0],shift₀) for i in 1:L]...,map(x -> x .+ L*[1.0,0.0],[[0.0,0.0],[0.0,1/sqrt(3)]]))
+    return CompositeLattice([OpenRect(1,W,(L*1.0,sqrt(3))) for _ in 1:4L+2]..., Tuple(Tuple.(shift))) |> Snake!  
+end
+
+function DiamondOpenXCHoneyComb(L::Int64,W::Int64)
+    @assert W == 1
+    shift₀ = [[1/2,-sqrt(3)/2],[1/2,-1/2sqrt(3)],[0.0,0.0],[0.0,1/sqrt(3)],[1/2,sqrt(3)/2],[1/2,5sqrt(3)/6]]
+    shift₁ = [[1,-2sqrt(3)/3],[1,sqrt(3)]]
+    shift = vcat([map(x -> x + (i-1)*[1.0,0.0],shift₀) for i in 1:L]...,[map(x -> x + (i-1)*[1.0,0.0],shift₁) for i in 1:L-1]...,map(x -> x .+ L*[1.0,0.0],[[0.0,0.0],[0.0,1/sqrt(3)]]))
+    shift = map(x -> x - [L,0],shift)
+    return CompositeLattice([OpenRect(1,W,(L*1.0,sqrt(3))) for _ in 1:8L]..., Tuple(Tuple.(shift))) |> Snake!  
+end
+
 function PCTria(L::Int64, W::Int64;
      scale::Real = 1.0)
     #  @assert L ≥ W
@@ -63,9 +92,14 @@ function YCHoneyComb(Lx::Int64, Ly::Int64)
     return CompositeLattice([YCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake! 
 end
 
-function XCHoneyComb(Lx::Int64, Ly::Int64)
-    shift = ((0.0,0.0),(1/2, sqrt(3)/6))
-    return CompositeLattice([XCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake!   
+# function XCHoneyComb(Lx::Int64, Ly::Int64)
+#     shift = ((0.0,0.0),(1/2, sqrt(3)/6))
+#     return CompositeLattice([XCTria(Lx,Ly) for _ in 1:2]..., shift) |> Snake!   
+# end
+
+function XCHoneyComb(L::Int64,W::Int64)
+    shift = ((1/2,-1/2sqrt(3)),(0.0,0.0),(0.0,1/sqrt(3)),(1/2,sqrt(3)/2))
+    return CompositeLattice([YCRect(L,W,(1.0,sqrt(3))) for _ in 1:4]..., shift) |> Snake!    
 end
 
 function _OpenSqua(L::Int64, W::Int64, a = (1,1))
@@ -75,28 +109,40 @@ function _OpenSqua(L::Int64, W::Int64, a = (1,1))
     return SquareLattice(e, sites)
 end
 
-function OXCHoneyComb(L::Int64,W::Int64)
-    shift = ((-1/2sqrt(3),1/2),(0.0,0.0),(1/sqrt(3),0.0),(sqrt(3)/2,1/2))
-    return CompositeLattice([_OpenSqua(L,W,(sqrt(3),1.0)) for _ in 1:4]..., shift) |> Snake!    
-end
+# function OXCHoneyComb(L::Int64,W::Int64)
+#     shift = ((-1/2sqrt(3),1/2),(0.0,0.0),(1/sqrt(3),0.0),(sqrt(3)/2,1/2))
+#     return CompositeLattice([_OpenSqua(L,W,(sqrt(3),1.0)) for _ in 1:4]..., shift) |> Snake!    
+# end
+
+# function OpenXCHoneyComb(L::Int64,W::Int64)
+#     shift = ((1/2,-1/2sqrt(3)),(0.0,0.0),(0.0,1/sqrt(3)),(1/2,sqrt(3)/2))
+#     return CompositeLattice([_OpenSqua(L,W,(1.0,sqrt(3))) for _ in 1:4]..., shift) |> Snake!    
+# end
 
 
-function getxyzbonds(Latt::AbstractLattice;
-    shift = [0,1],
-    direction = [[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]],tol=1e-8)
+# function getxyzbonds(Latt::AbstractLattice;
+#     shift = [0,1],
+#     direction = [[sqrt(3)/2,1/2],[sqrt(3)/2,-1/2],[0,1]],tol=1e-8)
+#     nb = neighbor(Latt)
+#     _,Ly = get_cellsize(Latt)
+#     return map(direction) do v
+#         filter(x -> abs(dot(let 
+#             u = coordinate(Latt,x[1]) .- coordinate(Latt,x[2])
+#             if abs(u[2]) > 1
+#                 u = u .- sign(u[2])*shift*Ly
+#             end
+#             u
+#         end,v)) < tol ,nb)
+#     end
+# end
+
+function getxyzbonds(Latt::AbstractLattice,direction::Vector,tol::Float64=1e-8)
     nb = neighbor(Latt)
     _,Ly = get_cellsize(Latt)
     return map(direction) do v
-        filter(x -> abs(dot(let 
-            u = coordinate(Latt,x[1]) .- coordinate(Latt,x[2])
-            if abs(u[2]) > 1
-                u = u .- sign(u[2])*shift*Ly
-            end
-            u
-        end,v)) < tol ,nb)
+        filter(x -> abs(dot(relaVec(Latt,x...),v)) < tol ,nb)
     end
 end
-
 
 function _OHTria(L::Int64,e::Tuple;kwargs...)
     scale = get(kwargs,:scale,1)
@@ -157,6 +203,29 @@ function getPBCflux(Latt::AbstractLattice, flux_Latt::AbstractLattice, direction
             pv2 = coordinate(Latt,nbp[2]) .- coordinate(Latt,i)
             abs(pv1[2]) > edge_shift[2] && (pv1 = pv1 .- sign(pv1[2])*edge_shift*Ly)
             abs(pv2[2]) > edge_shift[2] && (pv2 = pv2 .- sign(pv2[2])*edge_shift*Ly)
+            pv = pv1 .+ pv2
+            push!(tmpdirection,findmin(x -> abs(dot(x,pv)),direction)[2])
+        end
+        push!(fluxdirections, Tuple(tmpdirection))
+    end
+    return fluxsites,fluxdirections,direction
+end
+
+function getOBCflux(Latt::AbstractLattice, flux_Latt::AbstractLattice, direction::Vector ;
+    d::Number = 1,total_shift::Vector = [0,0])
+    fluxsites = map(y -> Tuple(sort(filter(x -> abs(norm(coordinate(Latt,x) .- coordinate(flux_Latt,y) .- total_shift) - d) < 1e-8,1:size(Latt)))),1:size(flux_Latt))
+    # filter!(x -> length(x) == 6,fluxsites)
+    fluxdirections = []
+    for flux in fluxsites
+        if length(flux) ≠ 6
+            push!(fluxdirections,())
+            continue
+        end
+        tmpdirection = Int64[]
+        for i in flux
+            nbp = intersect(unique(vcat(collect.(neighbor(Latt,i))...)),filter(x -> x != i,flux))
+            pv1 = coordinate(Latt,nbp[1]) .- coordinate(Latt,i)
+            pv2 = coordinate(Latt,nbp[2]) .- coordinate(Latt,i)
             pv = pv1 .+ pv2
             push!(tmpdirection,findmin(x -> abs(dot(x,pv)),direction)[2])
         end

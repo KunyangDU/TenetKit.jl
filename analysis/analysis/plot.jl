@@ -1,4 +1,4 @@
-function plotbond!(ax::Union{Axis,Axis3},Latt::AbstractLattice,pairs::Vector, values::Vector, shift::Vector, stagger = [zeros(2) for _ in 1:size(Latt)];
+function plotbond!(ax::Union{Axis,Axis3},Latt::AbstractLattice,pairs::Vector, values::Vector, stagger = [zeros(2) for _ in 1:size(Latt)];
     colormap = :seismic,
     alphas = ones(length(pairs)),
     linewidth = 10,resizelevel = 1,
@@ -15,22 +15,15 @@ function plotbond!(ax::Union{Axis,Axis3},Latt::AbstractLattice,pairs::Vector, va
     # values11 = (values .- +(extrema(values)...)/2) ./ - -(extrema(values)...)
 
     for (ind,(i, j)) in enumerate(pairs)
-
-        x = map([i, j]) do i
-            coordinate(Latt, i)[1] + stagger[i][1]
-        end
-        y = map([i, j]) do i
-            coordinate(Latt, i)[2] + stagger[i][2]
-        end
+        rj = coordinate(Latt,j) .+ stagger[j]
+        ri = relaVec(Latt,j,i) .+ rj
+        x = [ri[1],rj[1]]
+        y = [ri[2],rj[2]]
     
         z = map([i,j]) do i
             Latt[i][1] - 1
         end
-    
-        if abs((coordinate(Latt,i) .- coordinate(Latt,j))[2]) > Ly/2 - 1e-5 
-            y[findmin(y)[2]] = y[findmin(y)[2]] + Ly*shift[2]
-            x[findmin(x)[2]] = x[findmin(x)[2]] + Ly*shift[1]
-        end
+
         if directed
             directedlines!(ax, resize(x, y, z, resizelevel)...;
             linewidth=linewidth .* abs(values[ind]),
@@ -50,7 +43,7 @@ function plotbond!(ax::Union{Axis,Axis3},Latt::AbstractLattice,pairs::Vector, va
     end
 end
 
-function plotLatt!(ax::Axis,Latt::AbstractLattice,shift::Vector;kwargs...)
+function plotLatt!(ax::Axis,Latt::AbstractLattice;kwargs...)
 
     Lx,Ly = get_cellsize(Latt) 
 
@@ -72,18 +65,10 @@ function plotLatt!(ax::Axis,Latt::AbstractLattice,shift::Vector;kwargs...)
         for level in tplevel
             # NN bond 
             for (i, j) in get(kwargs,:pairs,neighbor(Latt;level = level))
-
-                    x = map([i, j]) do i
-                        coordinate(Latt, i)[1] + total_shift[1]
-                    end
-                    y = map([i, j]) do i
-                        coordinate(Latt, i)[2] + total_shift[2]
-                    end
-
-                    if abs((coordinate(Latt,i) .- coordinate(Latt,j))[2]) > Ly/2 - 1e-5 
-                        x[findmin(x)[2]] = x[findmin(x)[2]] + shift[1]*Ly
-                        y[findmin(y)[2]] = y[findmin(y)[2]] + shift[2]*Ly
-                    end
+                    rj = coordinate(Latt,j) .+ total_shift
+                    ri = relaVec(Latt,j,i) .+ rj
+                    x = [ri[1],rj[1]]
+                    y = [ri[2],rj[2]]
 
                     lines!(ax, x, y;
                         linewidth=linewidth,
@@ -144,16 +129,16 @@ function arrowc!(ax::Axis,x, y, u, v; kwargs...)
     arrow0!(ax,x-u/2,y-v/2,u,v;kwargs...)
 end
 
-function arrow2!(ax::Axis,x, y, u, v; arrowsize=0.386, color=:black, transparency=1,linewidth = 1.2)
-    nuv = sqrt(u^2 + v^2)
-    v1, v2 = [u;v] / nuv,  [-v;u] / nuv
-    v4 = (3*v1 + v2)/3.1623  # sqrt(10) to get unit vector
-    v5 = v4 - 2*(v4'*v2)*v2
-    v4, v5 = arrowsize*nuv*v4, arrowsize*nuv*v5
-    lines!(ax,[x,x+u], [y,y+v], color=(color,transparency),linewidth = linewidth)
-    lines!(ax,[x+u,x+u-v5[1]], [y+v,y+v-v5[2]], color=(color,transparency),linewidth = linewidth)
-    lines!(ax,[x+u,x+u-v4[1]], [y+v,y+v-v4[2]], color=(color,transparency),linewidth = linewidth)
-end
+# function arrow2!(ax::Axis,x, y, u, v; arrowsize=0.386, color=:black, transparency=1,linewidth = 1.2)
+#     nuv = sqrt(u^2 + v^2)
+#     v1, v2 = [u;v] / nuv,  [-v;u] / nuv
+#     v4 = (3*v1 + v2)/3.1623  # sqrt(10) to get unit vector
+#     v5 = v4 - 2*(v4'*v2)*v2
+#     v4, v5 = arrowsize*nuv*v4, arrowsize*nuv*v5
+#     lines!(ax,[x,x+u], [y,y+v], color=(color,transparency),linewidth = linewidth)
+#     lines!(ax,[x+u,x+u-v5[1]], [y+v,y+v-v5[2]], color=(color,transparency),linewidth = linewidth)
+#     lines!(ax,[x+u,x+u-v4[1]], [y+v,y+v-v4[2]], color=(color,transparency),linewidth = linewidth)
+# end
 
 function resize(X::Vector,Y::Vector,p::Number)
     A,B = map(1:2) do i
@@ -218,9 +203,10 @@ function polyHexagon!(ax::Axis, sites::Vector, colors::Vector;kwargs...)
     scale = get(kwargs, :scale, 1)
     alpha = get(kwargs, :alpha, 1)
     rot_mat = get(kwargs, :rot_mat, [1 0;0 1])
+    total_shift = get(kwargs, :total_shift, [0,0])
     for (i,center) in enumerate(sites)
         poly!(ax,
-        Point2f[Tuple.([rot_mat*[cos(pi/3) sin(pi/3);-sin(pi/3) cos(pi/3)]^i*[0,1]*scale + center for i in 0:5])...], 
+        Point2f[Tuple.([rot_mat*[cos(pi/3) sin(pi/3);-sin(pi/3) cos(pi/3)]^i*[0,1]*scale + center + total_shift for i in 0:5])...], 
         color = (colors[i],alpha), strokewidth = 0)
     end
 end

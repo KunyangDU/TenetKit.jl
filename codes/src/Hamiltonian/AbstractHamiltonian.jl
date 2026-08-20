@@ -6,6 +6,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     H::Union{Nothing,SparseMPO}
     validinds::Tuple
     E₀::Number
+    cache::Any   # 惰性初始化的零分配 action 缓存（预计算 El/Er/h + 每 validind 中间缓冲 + 每 worker 累加器）
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
         EnvR::SparseRightEnvironmentTensor{1},
@@ -14,7 +15,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
         DL2,D2,DR2 = H.D[2]
         @assert EnvL.D[1] == DL1
         @assert EnvR.D[1] == DR2
-        return new{2}(EnvL,EnvR,H,Tuple(_validind(H[1], H[2])),E₀)
+        return new{2}(EnvL,EnvR,H,Tuple(_validind(H[1], H[2])),E₀,nothing)
     end
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
@@ -24,7 +25,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
         @assert EnvL.D[1] == DL EnvL.D[1],DL
         @assert EnvR.D[1] == DR EnvR.D[1],DR
 
-        return new{1}(EnvL,EnvR,H,Tuple(_validind(H[1])),E₀)
+        return new{1}(EnvL,EnvR,H,Tuple(_validind(H[1])),E₀,nothing)
     end
 
     function SparseProjectiveHamiltonian(EnvL::SparseLeftEnvironmentTensor{1},
@@ -32,7 +33,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
         lm::LayerMap{N,D₁,D₂}, E₀::Number = 0.0) where {N,D₁,D₂}
         @assert EnvL.D[1] == D₁
         @assert EnvR.D[1] == D₂
-        return new{0}(EnvL,EnvR,nothing,Tuple(_validind0(lm)),E₀)
+        return new{0}(EnvL,EnvR,nothing,Tuple(_validind0(lm)),E₀,nothing)
     end
 end
 
@@ -69,7 +70,7 @@ end
 projright2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site],env.envs[site+2],SparseMPO(env.layer[2][site:site+1]),E₀) : DenseProjectiveHamiltonian(env.envs[site],env.envs[site+2],env.layer[2][site:site+1],E₀)
 projleft2(env::Environment{3},site::Int64,E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site-1],env.envs[site+1],SparseMPO(env.layer[2][site-1:site]),E₀) : DenseProjectiveHamiltonian(env.envs[site-1],env.envs[site+1],env.layer[2][site-1:site],E₀)
 proj2(EnvL::SparseLeftEnvironmentTensor,hl::SparseMPOTensor,hr::SparseMPOTensor,EnvR::SparseRightEnvironmentTensor;E₀::Number = 0.) = SparseProjectiveHamiltonian(EnvL,EnvR,SparseMPO([hl,hr]),E₀)
-proj2(EnvL::DenseLeftEnvironmentTensor,hl::DenseMPOTensor,hr::DenseMPOTensor,EnvR::DenseRightEnvironmentTensor;E₀::Number = 0.) = DenseProjectiveHamiltonian(EnvL,EnvR,[hl,hr],E₀)
+proj2(EnvL::DenseLeftEnvironmentTensor,hl::T,hr::T,EnvR::DenseRightEnvironmentTensor;E₀::Number = 0.) where T <: Union{DenseMPOTensor, AdjointMPOTensor} = DenseProjectiveHamiltonian(EnvL,EnvR,[hl,hr],E₀)
 proj2(EnvL::DenseLeftEnvironmentTensor{2}, ::Nothing, ::Nothing, EnvR::DenseRightEnvironmentTensor{2};E₀::Number = 0.) = DenseProjectiveHamiltonian{2,2}(EnvL,EnvR,E₀)
 
 function proj2(env::Environment{2},site1::Int64,site2::Int64;E₀::Number = 0.0)
@@ -84,21 +85,22 @@ mutable struct DenseProjectiveHamiltonian{N,L} <: AbstractProjectiveHamiltonian
     EnvR::DenseRightEnvironmentTensor
     H::Union{Nothing,Array}
     E₀::Number
+    cache::Any   # 惰性初始化的零分配 action 缓存（单套中间缓冲 + 单个累加器）
 
     function DenseProjectiveHamiltonian(EnvL::DenseLeftEnvironmentTensor,
         EnvR::DenseRightEnvironmentTensor,
-        H::Array,E₀::Number = 0.0) 
-        return new{3,length(H)}(EnvL,EnvR,H,E₀)
+        H::Array,E₀::Number = 0.0)
+        return new{3,length(H)}(EnvL,EnvR,H,E₀,nothing)
     end
 
     function DenseProjectiveHamiltonian(EnvL::DenseLeftEnvironmentTensor,
-        EnvR::DenseRightEnvironmentTensor, E₀::Number = 0.0) 
-        return new{3,0}(EnvL,EnvR,nothing,E₀)
+        EnvR::DenseRightEnvironmentTensor, E₀::Number = 0.0)
+        return new{3,0}(EnvL,EnvR,nothing,E₀,nothing)
     end
 
     function DenseProjectiveHamiltonian{N,L}(EnvL::DenseLeftEnvironmentTensor,
         EnvR::DenseRightEnvironmentTensor,E₀::Number = 0.0) where {N,L}
-        return new{N,L}(EnvL,EnvR,nothing,E₀)
+        return new{N,L}(EnvL,EnvR,nothing,E₀,nothing)
     end
 end
 

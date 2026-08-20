@@ -39,13 +39,12 @@ function add!!(A::AbstractTensorWrapper,
 end
 
 function axpy!(α::Number, A::T, B::T) where {T<:AbstractTensorWrapper}
-    # axpy!(α, A.A, B.A)
-    B.A = α * A.A + B.A
+    TensorKit.axpy!(α, A.A, B.A)   # 零分配：要求 B.A 类型够宽（需提升用 add!!）
     return B
 end
 
 function axpby!(α::Number, A::AbstractTensorWrapper, β::Number, B::AbstractTensorWrapper)
-    B.A = α * A.A + β * B.A
+    TensorKit.axpby!(α, A.A, β, B.A)   # 零分配：要求 B.A 类型够宽（需提升用 add!!）
     return B
 end
 axpby!(α::Number, A::AbstractTensorWrapper, ::Number, ::Nothing) = α * A
@@ -221,8 +220,8 @@ end
 Base.:*(α::Number, A::LeftEnvironmentTensor) = LeftEnvironmentTensor(α * A.A)
 Base.:*(α::Number, A::RightEnvironmentTensor) = RightEnvironmentTensor(α * A.A)
 
-axpy!(α::Number, A::LeftEnvironmentTensor, B::LeftEnvironmentTensor) = (B.A = α * A.A + B.A; B)
-axpy!(α::Number, A::RightEnvironmentTensor, B::RightEnvironmentTensor) = (B.A = α * A.A + B.A; B)
+axpy!(α::Number, A::LeftEnvironmentTensor, B::LeftEnvironmentTensor) = (TensorKit.axpy!(α, A.A, B.A); B)
+axpy!(α::Number, A::RightEnvironmentTensor, B::RightEnvironmentTensor) = (TensorKit.axpy!(α, A.A, B.A); B)
 axpy!(α::Number, A::LeftEnvironmentTensor, ::Nothing) = α * A
 axpy!(α::Number, A::RightEnvironmentTensor, ::Nothing) = α * A
 axpy!(::Number, ::Nothing, B::LeftEnvironmentTensor) = B

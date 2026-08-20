@@ -72,12 +72,12 @@ mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor
 
 end
 
-Base.adjoint(t::MPSTensor) = AdjointMPSTensor(t.A')
-Base.adjoint(ts::Vector{MPSTensor}) = convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(t.A') for t in ts])
-Base.adjoint(ts::AbstractVector{MPSTensor}) = convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(t.A') for t in ts])
-Base.adjoint(t::AdjointMPSTensor) = MPSTensor(t.A')
-Base.adjoint(ts::Vector{AdjointMPSTensor}) = convert(Vector{MPSTensor},[MPSTensor(t.A') for t in ts])
-Base.adjoint(ts::AbstractVector{AdjointMPSTensor}) = convert(Vector{MPSTensor},[MPSTensor(t.A') for t in ts])
+Base.adjoint(t::MPSTensor) = AdjointMPSTensor(copy(t.A'))
+Base.adjoint(ts::Vector{MPSTensor}) = convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(copy(t.A')) for t in ts])
+Base.adjoint(ts::AbstractVector{MPSTensor}) = convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(copy(t.A')) for t in ts])
+Base.adjoint(t::AdjointMPSTensor) = MPSTensor(copy(t.A'))
+Base.adjoint(ts::Vector{AdjointMPSTensor}) = convert(Vector{MPSTensor},[MPSTensor(copy(t.A')) for t in ts])
+Base.adjoint(ts::AbstractVector{AdjointMPSTensor}) = convert(Vector{MPSTensor},[MPSTensor(copy(t.A')) for t in ts])
 
 """
 todo {}
@@ -118,8 +118,8 @@ mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor
     end
 end
 
-Base.adjoint(t::CompositeMPSTensor) = AdjointCompositeMPSTensor(t.A')
-Base.adjoint(t::AdjointCompositeMPSTensor) = CompositeMPSTensor(t.A')
+Base.adjoint(t::CompositeMPSTensor) = AdjointCompositeMPSTensor(copy(t.A'))
+Base.adjoint(t::AdjointCompositeMPSTensor) = CompositeMPSTensor(copy(t.A'))
 Base.adjoint(ts::Vector{CompositeMPSTensor}) = convert(Vector{AdjointCompositeMPSTensor},[t' for t in ts])
 Base.adjoint(ts::AbstractVector{CompositeMPSTensor}) = convert(Vector{AdjointCompositeMPSTensor},[t' for t in ts])
 Base.adjoint(ts::Vector{AdjointCompositeMPSTensor}) = convert(Vector{CompositeMPSTensor},[t' for t in ts])
@@ -159,8 +159,8 @@ mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
     end
 end
 
-Base.adjoint(t::DenseMPOTensor) = AdjointMPOTensor(t.A')
-Base.adjoint(t::AdjointMPOTensor) = DenseMPOTensor(t.A')
+Base.adjoint(t::DenseMPOTensor) = AdjointMPOTensor(copy(t.A'))
+Base.adjoint(t::AdjointMPOTensor) = DenseMPOTensor(copy(t.A'))
 Base.adjoint(ts::Vector{DenseMPOTensor}) = convert(Vector{AdjointMPOTensor},[t' for t in ts])
 Base.adjoint(ts::AbstractVector{DenseMPOTensor}) = convert(Vector{AdjointMPOTensor},[t' for t in ts])
 Base.adjoint(ts::Vector{AdjointMPOTensor}) = convert(Vector{DenseMPOTensor},[t' for t in ts])
@@ -200,8 +200,8 @@ mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
     end
 end
 
-Base.adjoint(t::CompositeMPOTensor) = AdjointCompositeMPOTensor(t.A')
-Base.adjoint(t::AdjointCompositeMPOTensor) = CompositeMPOTensor(t.A')
+Base.adjoint(t::CompositeMPOTensor) = AdjointCompositeMPOTensor(copy(t.A'))
+Base.adjoint(t::AdjointCompositeMPOTensor) = CompositeMPOTensor(copy(t.A'))
 Base.adjoint(ts::Vector{CompositeMPOTensor}) = convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::AbstractVector{CompositeMPOTensor}) = convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])

@@ -7,6 +7,7 @@ mutable struct TruncationScheme
     TruncationScheme(tol::Float64) = new(false,0,tol)
     TruncationScheme(notrunc::Bool, truncdim::Int64, truncbelow::Float64) = new(notrunc,truncdim,truncbelow)
 end
+notrunc() = TruncationScheme()
 truncdim(D::Int64) = TruncationScheme(D)
 truncbelow(tol::Float64) = TruncationScheme(tol)
 function Base.getindex(A::TruncationScheme, ::Colon)
