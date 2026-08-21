@@ -95,7 +95,7 @@ end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGsweepinfo{L2R}) where {L,alg}
     localto = TimerOutput()
-    # lsE = []
+
     for site in 1:L-1
         Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
@@ -116,25 +116,22 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-            # localinfo.bond = BondInfo(tc)
             merge!(localinfo, bi)
             @timeit localto "splice" tr = splice(splice(tc,tr),Env.layer[1][site+1])
         end
         @timeit localto "pushright" pushright!(Env,tl, tr)
-        # push!(info.E,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
         Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
-    # info.σE = std(filter(!isnan,lsE))
-    # info.E = lsE[end]
+
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGsweepinfo{R2L}) where {L,alg}
     localto = TimerOutput()
-    # lsE = []
+
     for site in L:-1:2
         Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
@@ -156,25 +153,22 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{SingleSite,alg},info::DMRGswe
         @timeit localto "orthogonalize" begin
             @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc,index_tuple = ((1,),(2,3)))
             tr = MPSTensor(permute(tr.A, ((1, 2), (3,))))
-            # localinfo.bond = BondInfo(tc)
             merge!(localinfo, bi)
             @timeit localto "splice" tl = splice(Env.layer[1][site-1],splice(tl,tc))
         end
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
-        # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
         Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
-    # info.σE = std(filter(!isnan,lsE))
-    # info.E = lsE[end]
+
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepinfo{L2R}) where L
     localto = TimerOutput()
-    # lsE = []
+
     for site in 1:L-1
         Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
@@ -187,24 +181,22 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
         @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-        # localinfo.bond = BondInfo(tc)
         merge!(localinfo, bi)
         @timeit localto "splice" tr = splice(tc,tr) 
         @timeit localto "pushright" pushright!(Env,tl, tr)
-        # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
         Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
-    # info.σE = std(filter(!isnan,lsE))
-    # info.E = lsE[end]
+
+    
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end
 
 function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepinfo{R2L}) where L
     localto = TimerOutput()
-    # lsE = []
+
     for site in L:-1:2
         Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
@@ -217,17 +209,14 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         end 
         merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
         @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-        # localinfo.bond = BondInfo(tc)
         merge!(localinfo, bi)
         @timeit localto "splice" tl = splice(tl,tc) 
         @timeit localto "pushleft" pushleft!(Env,tl, tr)
-        # push!(lsE,localinfo.E)
         Alg.GCsite && @timeit localto "GC" GC.gc()
         merge!(info,localinfo)
         Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
-    # info.σE = std(filter(!isnan,lsE))
-    # info.E = lsE[end]
+
     Alg.GCsweep && @timeit localto "GC" GC.gc()
     return localto
 end

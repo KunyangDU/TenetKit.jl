@@ -94,17 +94,9 @@ _cbeproj(Q::AdjointMPOTensor{4},A::AdjointMPOTensor{4},direction::AbstractDirect
 _cbeinner(Q::AdjointMPOTensor{4},A::AdjointMPOTensor{4},direction::AbstractDirection) = _cbeinner(Q',A',direction)'
 _cbedsum(Q::AdjointMPOTensor{4},A::AdjointMPOTensor{4},direction::AbstractDirection) = _cbedsum(Q',A',direction)'
 
-# contract(tl::T, tr::T) where T <: Union{MPSTensor{2},DenseMPOTensor{2}} = tl*tr
-
-# _tdvp_permute(obj::DenseMPOTensor{4}, ::R2L) = DenseMPOTensor(permute(obj.A,(2,1),(3,4)))
-# _tdvp_permute(obj::DenseMPOTensor{4}, ::L2R) = DenseMPOTensor(permute(obj.A,(1,2),(4,3)))
-# _tdvp_permute(obj::MPSTensor{3}, ::R2L) = MPSTensor(permute(obj.A,(2,1),(3,4)))
-# _tdvp_permute(obj::MPSTensor{3}, ::L2R) = MPSTensor(permute(obj.A,(1,2),(4,3)))
-
 function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TruncationScheme,::R2L)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch, index_tuple = ((2,),(1,3,4)))
-    # tr = _tdvp_permute(tr,R2L())
     tr = DenseMPOTensor(permute(tr.A, ((2, 1), (3,4))))
     @timeit localto "contract" tl = tl*tc
     return tl,tc,tr,ϵ,localto
@@ -113,7 +105,6 @@ end
 function _tdvp_tsvd(tmp::DenseMPOTensor{4},truncsch::TruncationScheme,::L2R)
     localto = TimerOutput()
     @timeit localto "SVD" tl, tc, tr, ϵ = tsvd(tmp; direction=:center,trunc = truncsch)
-    # tl = _tdvp_permute(tl,L2R())
     tl = DenseMPOTensor(permute(tl.A, ((1, 2), (4,3))))
     @timeit localto "contract" tr = tc*tr
     return tl,tc,tr,ϵ,localto
