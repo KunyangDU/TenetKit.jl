@@ -28,44 +28,6 @@ function orthogonalize!(env::Environment{3},A::Union{DenseMPOTensor{4},MPSTensor
     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
 end
 
-# function orthogonalize!(H::SparseMPOTensor,B::Union{DenseMPOTensor{4},MPSTensor{3}},EnvR::SparseRightEnvironmentTensor)
-#     w,w2 = size(H)
-#     EnvRorth = Vector(undef,w)
-#     EnvRorth .= nothing
-
-#     for i in 1:w, j in 1:w2
-#         Hij = H.m[i,j]
-#         isnothing(Hij) && continue
-#         tmp = contract(B,Hij,EnvR.A[j])
-#         if isnothing(EnvRorth[i])
-#             EnvRorth[i] = tmp - contract(tmp,B)
-#         else
-#             EnvRorth[i] += tmp - contract(tmp,B)
-#         end
-#     end
-
-#     return SparseRightEnvironmentTensor(convert(Vector{RightCompositeEnvironmentTensor},EnvRorth))
-# end
-
-# function orthogonalize!(H::SparseMPOTensor,A::Union{DenseMPOTensor{4},MPSTensor{3}},EnvL::SparseLeftEnvironmentTensor)
-#     w1,w = size(H.m)
-#     EnvLorth = Vector(undef,w)
-#     EnvLorth .= nothing
-
-#     for i in 1:w1, j in 1:w
-#         Hij = H.m[i,j]
-#         isnothing(Hij) && continue
-#         tmp = contract(EnvL.A[i],A,Hij)
-#         if isnothing(EnvLorth[j])
-#             EnvLorth[j] = tmp - contract(tmp,A)
-#         else
-#             EnvLorth[j] += tmp - contract(tmp,A)
-#         end
-#     end
-
-#     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor},EnvLorth))
-# end
-
 function orthogonalize!(H::SparseMPOTensor,B::T,B′::T,EnvR::SparseRightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
     EnvRorth = Vector(undef, length(H.left.fwd))
     EnvRorth .= nothing
@@ -142,16 +104,6 @@ function orthogonalize!(H::SparseMPOTensor,A::T,A′::T,EnvL::SparseLeftEnvironm
     return SparseLeftEnvironmentTensor(convert(Vector{LeftCompositeEnvironmentTensor}, EnvLorth))
 end
 
-# function _orthogonalize!(Hij::AbstractLocalOperator,A::T,A′::T,EnvL::LeftEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
-#     x = contract(EnvL,A,Hij) 
-#     return x - contract(x,A′)
-# end
-# function _orthogonalize!(Hij::AbstractLocalOperator,B::T,B′::T,EnvR::RightEnvironmentTensor) where T <: Union{DenseMPOTensor{4},MPSTensor{3}}
-#     x = contract(B,Hij,EnvR)
-#     return x - contract(x,B′)
-# end
-
-
 function orthogonalize!(A::Union{DenseMPOTensor{4},MPSTensor{3}},A′::Union{DenseMPOTensor{4},MPSTensor{3}},Env::Union{DenseLeftEnvironmentTensor,DenseRightEnvironmentTensor})
     tmp = contract(Env.A,A)
     Envorth = tmp - contract(tmp,A′)
@@ -164,8 +116,6 @@ function orthogonalize!(Q::T,A::T,direction::AbstractDirection;tol::Number=1e-4)
     @assert ϵ < tol ϵ
     return Q
 end
-
-
 
 orthogonalize!(H::T,A::T′,A′::T′,EnvL::DenseLeftEnvironmentTensor) where {T <: Union{DenseMPOTensor{4},AdjointMPOTensor{4}}, T′ <: Union{DenseMPOTensor{4}, MPSTensor{3}}} = contract(EnvL.A,A,H) |> x -> x - contract(x,A′)
 orthogonalize!(H::T,B::T′,B′::T′,EnvR::DenseRightEnvironmentTensor) where {T <: Union{DenseMPOTensor{4},AdjointMPOTensor{4}}, T′ <: Union{DenseMPOTensor{4}, MPSTensor{3}}} = contract(B,H,EnvR.A) |> x -> x - contract(x,B′)

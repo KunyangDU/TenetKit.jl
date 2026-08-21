@@ -303,7 +303,7 @@ function pushright!(Env::Environment{3}, tl::Union{MPSTensor{3}, DenseMPOTensor{
     @timeit to "pushright" pushright!(Env)
     @timeit to "back evolve" ~, K = evolve!(tr, projleft0(Env;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tr,exp(Alg.τ * info.E))
-    tr = contract(tr,Env.layer[1][site+1])
+    tr = splice(tr,Env.layer[1][site+1])
     Env.layer[1][site+1] = tr
     Env.layer[3][site+1] = tr'
 
@@ -319,7 +319,7 @@ function pushleft!(Env::Environment{3}, tl::Union{MPSTensor{2}, DenseMPOTensor{2
     @timeit to "pushleft" pushleft!(Env)
     @timeit to "back evolve" ~, K = evolve!(tl, projright0(Env;E₀ = info.E), -Alg.τ, Alg.solver)
     rmul!(tl,exp(Alg.τ * info.E))
-    tl = contract(Env.layer[1][site-1],tl)
+    tl = splice(Env.layer[1][site-1],tl)
     Env.layer[1][site-1] = tl
     Env.layer[3][site-1] = tl'
 

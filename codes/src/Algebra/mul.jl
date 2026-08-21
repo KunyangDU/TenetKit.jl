@@ -60,7 +60,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         @timeit localto "projection" projH = proj2(EnvAB, site, site+1)
         @timeit localto "action" t = actionb(projH, composite(EnvAB.layer[1][site:site+1]...))
         @timeit localto "SVD" tl, tc, tr, localinfo.truncerr, localinfo.bond = tsvd(axpy!(α,t,nothing); direction=:center,trunc = Alg.trunc)
-        @timeit localto "contract" tr = contract(tc,tr) 
+        @timeit localto "splice" tr = splice(tc,tr) 
         @timeit localto "push right" begin
             EnvAB.layer[3][site:site+1] = adjoint.([tl, tr])
             map(v -> canonicalize!(EnvAB.layer[v],site + 1),1:3)
@@ -86,7 +86,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{DoubleSite}, s
         @timeit localto "projection" projH = proj2(EnvAB, site-1, site)
         @timeit localto "action" t = actionb(projH, composite(EnvAB.layer[1][site-1:site]...))
         @timeit localto "SVD" tl, tc, tr, localinfo.truncerr, localinfo.bond = tsvd(axpy!(α, t, nothing); direction=:center,trunc = Alg.trunc)
-        @timeit localto "contract" tl = contract(tl,tc) 
+        @timeit localto "splice" tl = splice(tl,tc) 
         @timeit localto "push left" begin
             EnvAB.layer[3][site-1:site] = adjoint.([tl, tr])
             map(v -> canonicalize!(EnvAB.layer[v],site - 1),1:3)
@@ -120,7 +120,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         @timeit localto "orthogonalize" begin
             # tl,tr = leftorth(axpy!(α, t, nothing))
             tl,tr,localinfo.truncerr,localinfo.bond = tsvd(axpy!(α, t, nothing); direction=:right,trunc = Alg.trunc)
-            tr = contract(tr,EnvAB.layer[3][site+1]')
+            tr = splice(tr,EnvAB.layer[3][site+1]')
             EnvAB.layer[3][site:site+1] = adjoint.([tl, tr])
         end
         @timeit localto "push right" begin
@@ -157,7 +157,7 @@ function mul!(EnvAB::Environment{3}, α::Number, Alg::Algebraalgo{SingleSite,alg
         @timeit localto "orthogonalize" begin
             # tl,tr = rightorth(axpy!(α, t, nothing))
             tl,tr,localinfo.truncerr,localinfo.bond = tsvd(axpy!(α, t, nothing); direction=:left,trunc = Alg.trunc)
-            tl = contract(EnvAB.layer[3][site-1]',tl)
+            tl = splice(EnvAB.layer[3][site-1]',tl)
             EnvAB.layer[3][site-1:site] = adjoint.([tl, tr])
         end
         @timeit localto "push left" begin

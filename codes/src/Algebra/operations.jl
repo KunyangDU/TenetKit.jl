@@ -31,16 +31,15 @@ tr1(obj::DenseMPO) = norm(obj[1])
 """
 compatible for N-layer Environment
 """
-function _scalar(Env::Environment{3})
-    @assert Env.center[1] == Env.center[2]
-    return contract(Env.layer[3][Env.center[1]], action(proj1(Env, Env.center[1]), Env.layer[1][Env.center[1]]))
+function _scalar(env::Environment{3})
+    @assert (site = env.center[1]) == env.center[2]
+    return inner(env.layer[3][site], action(proj1(env, site), env.layer[1][site]))
+    # return contract(env.envs[site],env.layer[1][site],env.layer[2][site],env.layer[3][site],env.envs[site+1])
 end
 
-function _scalar(Env::Environment{N}) where N
-    @assert (site = Env.center[1]) == Env.center[2]
-    t1 = map(x -> Env.layer[x][site], 1:length(Env.layer))
-    tmp = contract(Env.envs[site],t1...,Env.envs[site+1])
-    return tmp
+function _scalar(env::Environment{N}) where N
+    @assert (site = env.center[1]) == env.center[2]
+    return contract(env.envs[site],map(x -> env.layer[x][site], 1:length(env.layer)),env.envs[site+1])
 end
 
 function _scalar(EnvL::LeftEnvironmentTensor{2})

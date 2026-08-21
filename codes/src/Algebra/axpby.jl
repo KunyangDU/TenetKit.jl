@@ -80,7 +80,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "action" ts = map(z -> actionb(proj2(z.envs[site], nothing, nothing, z.envs[site+2]), composite(z.layer[1][site:site+1]...)), [Envx, Envy])
         @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
-        @timeit localto "contract" tr = contract(tc,tr)
+        @timeit localto "splice" tr = splice(tc,tr)
         @timeit localto "push right" map([Envx,Envy]) do Env
             N = length(Env.layer)
             Env.layer[N][site:site+1] = adjoint.([tl, tr])
@@ -106,7 +106,7 @@ function axpby!(α::Number, Envx::Environment{2}, β::Number, Envy::Environment{
         @assert (x2 = norm(x₀)^2) ≠ 0
         @timeit localto "action" ts = map(z -> actionb(proj2(z.envs[site-1], nothing, nothing, z.envs[site+1]), composite(z.layer[1][site-1:site]...)), [Envx, Envy])
         @timeit localto "SVD" tl, tc, tr, localinfo.err, localinfo.bond = tsvd(axpby!(α, ts[1], β, ts[2]); direction=:center,trunc = Alg.trunc)
-        @timeit localto "contract" tl = contract(tl,tc)
+        @timeit localto "splice" tl = splice(tl,tc)
         @timeit localto "push left" map([Envx,Envy]) do Env
             N = length(Env.layer)
             Env.layer[N][site-1:site] = adjoint.([tl, tr])

@@ -107,6 +107,10 @@ function action(O::SparseProjectiveHamiltonian{0}, obj::T) where T <: Union{MPST
     return actionb(O, obj)
 end
 
+function action(O::DenseProjectiveHamiltonian{3,0}, obj::T) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
+    return actionb(O, obj)
+end
+
 # ====================== 稠密 action 缓存 =======================
 
 mutable struct _DenseActionCache

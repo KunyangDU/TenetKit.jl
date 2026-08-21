@@ -1,5 +1,15 @@
 # ====================== 稠密 bare action（MPS）======================
-# DenseProjectiveHamiltonian 的单次作用（每次分配），MPS 侧：MPSTensor{3} / CompositeMPSTensor{2,4}。
+# DenseProjectiveHamiltonian 的单次作用（每次分配），MPS 侧：MPSTensor{3} / CompositeMPSTensor{2,4}；
+# 0-site 纯投影（{3,0}）的 MPSTensor{2}/DenseMPOTensor{2} rank-2 布局一致，在此统一定义。
+
+# ---------- {3,0} 0-site 纯投影（MPSTensor{2} / DenseMPOTensor{2} 共用，rank-2 布局一致）----------
+
+function actionb(O::DenseProjectiveHamiltonian{3,0}, obj::T) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
+    @tensor x[-1;-2] ≔ O.EnvL.A.A[-1,2,1] * obj.A[1,3] * O.EnvR.A.A[3,2,-2]
+    x = T(x)
+    !iszero(O.E₀) && (x = axpy!(-O.E₀, obj, x))
+    return x
+end
 
 # ---------- {2,1} 两体环境纯投影 ----------
 
