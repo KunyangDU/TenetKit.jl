@@ -15,6 +15,25 @@ mutable struct _ActionCache
     acc::Vector{Any}     # 每 worker 一个累加器
 end
 
+function _init_action_cache!(O::SparseProjectiveHamiltonian{0}, obj)
+    n = length(O.validinds)
+    El = Vector{Any}(undef, n); Er = Vector{Any}(undef, n)
+    hlA = Vector{Any}(undef, n); hrA = Vector{Any}(undef, n)
+    wmid = Vector{Number}(undef, n)
+    TTs = Type[scalartype(obj.A)]
+    for (i, (l_inds, ~, r_inds, wl, wr)) in enumerate(O.validinds)
+        El[i] = _wsum(O.EnvL, l_inds, wl); Er[i] = _wsum(O.EnvR, r_inds, wr)
+        hlA[i] = nothing; hrA[i] = nothing; wmid[i] = 1.0
+        push!(TTs, scalartype(El[i].A), scalartype(Er[i].A))
+    end
+    TT = reduce(promote_type, TTs)
+    caches = [Any[] for _ in 1:n]
+    acc = [zerovector(obj, TT) for _ in 1:Threads.nthreads()]   # wrapper 累加器（空间由输入张量直接指定）
+    c = _ActionCache(El, Er, hlA, hrA, wmid, TT, caches, acc)
+    O.cache = c
+    return c
+end
+
 function _init_action_cache!(O::SparseProjectiveHamiltonian{1}, obj)
     n = length(O.validinds)
     El = Vector{Any}(undef, n); Er = Vector{Any}(undef, n)
@@ -61,7 +80,7 @@ function _init_action_cache!(O::SparseProjectiveHamiltonian{2}, obj)
     return c
 end
 
-function action(O::SparseProjectiveHamiltonian{N}, obj::T) where {N, T <: Union{MPSTensor{3}, CompositeMPSTensor{2,4}, DenseMPOTensor{4}, CompositeMPOTensor{2,6}}}
+function action(O::SparseProjectiveHamiltonian{N}, obj::T) where {N, T <: Union{MPSTensor{2}, DenseMPOTensor{2}, MPSTensor{3}, CompositeMPSTensor{2,4}, DenseMPOTensor{4}, CompositeMPOTensor{2,6}}}
     c = O.cache === nothing ? _init_action_cache!(O, obj) : O.cache
     c === nothing && return actionb(O, obj)
     to = get_timer("action")
@@ -81,7 +100,9 @@ function action(O::SparseProjectiveHamiltonian{N}, obj::T) where {N, T <: Union{
             while true
                 ct = Threads.atomic_add!(counter, 1)
                 ct > n && break
-                if N == 1
+                if N == 0
+                    _action0_contract(to_w, c.caches[ct], accw, objW, c.El[ct], c.Er[ct])
+                elseif N == 1
                     _action1_contract(to_w, c.caches[ct], accw, objW, c.El[ct], c.hlA[ct], c.Er[ct])
                 else
                     _action2_contract(to_w, c.caches[ct], accw, objW, c.El[ct], c.hlA[ct], c.hrA[ct], c.Er[ct], c.wmid[ct])
@@ -102,13 +123,40 @@ function action(O::SparseProjectiveHamiltonian{N}, obj::T) where {N, T <: Union{
     return x
 end
 
-# 0-site 边界（proj0 / projleft0 / projright0）：无零分配链（单个 El·obj·Er 缩并），直接走 bare。
-function action(O::SparseProjectiveHamiltonian{0}, obj::T) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
-    return actionb(O, obj)
+# ====================== 0-site 边界（proj0 / projleft0 / projright0）零分配链 ======================
+# 网络是单个 El·obj·Er 缩并（无中间算符，rank-2 obj 夹在两侧环境间）。裸 @tensor 参考：
+#   {2}/{2}: x[-1;-2] ≔ El.A[-1,1] * obj.A[1,2] * Er.A[2,-2]
+#   {3}/{3}: x[-1;-2] ≔ El.A[-1,3,1] * obj.A[1,2] * Er.A[2,3,-2]
+# 末步 mul!(acc.A, El, c, 1, 1)：rank-2 结果无需 permute，直接 β=1 累加（acc 已 zerovector! 清零）。
+
+function _action0_contract(to::TimerOutput, cache::Vector{Any}, acc::T, objW::T,
+        ElW::LeftEnvironmentTensor{2}, ErW::RightEnvironmentTensor{2}) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
+    objA = objW.A; El = ElW.A; Er = ErW.A
+    @timeit to "_action0_0_2_2" begin
+        isempty(cache) ? (empty!(cache); append!(cache, [objA * Er])) :
+                         TensorKit.mul!(cache[1], objA, Er, 1, 0)
+    end
+    TensorKit.mul!(acc.A, El, cache[1], 1, 1)     # acc += [α; δ]
+    return acc
 end
 
-function action(O::DenseProjectiveHamiltonian{3,0}, obj::T) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
-    return actionb(O, obj)
+function _action0_contract(to::TimerOutput, cache::Vector{Any}, acc::T, objW::T,
+        ElW::LeftEnvironmentTensor{3}, ErW::RightEnvironmentTensor{3}) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
+    objA = objW.A; El = ElW.A; Er = ErW.A
+    @timeit to "_action0_0_3_3" begin
+        if isempty(cache)
+            c1 = permute(Er, ((1,), (2,3)); copy=true)    # [β; σ, δ]
+            c2 = objA * c1                                 # [γ; σ, δ]
+            c3 = permute(c2, ((2,1), (3,)); copy=true)     # [σ, γ; δ]
+            empty!(cache); append!(cache, [c1, c2, c3])
+        else
+            permute!(cache[1], Er, ((1,), (2,3)))
+            TensorKit.mul!(cache[2], objA, cache[1], 1, 0)
+            permute!(cache[3], cache[2], ((2,1), (3,)))
+        end
+    end
+    TensorKit.mul!(acc.A, El, cache[3], 1, 1)     # acc += [α; δ]
+    return acc
 end
 
 # ====================== 稠密 action 缓存 =======================

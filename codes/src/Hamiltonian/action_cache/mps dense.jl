@@ -3,6 +3,40 @@
 # 零分配约定：稠密路径无 validinds 循环（单次缩并），缓存单套中间缓冲 + 单个累加器，单线程无 @spawn。
 # 末步 add_permute!(acc.A, cache[end], perm, 1, 1) 融合「permute + 累加」，acc 已被 zerovector! 清零。
 
+# ====================== {3,0}：0-site 纯投影（无算符，零分配）======================
+# 纯投影网络 El·obj·Er（rank-3 环境夹 rank-2 bond 张量）。旧 @tensor 参考：
+#   x[-1;-2] ≔ EnvL[-1,2,1] * obj[1,3] * EnvR[3,2,-2]   → [α; δ]
+
+function action(O::DenseProjectiveHamiltonian{3,0}, obj::T) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
+    c = O.cache === nothing ? _init_proj_action_cache!(O, obj) : O.cache
+    to = get_timer("action")
+    objA = obj.A * one(c.TT)
+    objW = T(objA)
+    TensorKit.zerovector!(c.acc)
+    @timeit to "_proj_action0" _proj_action0_contract!(c.cache, c.acc, objW, O.EnvL, O.EnvR)
+    x = c.acc::T
+    !iszero(O.E₀) && axpby!(-O.E₀, objW, 1.0, x)
+    return x
+end
+
+# 0-site 纯投影：El[α;σ,γ] · obj[γ;β] · Er[β,σ;δ] → [α;δ]（与稀疏 {3}/{3} 同构，仅包装不同）
+function _proj_action0_contract!(cache::Vector{Any}, acc::T, objW::T,
+        ElW::DenseLeftEnvironmentTensor{3}, ErW::DenseRightEnvironmentTensor{3}) where T <: Union{MPSTensor{2}, DenseMPOTensor{2}}
+    objA = objW.A; El = ElW.A.A; Er = ErW.A.A
+    if isempty(cache)
+        c1 = permute(Er, ((1,), (2,3)); copy=true)    # [β; σ, δ]
+        c2 = objA * c1                                 # [γ; σ, δ]
+        c3 = permute(c2, ((2,1), (3,)); copy=true)     # [σ, γ; δ]
+        empty!(cache); append!(cache, [c1, c2, c3])
+    else
+        permute!(cache[1], Er, ((1,), (2,3)))
+        TensorKit.mul!(cache[2], objA, cache[1], 1, 0)
+        permute!(cache[3], cache[2], ((2,1), (3,)))
+    end
+    TensorKit.mul!(acc.A, El, cache[3], 1, 1)     # acc += [α; δ]
+    return acc
+end
+
 # ====================== {2,1}：两体环境纯投影（无算符，零分配）======================
 # 纯投影网络 El·obj·Er（phys 透传）。旧 @tensor 参考：
 #   {2,1} MPS: tmp[-1,-2;-3] ≔ A[1,-2,2] * El[-1,1] * Er[2,-3]   → [a',phys;f]

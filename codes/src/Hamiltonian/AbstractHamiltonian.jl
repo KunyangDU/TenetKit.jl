@@ -37,29 +37,8 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     end
 end
 
-proj0(EnvL,EnvR;E₀::Number = 0.0) = SparseProjectiveHamiltonian(EnvL,EnvR,E₀)
-
-function projleft0(env::Environment{3};E₀::Number = 0.0)
-    site = env.center[1]
-    EnvR = pushleft(map(x -> env.layer[x],eachindex(env.layer))...,env.envs[site+1],site)
-    if issparse(env.layer[2])
-        lm = env.layer[2][site].left
-        return SparseProjectiveHamiltonian(env.envs[site], EnvR, lm, E₀)
-    else
-        return DenseProjectiveHamiltonian(env.envs[site], EnvR, E₀)
-    end
-end
-
-function projright0(env::Environment{3};E₀::Number = 0.0)
-    site = env.center[1]
-    EnvL = pushright(map(x -> env.layer[x],eachindex(env.layer))...,env.envs[site],site)
-    if issparse(env.layer[2])
-        lm = env.layer[2][site].right
-        return SparseProjectiveHamiltonian(EnvL, env.envs[site+1], lm, E₀)
-    else
-        return DenseProjectiveHamiltonian(EnvL, env.envs[site+1], E₀)
-    end
-end
+proj0(EnvL::SparseLeftEnvironmentTensor,EnvR::SparseRightEnvironmentTensor,lm::LayerMap;E₀::Number = 0.) = SparseProjectiveHamiltonian(EnvL,EnvR,lm,E₀)
+proj0(EnvL::DenseLeftEnvironmentTensor,EnvR::DenseRightEnvironmentTensor,::Nothing;E₀::Number = 0.) = DenseProjectiveHamiltonian(EnvL,EnvR,E₀)
 
 proj1(env::Environment{3},site::Int64;E₀::Number = 0.0) = issparse(env.layer[2]) ? SparseProjectiveHamiltonian(env.envs[site],env.envs[site+1],SparseMPO(env.layer[2][site]),E₀) : DenseProjectiveHamiltonian(env.envs[site],env.envs[site+1],[env.layer[2][site],],E₀)
 
