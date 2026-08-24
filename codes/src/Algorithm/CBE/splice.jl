@@ -1,115 +1,31 @@
 function splice(Envorth::SparseLeftEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
     tmp = Vector{LeftCompositeEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_nworker()
-    if Nthr > 1
-        Lock = Threads.ReentrantLock()
-        counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Nthr
-            Threads.@spawn while true
-                ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D[1] && break
-                C = contract(Envorth.A[ct],Λ)
-                lock(Lock)
-                try
-                    tmp[ct] = C
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
-                end
-            end
-        end
-    else
-        for i in 1:Envorth.D[1]
-            tmp[i] = contract(Envorth.A[i],Λ)
-        end
+    threaded_foreach(eachindex(Envorth.A)) do i
+        tmp[i] = contract(Envorth.A[i], Λ)
     end
     return SparseLeftEnvironmentTensor(tmp)
 end
 
 function splice(Envorth::SparseRightEnvironmentTensor,Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
     tmp = Vector{RightCompositeEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_nworker()
-    if Nthr > 1
-        Lock = Threads.ReentrantLock()
-        counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Nthr
-            Threads.@spawn while true
-                ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D[1] && break
-                C = contract(Envorth.A[ct],Λ)
-                lock(Lock)
-                try
-                    tmp[ct] = C
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
-                end
-            end
-        end
-    else
-        for i in 1:Envorth.D[1]
-            tmp[i] = contract(Envorth.A[i],Λ)
-        end
+    threaded_foreach(eachindex(Envorth.A)) do i
+        tmp[i] = contract(Envorth.A[i], Λ)
     end
     return SparseRightEnvironmentTensor(tmp)
 end
 
 function splice(Envorth::SparseLeftEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{LeftEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_nworker()
-    if Nthr > 1
-        Lock = Threads.ReentrantLock()
-        counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Nthr
-            Threads.@spawn while true
-                ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D[1] && break
-                C = contract(Envorth.A[ct],A)
-                lock(Lock)
-                try
-                    tmp[ct] = C
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
-                end
-            end
-        end
-    else
-        for i in 1:Envorth.D[1]
-            tmp[i] = contract(Envorth.A[i],A)
-        end
+    threaded_foreach(eachindex(Envorth.A)) do i
+        tmp[i] = contract(Envorth.A[i], A)
     end
     return SparseLeftEnvironmentTensor(tmp)
 end
 
 function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
     tmp = Vector{RightEnvironmentTensor}(undef,Envorth.D[1])
-    Nthr = get_nworker()
-    if Nthr > 1
-        Lock = Threads.ReentrantLock()
-        counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Nthr
-            Threads.@spawn while true
-                ct = Threads.atomic_add!(counter, 1)
-                ct > Envorth.D[1] && break
-                C = contract(Envorth.A[ct],A)
-                lock(Lock)
-                try
-                    tmp[ct] = C
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
-                end
-            end
-        end
-    else
-        for i in 1:Envorth.D[1]
-            tmp[i] = contract(Envorth.A[i],A)
-        end
+    threaded_foreach(eachindex(Envorth.A)) do i
+        tmp[i] = contract(Envorth.A[i], A)
     end
     return SparseRightEnvironmentTensor(tmp)
 end

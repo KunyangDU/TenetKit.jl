@@ -28,7 +28,7 @@ function _init_action_cache!(O::SparseProjectiveHamiltonian{0}, obj)
     end
     TT = reduce(promote_type, TTs)
     caches = [Any[] for _ in 1:n]
-    acc = [zerovector(obj, TT) for _ in 1:Threads.nthreads()]   # wrapper 累加器（空间由输入张量直接指定）
+    acc = [zerovector(obj, TT) for _ in 1:get_nworker()]        # wrapper 累加器（空间由输入张量直接指定）
     c = _ActionCache(El, Er, hlA, hrA, wmid, TT, caches, acc)
     O.cache = c
     return c
@@ -50,7 +50,7 @@ function _init_action_cache!(O::SparseProjectiveHamiltonian{1}, obj)
     end
     TT = reduce(promote_type, TTs)
     caches = [Any[] for _ in 1:n]
-    acc = [zerovector(obj, TT) for _ in 1:Threads.nthreads()]   # wrapper 累加器（空间由输入张量直接指定）
+    acc = [zerovector(obj, TT) for _ in 1:get_nworker()]        # wrapper 累加器（空间由输入张量直接指定）
     c = _ActionCache(El, Er, hlA, hrA, wmid, TT, caches, acc)
     O.cache = c
     return c
@@ -74,7 +74,7 @@ function _init_action_cache!(O::SparseProjectiveHamiltonian{2}, obj)
     end
     TT = reduce(promote_type, TTs)
     caches = [Any[] for _ in 1:n]
-    acc = [zerovector(obj, TT) for _ in 1:Threads.nthreads()]   # wrapper 累加器（空间由输入张量直接指定）
+    acc = [zerovector(obj, TT) for _ in 1:get_nworker()]        # wrapper 累加器（空间由输入张量直接指定）
     c = _ActionCache(El, Er, hlA, hrA, wmid, TT, caches, acc)
     O.cache = c
     return c
@@ -87,34 +87,23 @@ function action(O::SparseProjectiveHamiltonian{N}, obj::T) where {N, T <: Union{
     n = length(O.validinds)
     objA = obj.A * one(c.TT)                  # 裸张量：TT 提升 + 强制新拷贝（解耦持久 acc，防 obj 变 ComplexF64 后别名）
     objW = T(objA)                            # 包成 T，供链函数按 obj 类型分发（未来补 MPO 用 DenseMPOTensor）
-    Nthr = Threads.nthreads()
-    xs      = Vector{Any}(nothing, Nthr)      # 必须在函数作用域（@spawn 闭包捕获坑，不能塞进 if 块）
-    tos     = [TimerOutput() for _ in 1:Nthr] # 每 worker 一个线程本地计时器（避免锁争用）
-    counter = Threads.Atomic{Int64}(1)
+    Nthr = get_nworker()
+    tos = [TimerOutput() for _ in 1:Nthr]     # 每 worker 一个线程本地计时器（避免锁争用）
+    for w in 1:Nthr
+        TensorKit.zerovector!(c.acc[w])       # 清零持久累加器（串行，廉价）
+    end
     @timeit to "action" begin
-    Threads.@sync for w in 1:Nthr
-        Threads.@spawn begin
-            accw = c.acc[w]
-            to_w = tos[w]
-            TensorKit.zerovector!(accw)
-            while true
-                ct = Threads.atomic_add!(counter, 1)
-                ct > n && break
-                if N == 0
-                    _action0_contract(to_w, c.caches[ct], accw, objW, c.El[ct], c.Er[ct])
-                elseif N == 1
-                    _action1_contract(to_w, c.caches[ct], accw, objW, c.El[ct], c.hlA[ct], c.Er[ct])
-                else
-                    _action2_contract(to_w, c.caches[ct], accw, objW, c.El[ct], c.hlA[ct], c.hrA[ct], c.Er[ct], c.wmid[ct])
-                end
-            end
-            xs[w] = accw
+    x = threaded_reduce!(1:n, c.acc; combine! = (x, y) -> axpy!(1, y, x)) do ct, acc, w
+        to_w = tos[w]
+        if N == 0
+            _action0_contract(to_w, c.caches[ct], acc, objW, c.El[ct], c.Er[ct])
+        elseif N == 1
+            _action1_contract(to_w, c.caches[ct], acc, objW, c.El[ct], c.hlA[ct], c.Er[ct])
+        else
+            _action2_contract(to_w, c.caches[ct], acc, objW, c.El[ct], c.hlA[ct], c.hrA[ct], c.Er[ct], c.wmid[ct])
         end
     end
-    x = xs[1]::T
-    for w in 2:Nthr
-        axpy!(1, xs[w], x)
-    end
+    x = x::T                                  # 收窄 threaded_reduce! 返回的 Any（c.acc 字段是 Vector{Any}）
     !iszero(O.E₀) && axpby!(-O.E₀, objW, 1.0, x)
     end
     for w in 1:Nthr

@@ -2,36 +2,12 @@
 # join
 
 function contract(EnvL::SparseLeftEnvironmentTensor{1}, EnvR::SparseRightEnvironmentTensor{1}, lm::LayerMap)
-    mps = nothing
-    Nthr = get_nworker()
-    if Nthr > 1
-        Lock = Threads.ReentrantLock()
-        counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Nthr
-            Threads.@spawn while true
-                ct = Threads.atomic_add!(counter, 1)
-                ct > length(lm.rev) && break
-                ind = [t[1] for t in lm.rev[ct]]
-                isempty(ind) && continue
-                C = contract(EnvL.A[ct], sum(EnvR.A[ind]))
-                lock(Lock)
-                try
-                    mps = axpy!(1, C, mps)
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
-                end
-            end
-        end
-    else
-        for (i, tuples) in enumerate(lm.rev)
-            isempty(tuples) && continue
-            ind = [t[1] for t in tuples]
-            mps = axpy!(1, contract(EnvL.A[i], sum(EnvR.A[ind])), mps)
-        end
+    accs = Vector{Any}(nothing, get_nworker())
+    threaded_reduce!(eachindex(lm.rev), accs; combine! = (x, y) -> axpy!(1, y, x)) do ct, acc, w
+        ind = [t[1] for t in lm.rev[ct]]
+        isempty(ind) && return acc
+        axpy!(1, contract(EnvL.A[ct], sum(EnvR.A[ind])), acc)
     end
-    return mps
 end
 
 contract(EnvL::LeftEnvironmentTensor{3}, EnvR::RightCompositeEnvironmentTensor{1, 4}) = MPSTensor(@tensor tmp[-1,-2;-3] ≔ EnvL.A[-1,2,1] * EnvR.A[1,2,-2,-3])

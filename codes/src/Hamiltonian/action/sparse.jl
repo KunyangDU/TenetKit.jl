@@ -2,36 +2,12 @@
 # 单次作用、每次分配。稀疏路径复用 contract.jl 的 _action*_contract（本就是 @tensor），
 # 多线程累加。入口 actionb(Sparse, obj) 用 Union 统一方法，靠 obj 类型派发到 _action*。
 
-# 稀疏累加（多线程）：每 worker 并行算各 validind 的 @tensor/contract 贡献 C（昂贵部分无锁），
-# 仅对廉价 axpy! 累加加 ReentrantLock；单线程直接串行。
+# 稀疏累加（多线程）：per-thread 私有累加器 + 末步确定性归约（threaded_reduce!，无锁）。
 function _sparse_actionb_sum(f::Function, validinds)
-    x = nothing
-    Nthr = get_nworker()
-    n = length(validinds)
-    if Nthr > 1
-        Lock = Threads.ReentrantLock()
-        counter = Threads.Atomic{Int64}(1)
-        Threads.@sync for _ in 1:Nthr
-            Threads.@spawn while true
-                ct = Threads.atomic_add!(counter, 1)
-                ct > n && break
-                C = f(validinds[ct])
-                lock(Lock)
-                try
-                    x = axpy!(1, C, x)
-                catch
-                    rethrow()
-                finally
-                    unlock(Lock)
-                end
-            end
-        end
-    else
-        for ind in validinds
-            x = axpy!(1, f(ind), x)
-        end
+    accs = Vector{Any}(nothing, get_nworker())
+    threaded_reduce!(validinds, accs; combine! = (x, y) -> axpy!(1, y, x)) do ind, acc, w
+        axpy!(1, f(ind), acc)
     end
-    return x
 end
 
 function actionb(O::SparseProjectiveHamiltonian, obj::T) where T <: Union{MPSTensor{2},DenseMPOTensor{2},MPSTensor{3},DenseMPOTensor{4},CompositeMPSTensor{2,4},CompositeMPOTensor{2,6}}

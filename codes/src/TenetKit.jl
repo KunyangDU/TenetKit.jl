@@ -4,6 +4,7 @@ import Statistics: std
 
 include("Globals.jl")
 include("init.jl")
+include("tools/threading.jl")
 
 include("tools/TensorKit.jl")
 
@@ -51,7 +52,9 @@ include("MPO/methods.jl")
 include("MPO/operations.jl")
 
 include("Environment/operations.jl")
-include("Environment/push.jl")
+include("Environment/push/wrapper.jl")
+include("Environment/push/push3.jl")
+include("Environment/push/push4.jl")
 include("Environment/contract/mps dense.jl")
 include("Environment/contract/mps sparse.jl")
 include("Environment/contract/mpo dense.jl")
