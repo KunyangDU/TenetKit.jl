@@ -1,12 +1,19 @@
-function CBE!(env::Environment, alg::CBEalgo{dynamicSVD}, info::CBEinfo;kwargs...)
-    site = env.center[1]
+function CBE!(env::Environment, alg::CBEalgo{dynamicSVD}, info::CBEinfo{Dir};kwargs...) where Dir
     to = TimerOutput()
-    if min(site,length(env.layer[1]) - site) ≤ alg.scheme.N
-        @timeit to "full SVD" localto = CBE!(env,CBEalgo(alg,fullSVD()),info)
-        merge!(to,localto,tree_point = ["full SVD"])
-    else
+
+    Dl,Dr = _cbe_maxdim(env,alg,info)
+    
+    if !(Dl ≤ alg.scheme.λ * alg.D || Dr ≤ alg.scheme.λ * alg.D)
         @timeit to "rand SVD" localto = CBE!(env,CBEalgo(alg,randSVD(alg.scheme.λ)),info)
         merge!(to,localto,tree_point = ["rand SVD"])
+        return to
+    end
+
+    Dc = _cbe_currentdim(env,alg,info)
+    if !(Dl ≤ Dc || Dr ≤ Dc)
+        @timeit to "full SVD" localto = CBE!(env,CBEalgo(alg,fullSVD()),info)
+        merge!(to,localto,tree_point = ["full SVD"])
+        return to
     end
     return to
 end

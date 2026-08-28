@@ -94,9 +94,10 @@ function _validind0(lm::LayerMap{N,D₁,D₂,T}) where {N,D₁,D₂,T}
 end
 
 function _wsum(Env, inds::Vector{Int64}, w::Vector{T}) where T
-    # result = w[1] * Env[inds[1]]
-    # for i in 2:length(inds)
-    #     result = axpy!(w[i], Env[inds[i]], result)
-    # end
-    return sum(w .* Env[inds])
+    # 就地累加：首项分配一次，后续 axpy! 原地写，避免 sum(w .* Env[inds]) 物化整个加权环境向量
+    result = w[1] * Env[inds[1]]
+    for i in 2:length(inds)
+        result = axpy!(w[i], Env[inds[i]], result)
+    end
+    return result
 end

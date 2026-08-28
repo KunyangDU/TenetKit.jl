@@ -14,7 +14,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,1}, info::CBEinfo{
     D_i ≥ D_f && return to
 
     @timeit to "leftorth" tL,Λ = leftorth(tL₀)
-    @timeit to "left orthogonalize" Lorth = orthogonalize!(hl,tL,tL,EnvL)
+    # @timeit to "left orthogonalize" Lorth = orthogonalize!(hl,tL,tL,EnvL)
+    @timeit to "left orthogonalize" Lorth = orthogonalize!(hl,tL₀,tL,EnvL)
     @timeit to "right orthogonalize" Rorth = orthogonalize!(hr,tR₀,tR₀,EnvR)
 
     CBEenv = CBEenvironment(tL₀,tR₀,tL,nothing,D_i,D_f,Λ,Lorth,Rorth,struc == DSA ? hl.right : nothing)
@@ -47,7 +48,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,1}, info::CBEinfo{
 
     @timeit to "rightorth" Λ,tR = rightorth(tR₀)
     @timeit to "left orthogonalize" Lorth = orthogonalize!(hl,tL₀,tL₀,EnvL)
-    @timeit to "right orthogonalize" Rorth = orthogonalize!(hr,tR,tR,EnvR)
+    # @timeit to "right orthogonalize" Rorth = orthogonalize!(hr,tR,tR,EnvR)
+    @timeit to "right orthogonalize" Rorth = orthogonalize!(hr,tR₀,tR,EnvR)
 
     CBEenv = CBEenvironment(tL₀,tR₀,nothing,tR,D_i,D_f,Λ,Lorth,Rorth,struc == DSA ? hr.left : nothing)
 

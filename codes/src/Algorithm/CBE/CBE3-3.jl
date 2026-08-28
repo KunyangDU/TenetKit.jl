@@ -66,7 +66,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,3}, info::CBEinfo{
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = (env.layer[1][site:site+1])
+    # tL₀,tR₀ = (env.layer[1][site:site+1])
+    tL₀,tR₀ = adjoint.(env.layer[3][site:site+1])
     EnvL = env.envs[site]
     EnvR = env.envs[site + 2]
     hl,hr = env.layer[2][site:site+1]
@@ -93,7 +94,8 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,3}, info::CBEinfo{
     to = TimerOutput()
     site = env.center[1]
 
-    tL₀,tR₀ = env.layer[1][site-1:site]
+    # tL₀,tR₀ = env.layer[1][site-1:site]
+    tL₀,tR₀ = adjoint.(env.layer[3][site-1:site])
     EnvL = env.envs[site - 1]
     EnvR = env.envs[site + 1]
     hl,hr = env.layer[2][site-1:site]

@@ -30,9 +30,52 @@ function splice(Envorth::SparseRightEnvironmentTensor,A::Union{AdjointMPOTensor{
     return SparseRightEnvironmentTensor(tmp)
 end
 
-function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor},
-    Λ::Union{MPSTensor{2},AdjointMPSTensor{3},DenseMPOTensor{2},AdjointMPOTensor{4}})
-    Envorth.A = splice(Envorth,Λ).A
+# 原地 splice（bond 张量，元素类型不变）：@tensor = 覆盖（β=0），复用 Envorth.A[i] 的容器与 wrapper。
+# 仅当输入 Envorth 之后不再被引用时安全（svd.jl 的 splice Λ）；splice Ω 因输入 env 仍被复用，走分配版 splice。
+function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor}, Λ::Union{DenseMPOTensor{2},MPSTensor{2}})
+    threaded_foreach(eachindex(Envorth.A)) do i
+        _splice_inplace!(Envorth.A[i], Λ)
+    end
+    return Envorth
+end
+# 类型改变（Adjoint，Composite→plain）无法原地，保留分配 + 换 .A
+function splice!(Envorth::Union{SparseLeftEnvironmentTensor,SparseRightEnvironmentTensor}, A::Union{AdjointMPOTensor{4},AdjointMPSTensor{3}})
+    Envorth.A = splice(Envorth, A).A
+    return Envorth
+end
+
+# 原地写各元素（模式与 contract/splice.jl 一一对应，≔→=、tmp→x.A）
+function _splice_inplace!(x::LeftCompositeEnvironmentTensor{2,3}, Λ::MPSTensor{2})
+    x.A = x.A * Λ.A   # 直接 mul 无法别名（mul! 拒绝 C≡A），分配新数据、复用 wrapper
+    return x
+end
+function _splice_inplace!(x::RightCompositeEnvironmentTensor{1,3}, Λ::MPSTensor{2})
+    x.A = @tensor tmp[-1,-2;-3] ≔ Λ.A[-1,1] * x.A[1,-2,-3]   # 直接 mul 无法别名，分配新数据、复用 wrapper
+    return x
+end
+function _splice_inplace!(x::LeftCompositeEnvironmentTensor{2,4}, Λ::MPSTensor{2})
+    x.A = @tensor tmp[-1,-2;-3,-4] ≔ x.A[-1,-2,-3,1] * Λ.A[1,-4]   # 收缩末位 domain 腿，直接 mul 无法别名
+    return x
+end
+function _splice_inplace!(x::RightCompositeEnvironmentTensor{1,4}, Λ::MPSTensor{2})
+    x.A = @tensor tmp[-1,-2,-3;-4] ≔ Λ.A[-1,1] * x.A[1,-2,-3,-4]   # 收缩首位 codomain 腿，直接 mul 无法别名
+    return x
+end
+function _splice_inplace!(x::LeftCompositeEnvironmentTensor{2,4}, Λ::DenseMPOTensor{2})
+    x.A = @tensor tmp[-1,-2;-3,-4] ≔ x.A[-1,-2,1,-4] * Λ.A[1,-3]
+    return x
+end
+function _splice_inplace!(x::RightCompositeEnvironmentTensor{2,4}, Λ::DenseMPOTensor{2})
+    x.A = @tensor tmp[-1,-2;-3,-4] ≔ Λ.A[-1,1] * x.A[1,-2,-3,-4]
+    return x
+end
+function _splice_inplace!(x::LeftCompositeEnvironmentTensor{2,5}, Λ::DenseMPOTensor{2})
+    x.A = @tensor tmp[-1,-2;-3,-4,-5] ≔ x.A[-1,-2,-3,1,-5] * Λ.A[1,-4]
+    return x
+end
+function _splice_inplace!(x::RightCompositeEnvironmentTensor{2,5}, Λ::DenseMPOTensor{2})
+    x.A = @tensor tmp[-1,-2,-3;-4,-5] ≔ Λ.A[-1,1] * x.A[1,-2,-3,-4,-5]   # 收缩首位 codomain 腿，直接 mul 无法别名
+    return x
 end
 
 #######################

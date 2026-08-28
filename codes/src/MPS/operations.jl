@@ -67,3 +67,12 @@ function leftorth(A::AdjointMPSTensor{3}, B::AdjointMPSTensor{3})
     return Q,AdjointMPSTensor(tmp)
 end
 
+function leftorth(A::CompositeMPSTensor{2, 4})
+    Q,R = leftorth(A.A,(1,2),(3,4))
+    return map(MPSTensor, (permute(Q,((1,2),(3,))),permute(R,((1,2),(3,)))))
+end
+
+function rightorth(A::CompositeMPSTensor{2, 4})
+    L,Q = rightorth(A.A,(1,2),(3,4))
+    return map(MPSTensor, (permute(L,((1,2),(3,))),permute(Q,((1,2),(3,)))))
+end

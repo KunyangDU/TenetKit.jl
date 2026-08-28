@@ -80,4 +80,12 @@ function rightorth(A::AdjointMPOTensor{4}, B::AdjointMPOTensor{4})
     return AdjointMPOTensor(tmp),Q
 end
 
+function leftorth(A::CompositeMPOTensor{2, 6})
+    Q,R = leftorth(A.A,(2,3,6),(1,4,5))
+    return map(DenseMPOTensor, (permute(Q,((1,2),(4,3))),permute(R,((2,1),(3,4)))))
+end
 
+function rightorth(A::CompositeMPOTensor{2, 6})
+    L,Q = rightorth(A.A,(2,3,6),(1,4,5))
+    return map(DenseMPOTensor, (permute(L,((1,2),(4,3))),permute(Q,((2,1),(3,4)))))
+end

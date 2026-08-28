@@ -16,11 +16,13 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         nmt = normalize!(tmp)
-        @timeit localto "orthogonalize" begin
-            tl,tc,tr,localinfo.err,svdto = _tdvp_tsvd(tmp,Alg.trunc,L2R())
-            merge!(localto,svdto;tree_point = ["orthogonalize"])
-            merge!(localinfo,BondInfo(tc))
-        end
+        @timeit localto "svd" tl,tr,localinfo.err,bondinfo = tsvd(tmp;direction=:right,trunc = Alg.trunc)
+        merge!(localinfo,bondinfo)
+        # @timeit localto "orthogonalize" begin
+        #     tl,tc,tr,localinfo.err,svdto = _tdvp_tsvd(tmp,Alg.trunc,L2R())
+        #     merge!(localto,svdto;tree_point = ["orthogonalize"])
+        #     merge!(localinfo,BondInfo(tc))
+        # end
         to,solver = pushright!(Env,tl,rmul!(tr,nmt),Alg,info)
         merge!(localto,to)
         merge!(localto,get_timer("action");tree_point = ["back evolve"])
@@ -57,11 +59,13 @@ function TDVP!(Env::Environment{3,L},Alg::TDVPalgo{SingleSite,alg},info::TDVPswe
         merge!(localto,get_timer("action");tree_point = ["evolve"])
         rmul!(tmp,exp(-Alg.τ * info.E))
         nmt = normalize!(tmp)
-        @timeit localto "orthogonalize" begin
-            tl,tc,tr,localinfo.err,svdto = _tdvp_tsvd(tmp,Alg.trunc,R2L())
-            merge!(localto,svdto;tree_point = ["orthogonalize"])
-            merge!(localinfo,BondInfo(tc))
-        end
+        @timeit localto "svd" tl,tr,localinfo.err,bondinfo = tsvd(tmp;direction=:left,trunc = Alg.trunc)
+        merge!(localinfo,bondinfo)
+        # @timeit localto "orthogonalize" begin
+        #     tl,tc,tr,localinfo.err,svdto = _tdvp_tsvd(tmp,Alg.trunc,R2L())
+        #     merge!(localto,svdto;tree_point = ["orthogonalize"])
+        #     merge!(localinfo,BondInfo(tc))
+        # end
         to,solver = pushleft!(Env,rmul!(tl,nmt),tr,Alg,info)
         merge!(localto,to)
         merge!(localto,get_timer("action");tree_point = ["back evolve"])
