@@ -4,20 +4,17 @@ struct DoubleSite <: SweepScheme DoubleSite() = new() end
 # struct singlesite <: SingleSite singlesite() = new() end
 # struct doublesite <: DoubleSite doublesite() = new() end
 struct randSVD <: CBEscheme 
-    λ::Float64
-    randSVD(λ::Float64) = new(λ)
+    Df::Int64
+    randSVD(Df::Int64) = new(Df)
     randSVD() = new(NaN)
 end
 struct fullSVD <: CBEscheme
-    # N::Int64
-    # fullSVD(N::Int64) = new(N)
     fullSVD() = new()
 end
 struct dynamicSVD <: CBEscheme
-    λ::Float64
-    N::Int64
-    dynamicSVD() = new(NaN,NaN)
-    dynamicSVD(λ::Float64,N::Int64) = new(λ,N)
+    Df::Int64
+    dynamicSVD() = new(NaN)
+    dynamicSVD(Df::Int64) = new(Df)
 end
 
 # struct randSVD <: CBEscheme 

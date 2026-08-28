@@ -7,7 +7,7 @@ function SETTN1!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     tol = get(kwargs,:tol,1e-12)
     isdisk = get(kwargs,:isdisk,IS_DISK[])
     # algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),NoStruc(),0,_getdim(trunc),isnothing(_getcutoff(trunc)) ? tol : _getcutoff(trunc)))
-    algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),DSA(),3,_getdim(trunc)))
+    algo = get(kwargs,:algo,CBEalgo(dynamicSVD(ceil(Int64,_getdim(trunc) * 1.25)),DSA(),3,_getdim(trunc)))
     multol = get(kwargs,:tol,1e-12)
     verbose = get(kwargs,:verbose,false)
     Alg = SETTNalgo(SingleSite(),Algebraalgo(SingleSite(),algo,trunc,3,multol,verbose,isdisk),trunc,N,tol)

@@ -10,7 +10,7 @@
 #     EnvR = env.envs[site + 2]
 
 #     D_i = dims(tL₀)[2][1]
-#     D_f = ceil(Int64,alg.D*alg.scheme.λ)
+#     D_f = alg.scheme.Df
 #     D_i ≥ D_f && return to
 
 #     @timeit to "leftorth" tL,Λ = leftorth(tL₀)
@@ -40,7 +40,7 @@
 #     EnvR = env.envs[site + 1]
 
 #     D_i = dims(tL₀)[2][1]
-#     D_f = ceil(Int64,alg.D*alg.scheme.λ)
+#     D_f = alg.scheme.Df
 #     D_i ≥ D_f && return to
 
 #     @timeit to "rightorth" Λ,tR = rightorth(tR₀)

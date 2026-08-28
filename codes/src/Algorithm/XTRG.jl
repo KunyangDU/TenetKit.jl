@@ -43,7 +43,7 @@ function XTRG1!(obj::DenseMPO{L},H::SparseMPO{L},N::Int64;kwargs...) where L
     Nsweep = get(kwargs,:Nsweep,20)
     verbose = get(kwargs,:verbose,false)
     isdisk = get(kwargs,:isdisk,IS_DISK[])
-    cbealgo = CBEalgo(dynamicSVD(1.2,2),DDA(),3,_getdim(truncscheme))
+    cbealgo = CBEalgo(dynamicSVD(ceil(Int64,_getdim(truncscheme) * 1.25)),DDA(),3,_getdim(truncscheme))
     algo = Algebraalgo(SingleSite(),cbealgo,truncscheme,Nsweep,tol,verbose,isdisk)
     Alg = XTRGalgo(SingleSite(),algo,N,H,isdisk)
     lnZ = 2log(normalize!(obj))

@@ -11,7 +11,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,3}, info::CBEinfo{
     hl,hr = env.layer[2][site:site+1]
 
     D_i = dims(tL₀)[2][1]
-    D_f = ceil(Int64,alg.D*alg.scheme.λ)
+    D_f = alg.scheme.Df
     D_i ≥ D_f && return to
 
     @timeit to "leftorth" tL,Λ = leftorth(tL₀)
@@ -42,7 +42,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,3}, info::CBEinfo{
     hl,hr = env.layer[2][site-1:site]
 
     D_i = dims(tL₀)[2][1]
-    D_f = ceil(Int64,alg.D*alg.scheme.λ)
+    D_f = alg.scheme.Df
     D_i ≥ D_f && return to
 
     @timeit to "rightorth" Λ,tR = rightorth(tR₀)

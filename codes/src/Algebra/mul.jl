@@ -178,11 +178,9 @@ function mul!(C::Union{DenseMPO,DenseMPS}, A::Union{DenseMPO,DenseMPS}, B::Union
     D = _getdim(trunc)
     ϵ = _getcutoff(trunc)
 
-    λ = get(kwargs,:λ,1.2)
-    Nfull = get(kwargs,:Nfull,4)
     Nmul = get(kwargs,:Nmul,3)
     verbose = get(kwargs,:verbose,false)
-    alg = get(kwargs,:alg,Algebraalgo(SingleSite(),CBEalgo(dynamicSVD(λ,Nfull),NoStruc(),0,D),trunc,Nmul,ϵ,verbose))
+    alg = get(kwargs,:alg,Algebraalgo(SingleSite(),CBEalgo(dynamicSVD(ceil(Int64, D * 1.25)),NoStruc(),0,D),trunc,Nmul,ϵ,verbose))
     
     return mul!(C,A,B,α,alg)
 end

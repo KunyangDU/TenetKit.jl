@@ -3,8 +3,8 @@ function CBE!(env::Environment, alg::CBEalgo{dynamicSVD}, info::CBEinfo{Dir};kwa
 
     Dl,Dr = _cbe_maxdim(env,alg,info)
     
-    if !(Dl ≤ alg.scheme.λ * alg.D || Dr ≤ alg.scheme.λ * alg.D)
-        @timeit to "rand SVD" localto = CBE!(env,CBEalgo(alg,randSVD(alg.scheme.λ)),info)
+    if !(Dl ≤ alg.scheme.Df || Dr ≤ alg.scheme.Df)
+        @timeit to "rand SVD" localto = CBE!(env,CBEalgo(alg,randSVD(alg.scheme.Df)),info)
         merge!(to,localto,tree_point = ["rand SVD"])
         return to
     end
