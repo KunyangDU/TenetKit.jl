@@ -111,3 +111,4 @@ _calObs_right_contract!(w::ObservableWeight, val::CompositeLocalOperator{2}, obj
 
 hasLR(w::DirectedEdge) = !isleftdefault(w), !isrightdefault(w)
 
+isfermionic(A::NTuple{N, Bool}) where N = ((-1)^sum(A) == -1)

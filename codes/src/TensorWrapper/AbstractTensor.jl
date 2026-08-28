@@ -21,7 +21,7 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor
     A::AbstractTensorMap
 
     function MPSTensor(ts::AbstractTensorMap)
-        return new{rank(ts)}(ts)
+        return new{numind(ts)}(ts)
     end
 
     function MPSTensor{r}(ts::AbstractTensorMap) where r
@@ -30,17 +30,17 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor
 
     function MPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = fc(Float64,codomain,domain)
-        return new{rank(A)}(A)
+        return new{numind(A)}(A)
     end
 
     function MPSTensor(data::AbstractMatrix,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = TensorMap(data[:],codomain,domain)
-        return new{rank(A)}(A)
+        return new{numind(A)}(A)
     end
 
     function MPSTensor(data::AbstractVector,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = TensorMap(data,codomain,domain)
-        return new{rank(A)}(A)
+        return new{numind(A)}(A)
     end
 
 end
@@ -62,12 +62,12 @@ mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor
     A::AbstractTensorMap
 
     function AdjointMPSTensor(ts::AbstractTensorMap)
-        return new{rank(ts)}(ts)
+        return new{numind(ts)}(ts)
     end
 
     function AdjointMPSTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = fc(codomain,domain)
-        return new{rank(A)}(A)
+        return new{numind(A)}(A)
     end
 
 end
@@ -89,7 +89,7 @@ mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor
     A::AbstractTensorMap
 
     function CompositeMPSTensor(A::AbstractTensorMap)
-        return new{length(codomain(A))-1, rank(A)}(A)
+        return new{numout(A)-1, numind(A)}(A)
     end
     function CompositeMPSTensor{n,r}(A::AbstractTensorMap) where {n,r}
         return new{n,r}(A)
@@ -97,7 +97,7 @@ mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor
 
     function CompositeMPSTensor(fc::Function, codom, dom)
         A = fc(codom,dom)
-        return new{length(codomain(A))-1, rank(A)}(A)
+        return new{numout(A)-1, numind(A)}(A)
     end
 end
 
@@ -105,7 +105,7 @@ mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor
     A::AbstractTensorMap
 
     function AdjointCompositeMPSTensor(A::AbstractTensorMap)
-        return new{length(domain(A))-1, rank(A)}(A)
+        return new{numin(A)-1, numind(A)}(A)
     end
 
     function AdjointCompositeMPSTensor{n,r}(A::AbstractTensorMap) where {n,r}
@@ -114,7 +114,7 @@ mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor
 
     function AdjointCompositeMPSTensor(fc::Function,codom,dom)
         A = fc(codom,dom)
-        return new{length(domain(A))-1, rank(A)}(A)
+        return new{numin(A)-1, numind(A)}(A)
     end
 end
 
@@ -129,7 +129,7 @@ mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
     A::AbstractTensorMap
 
     function DenseMPOTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
 
     function DenseMPOTensor{r}(t::AbstractTensorMap) where r
@@ -137,7 +137,7 @@ mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
     end
     function DenseMPOTensor(fc::Function,codom,dom)
         A = fc(codom,dom)
-        return new{rank(A)}(A)
+        return new{numind(A)}(A)
     end
 end
 
@@ -146,12 +146,12 @@ mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
     A::AbstractTensorMap
 
     function AdjointMPOTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
 
     function AdjointMPOTensor(fc::Function,codomain::Union{VectorSpace,ElementarySpace},domain::Union{VectorSpace,ElementarySpace})
         A = fc(codomain,domain)
-        return new{rank(A)}(A)
+        return new{numind(A)}(A)
     end
 
     function AdjointMPOTensor{r}(t::AbstractTensorMap) where r
@@ -170,7 +170,7 @@ mutable struct CompositeMPOTensor{N, R} <: AbstractMPOTensor
     A::AbstractTensorMap
 
     function CompositeMPOTensor(A::AbstractTensorMap)
-        return new{length(codomain(A))-1, rank(A)}(A)
+        return new{numout(A)-1, numind(A)}(A)
     end
 
     function CompositeMPOTensor{n,r}(A::AbstractTensorMap) where {n,r}
@@ -179,7 +179,7 @@ mutable struct CompositeMPOTensor{N, R} <: AbstractMPOTensor
 
     function CompositeMPOTensor(fc::Function, codom, dom)
         A = fc(codom,dom)
-        return new{length(codomain(A))-1, rank(A)}(A)
+        return new{numout(A)-1, numind(A)}(A)
     end
 end
 
@@ -187,7 +187,7 @@ mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
     A::AbstractTensorMap
 
     function AdjointCompositeMPOTensor(A::AbstractTensorMap)
-        return new{length(domain(A))-1, rank(A)}(A)
+        return new{numin(A)-1, numind(A)}(A)
     end
 
     function AdjointCompositeMPOTensor{n,r}(A::AbstractTensorMap) where {n,r}
@@ -196,7 +196,7 @@ mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
 
     function AdjointCompositeMPOTensor(fc::Function,codom,dom)
         A = fc(codom,dom)
-        return new{length(domain(A))-1, rank(A)}(A)
+        return new{numin(A)-1, numind(A)}(A)
     end
 end
 
@@ -206,6 +206,11 @@ Base.adjoint(ts::Vector{CompositeMPOTensor}) = convert(Vector{AdjointCompositeMP
 Base.adjoint(ts::AbstractVector{CompositeMPOTensor}) = convert(Vector{AdjointCompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::Vector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
 Base.adjoint(ts::AbstractVector{AdjointCompositeMPOTensor}) = convert(Vector{CompositeMPOTensor},[t' for t in ts])
+
+composite(A::MPSTensor{3}, B::MPSTensor{3}) = CompositeMPSTensor(@tensor tmp[-1 -2 -3; -4] ≔ A.A[-1,-2,1]*B.A[1,-3,-4])
+composite(A::DenseMPOTensor{4}, B::DenseMPOTensor{4}) = CompositeMPOTensor(@tensor tmp[-1 -2 -3;-4 -5 -6] ≔ A.A[-2,-3,1,-6] * B.A[-1,1,-4,-5])
+composite(A::T, B::T) where T <: Union{AdjointMPSTensor{3},AdjointMPOTensor{4}} = composite(A',B')'
+
 
 mutable struct SparseMPOTensor{DL,D,DR,T} <: AbstractMPOTensor
     A::Vector{AbstractLocalOperator}

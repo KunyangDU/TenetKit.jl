@@ -5,7 +5,7 @@ mutable struct LocalOperator{R₁,R₂} <: AbstractLocalOperator{R₁,R₂}
     site::Int64
     isstring::Bool
 
-    LocalOperator(A::AbstractTensorMap, name::String, site::Int64, isstring::Bool = false) = new{length(codomain(A)),length(domain(A))}(A, name, site, isstring)
+    LocalOperator(A::AbstractTensorMap, name::String, site::Int64, isstring::Bool = false) = new{numout(A),numin(A)}(A, name, site, isstring)
     LocalOperator{R₁,R₂}(A::AbstractTensorMap, name::String, site::Int64, isstring::Bool = false) where {R₁,R₂} = new{R₁,R₂}(A, name, site, isstring)
     LocalOperator{R₁′,R₂′}(mapping::Function, A::LocalOperator{R₁′,R₂′}) where {R₁′,R₂′} = new{R₁′,R₂′}(mapping(A.A),A.name,A.site,A.isstring)
 end
@@ -20,7 +20,7 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
     name::Union{Nothing,String}
     site::Int64
     isstring::Bool
-    IdentityOperator(A::AbstractTensorMap,site::Int64) = new{length(codomain(A))}(A, nothing, site, true)
+    IdentityOperator(A::AbstractTensorMap,site::Int64) = new{numout(A)}(A, nothing, site, true)
     IdentityOperator(site::Int64, isstring::Bool) = new{1}(nothing, nothing, site, isstring)
     IdentityOperator(site::Int64, name::String, isstring::Bool = true) = new{1}(nothing, name, site, isstring)
     IdentityOperator(site::Int64) = new{1}(nothing, nothing, site, true)
@@ -29,7 +29,7 @@ mutable struct IdentityOperator{R} <: AbstractLocalOperator{0,0}
 
     function IdentityOperator(A::LocalOperator)
         A′ = getIdTensor(A)
-        return new{length(codomain(A′))}(A′, nothing, A.site, A.isstring)
+        return new{numout(A′)}(A′, nothing, A.site, A.isstring)
     end
 
     IdentityOperator(A::IdentityOperator) = A
@@ -70,3 +70,6 @@ Base.:*(A::Number, B::LocalOperator) = LocalOperator(A * B.A, B.name, B.site)
 Base.:*(A::LocalOperator, B::LocalOperator) = (@assert A.site == B.site; LocalOperator(A.A * B.A, string(A.name,B.name), A.site))
 Base.:+(A::LocalOperator, B::LocalOperator) = (@assert A.site == B.site; LocalOperator(A.A + B.A, string(A.name, "+", B.name), A.site))
 Base.:-(A::LocalOperator, B::LocalOperator) = (@assert A.site == B.site; LocalOperator(A.A - B.A, string(A.name, "-", B.name), A.site))
+
+trivial(::GradedSpace{I, D}) where {I, D} = GradedSpace{I,D}(TensorKit.SortedVectorDict(one(I) => 1), false)
+trivial(::ComplexSpace) = ℂ^1

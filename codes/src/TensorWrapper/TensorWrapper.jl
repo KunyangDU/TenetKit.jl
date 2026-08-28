@@ -175,7 +175,7 @@ Base.randn(A::T) where T <: AbstractTensorWrapper = T(TensorMap(randn, eltype(A)
 
 Base.copy(A::T) where T <: AbstractTensorWrapper = T(copy(A.A))
 
-rank(A::T) where T <: AbstractTensorWrapper = rank(A.A)
+TensorKit.numind(A::T) where T <: AbstractTensorWrapper = numind(A.A)
 
 Base.getindex(obj::T, i::Int64) where T <: Union{DenseMPO,AdjointMPO,DenseMPS,AdjointMPS,SparseMPO} = _isdisk(obj) ? (@timeit _local_io_timer() "deserialize" obj.ts[i]) : obj.ts[i]
 Base.getindex(obj::T, i::Int64) where T <: Union{RefMPO, RefMPS} = obj.mapping(obj.ts[i])
@@ -227,3 +227,4 @@ axpy!(α::Number, A::RightEnvironmentTensor, ::Nothing) = α * A
 axpy!(::Number, ::Nothing, B::LeftEnvironmentTensor) = B
 axpy!(::Number, ::Nothing, B::RightEnvironmentTensor) = B
 
+Base.length(::Union{DenseMPS{L}, DenseMPO{L}, RefMPS{L}, RefMPO{L}}) where L = L

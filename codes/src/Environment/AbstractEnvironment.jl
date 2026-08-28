@@ -5,10 +5,10 @@ mutable struct LocalEnvironmentTensor{R} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
 
     function LocalEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
     function LocalEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
 end
 
@@ -16,10 +16,10 @@ mutable struct RightEnvironmentTensor{R} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
 
     function RightEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
     function RightEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
 end
 
@@ -27,10 +27,10 @@ mutable struct LeftEnvironmentTensor{R} <: AbstractEnvironmentTensor
     A::AbstractTensorMap
 
     function LeftEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
     function LeftEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(t)
+        return new{numind(t)}(t)
     end
 end
 
@@ -54,15 +54,15 @@ mutable struct LeftCompositeEnvironmentTensor{Rcd,Rt,N,I} <: AbstractEnvironment
     A::AbstractTensorMap
 
     function LeftCompositeEnvironmentTensor(t::AbstractTensorMap)
-        return new{length(codomain(t)),rank(t),3,3}(t)
+        return new{numout(t),numind(t),3,3}(t)
     end
 
     function LeftCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
-        return new{length(codomain(t)),rank(t),3,3}(t)
+        return new{numout(t),numind(t),3,3}(t)
     end
 
     function LeftCompositeEnvironmentTensor(t::AbstractTensorMap,n::Int64,i::Int64)
-        return new{length(codomain(t)),rank(t),n,i}(t)
+        return new{numout(t),numind(t),n,i}(t)
     end
 
     function LeftCompositeEnvironmentTensor{rcd,rt,n,i}(t::AbstractTensorMap) where {rcd,rt,n,i}
@@ -74,14 +74,14 @@ mutable struct RightCompositeEnvironmentTensor{Rcd,Rt,N,I} <: AbstractEnvironmen
     A::AbstractTensorMap
 
     function RightCompositeEnvironmentTensor(t::AbstractTensorMap)
-        return new{length(domain(t)),rank(t),3,3}(t)
+        return new{numin(t),numind(t),3,3}(t)
     end
 
     function RightCompositeEnvironmentTensor{n,r}(t::AbstractTensorMap) where {n,r}
-        return new{length(domain(t)),rank(t),3,3}(t)
+        return new{numin(t),numind(t),3,3}(t)
     end
     function RightCompositeEnvironmentTensor(t::AbstractTensorMap,n::Int64,i::Int64)
-        return new{length(domain(t)),rank(t),n,i}(t)
+        return new{numin(t),numind(t),n,i}(t)
     end
     function RightCompositeEnvironmentTensor{rcd,rt,n,i}(t::AbstractTensorMap) where {rcd,rt,n,i}
         return new{rcd,rt,n,i}(t)
@@ -194,15 +194,15 @@ mutable struct DenseLeftEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
     A::LeftEnvironmentTensor
 
     function DenseLeftEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(LeftEnvironmentTensor(t))
+        return new{numind(t)}(LeftEnvironmentTensor(t))
     end
 
     function DenseLeftEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(LeftEnvironmentTensor(t))
+        return new{numind(t)}(LeftEnvironmentTensor(t))
     end
 
     function DenseLeftEnvironmentTensor(t::LeftEnvironmentTensor)
-        return new{rank(t.A)}(t)
+        return new{numind(t.A)}(t)
     end
 
     function DenseLeftEnvironmentTensor{r}(t::LeftEnvironmentTensor) where r
@@ -214,15 +214,15 @@ mutable struct DenseRightEnvironmentTensor{R} <: AbstractLeftEnvironmentTensor
     A::RightEnvironmentTensor
 
     function DenseRightEnvironmentTensor(t::AbstractTensorMap)
-        return new{rank(t)}(RightEnvironmentTensor(t))
+        return new{numind(t)}(RightEnvironmentTensor(t))
     end
 
     function DenseRightEnvironmentTensor{r}(t::AbstractTensorMap) where r
-        return new{rank(t)}(RightEnvironmentTensor(t))
+        return new{numind(t)}(RightEnvironmentTensor(t))
     end
 
     function DenseRightEnvironmentTensor(t::RightEnvironmentTensor)
-        return new{rank(t.A)}(t)
+        return new{numind(t.A)}(t)
     end
 
     function DenseRightEnvironmentTensor{r}(t::RightEnvironmentTensor) where r

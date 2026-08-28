@@ -39,5 +39,5 @@ function vonNeumann(S::AbstractTensorMap{T,<:ElementarySpace,1,1}) where T
     d = norm(S)
     d == 0 && return 0.0
     A = S/d |> x -> x*x'
-    return -real(sum(xlogx, diag(convert(Array, A))))
+    return -real(sum(xlogx, A.data))
 end

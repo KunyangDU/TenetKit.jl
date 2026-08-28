@@ -69,18 +69,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,1}, info::CBEinfo{
     
     to = TimerOutput()
     site = env.center[1]
-
-    tL₀,tR₀ = env.layer[1][site:site+1]
-
-    EnvL = env.envs[site]
-    EnvR = env.envs[site + 2]
-    hl,hr = env.layer[2][site:site+1]
-    
-    D_i = dims(tL₀)[2][1]
-    D_f = alg.D
-    D_i ≥ D_f && return to
-
-    CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR, struc == DSA ? hl.right : nothing)
+    CBEenv = CBEenvironment(env.layer[1][site:site+1]...,nothing,nothing,-1,alg.D,nothing,nothing,nothing, nothing)
 
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
@@ -99,18 +88,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,1}, info::CBEinfo{
 
     to = TimerOutput()
     site = env.center[1]
-
-    tL₀,tR₀ = env.layer[1][site-1:site]
-
-    EnvL = env.envs[site - 1]
-    EnvR = env.envs[site + 1]
-    hl,hr = env.layer[2][site-1:site]
-
-    D_i = dims(tL₀)[2][1]
-    D_f = alg.D
-    D_i ≥ D_f && return to
-
-    CBEenv = CBEenvironment(tL₀,tR₀,hl,hr,D_i,D_f,nothing,EnvL,EnvR, struc == DSA ? hl.right : nothing)
+    CBEenv = CBEenvironment(env.layer[1][site-1:site]...,nothing,nothing,-1,alg.D,nothing,nothing,nothing, nothing)
 
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 

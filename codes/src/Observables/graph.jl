@@ -18,8 +18,11 @@ end
 function setdefault!(ig::InteractionGraph{L,LocalOperator,ObservableWeight,DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}}
     # ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
     # ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
-    EnvL = LeftEnvironmentTensor(_left_isometry(obj))
-    EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    # EnvL = LeftEnvironmentTensor(_left_isometry(obj))
+    # EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    als, ars = auxspace(obj,obj)
+    EnvL = LeftEnvironmentTensor(ones(als...))
+    EnvR = RightEnvironmentTensor(ones(ars...))
     for e in ig.graph.source[1].out_edges
         e.weight.EnvL = EnvL
         e.weight.leftdata = Dict("site" => Int64[], "name" => String[])
@@ -33,8 +36,11 @@ end
 function setdefault!(ig::InteractionGraph{L,CompositeLocalOperator{N},ObservableWeight,DirectedAcyclicGraph{1,1}}, obj::T) where {L, T <: Union{DenseMPS,DenseMPO}, N}
     # ig.graph.source[1].val.EnvL = LeftEnvironmentTensor(_left_isometry(obj))
     # ig.graph.sink[1].val.EnvR = RightEnvironmentTensor(_right_isometry(obj))
-    EnvL = LeftEnvironmentTensor(_left_isometry(obj))
-    EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    # EnvL = LeftEnvironmentTensor(_left_isometry(obj))
+    # EnvR = RightEnvironmentTensor(_right_isometry(obj))
+    als, ars = auxspace(obj,obj)
+    EnvL = LeftEnvironmentTensor(ones(als...))
+    EnvR = RightEnvironmentTensor(ones(ars...))
     for e in ig.graph.source[1].out_edges
         e.weight.EnvL = EnvL
         e.weight.leftdata = Dict("site" => [Int64[] for _ in 1:N], "name" => [String[] for _ in 1:N])
