@@ -10,8 +10,29 @@ function initialize!(env::Environment;kwargs...)
     canonicalize!(env,1)
 end
 
-function canonicalize!(env::Environment,sl::Int64,sr::Int64)
+function canonicalize!(env::Environment{N},sl::Int64,sr::Int64) where N
     @assert 1 ≤ sl ≤ sr ≤ env.L + 1
+
+    for i in 1:N 
+        canonicalize!(env.layer[i],sl,sr)
+    end
+
+    for _ in env.center[1]:sl-1
+        pushright!(env)
+    end
+
+    for _ in env.center[2]:-1:sr+1
+        pushleft!(env)
+    end
+
+end
+
+function canonicalize!!(env::Environment{N},sl::Int64,sr::Int64) where N
+    @assert 1 ≤ sl ≤ sr ≤ env.L + 1
+
+    for i in 1:N 
+        canonicalize!!(env.layer[i],sl,sr)
+    end
 
     for _ in env.center[1]:sl-1
         pushright!(env)
@@ -26,6 +47,11 @@ end
 function canonicalize!(env::Environment,si::Int64)
     @assert 1 ≤ si ≤ env.L + 1
     canonicalize!(env,si,si)
+end
+
+function canonicalize!!(env::Environment,si::Int64)
+    @assert 1 ≤ si ≤ env.L + 1
+    canonicalize!!(env,si,si)
 end
 
 function setdefault!(env::Environment{3},A::T₁,H::SparseMPO{L},B::T₂;kwargs...) where {T₁ <: Union{DenseMPS{L},DenseMPO{L}}, T₂ <: Union{AdjointMPS{L},AdjointMPO{L},RefMPS{L},RefMPO{L}}} where L

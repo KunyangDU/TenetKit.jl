@@ -94,9 +94,12 @@ function _validind0(lm::LayerMap{N,D₁,D₂,T}) where {N,D₁,D₂,T}
 end
 
 function _wsum(Env, inds::Vector{Int64}, w::Vector{T}) where T
-    # 就地累加：首项分配一次，后续 axpy! 原地写，避免 sum(w .* Env[inds]) 物化整个加权环境向量
-    result = w[1] * Env[inds[1]]
-    for i in 2:length(inds)
+    # 就地累加：先按所有项（环境标量类型 + 权重运行时类型）提升后分配一次，后续 axpy! 原地写，
+    # 避免 sum(w .* Env[inds]) 物化整个加权环境向量，也避免实/复混用时 InexactError。
+    # 注意：w 的元素类型 T 可能是抽象 Number（LayerMap 权重），须用运行时 typeof 而非 T 求权重类型。
+    TT = reduce(promote_type, scalartype.(Env[inds]); init=mapreduce(typeof, promote_type, w))
+    result = zerovector(Env[inds[1]], TT)
+    for i in eachindex(inds)
         result = axpy!(w[i], Env[inds[i]], result)
     end
     return result

@@ -1,4 +1,9 @@
 
+function canonicalize!(obj::T,si::Int64) where T <: Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}} where L
+    @assert 1 ≤ si ≤ L 
+    return canonicalize!(obj,si,si)
+end
+
 function canonicalize!(obj::T,sl::Int64,sr::Int64) where T <: Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}} where L
     @assert 1 ≤ sl ≤ sr ≤ L 
 
@@ -17,10 +22,19 @@ function canonicalize!(obj::T,sl::Int64,sr::Int64) where T <: Union{DenseMPO{L},
     return obj
 end
 
-function canonicalize!(obj::T,si::Int64) where T <: Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}} where L
+function canonicalize!!(obj::T,si::Int64) where T <: Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}} where L
     @assert 1 ≤ si ≤ L 
-    return canonicalize!(obj,si,si)
+    return canonicalize!!(obj,si,si)
 end
 
-canonicalize!(::SparseMPO, ::Int64) = nothing
-canonicalize!(obj::RefMPO, i::Int64) = canonicalize!(obj.pointer,i)
+function canonicalize!!(obj::T,sl::Int64,sr::Int64) where T <: Union{DenseMPO{L},DenseMPS{L},AdjointMPO{L},AdjointMPS{L}} where L
+    @assert 1 ≤ sl ≤ sr ≤ L 
+    obj.center = [sl,sr]
+    return obj
+end
+
+canonicalize!(::T, ::Int64) where T <: Union{SparseMPO,RefMPO,RefMPS} = nothing
+canonicalize!(::T, ::Int64, ::Int64) where T <: Union{SparseMPO,RefMPO,RefMPS} = nothing
+canonicalize!!(::T, ::Int64) where T <: Union{SparseMPO,RefMPO,RefMPS} = nothing
+canonicalize!!(::T, ::Int64, ::Int64) where T <: Union{SparseMPO,RefMPO,RefMPS} = nothing
+

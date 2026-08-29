@@ -87,7 +87,7 @@ mutable struct RefMPS{L} <: AbstractMPS
     center::Vector{Int64}
     mapping::Function
     pointer::DenseMPS
-    RefMPS(A::DenseMPS{L}, mapping::Function = adjoint) where L = new{L}(A.ts, deepcopy(A.center), mapping, A)
+    RefMPS(A::DenseMPS{L}, mapping::Function = adjoint) where L = new{L}(A.ts, A.center, mapping, A)
 end
 
 isadjoint(::DenseMPS) = false

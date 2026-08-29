@@ -6,6 +6,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
+
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj2(Env,site,site+1;E₀ = E₀)
             @timeit localto "composite" x₀ = composite(Env.layer[1][site:site+1]...)
@@ -13,11 +14,11 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             localinfo.E = E₀ + Eg |> real
         end
         merge!(localto,get_timer("action");tree_point = ["Krylov"])
-        @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-        merge!(localinfo, bi)
-        @timeit localto "splice" tr = splice(tc,tr) 
-        @timeit localto "pushright" pushright!(Env,tl, tr)
+        @timeit localto "SVD" Env.layer[1][site], Env.layer[1][site+1], localinfo.err, bondinfo = tsvd(Egv; direction=:right,trunc = Alg.trunc)
+        @timeit localto "pushright" canonicalize!!(Env,site+1)
         Alg.GCsite && @timeit localto "GC" GC.gc()
+
+        merge!(localinfo, bondinfo)
         merge!(info,localinfo)
         Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
@@ -33,6 +34,7 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
         Alg.verbose && (time₀ = time())
         localinfo = DMRGsiteinfo()
         E₀ = _scalar(Env) |> real
+
         @timeit localto "Krylov" begin
             @timeit localto "projection" projH = proj2(Env,site-1,site;E₀ = E₀)
             @timeit localto "composite" x₀ = composite(Env.layer[1][site-1:site]...)
@@ -40,11 +42,11 @@ function DMRG!(Env::Environment{3,L},Alg::DMRGalgo{DoubleSite},info::DMRGsweepin
             localinfo.E = E₀ + Eg |> real
         end 
         merge!(localto,get_timer("action");tree_point = ["Krylov"]) 
-        @timeit localto "SVD" tl, tc, tr, localinfo.err, bi = tsvd(Egv; direction=:center,trunc = Alg.trunc)
-        merge!(localinfo, bi)
-        @timeit localto "splice" tl = splice(tl,tc) 
-        @timeit localto "pushleft" pushleft!(Env,tl, tr)
+        @timeit localto "SVD" Env.layer[1][site-1], Env.layer[1][site], localinfo.err, bondinfo = tsvd(Egv; direction=:left,trunc = Alg.trunc)
+        @timeit localto "pushleft" canonicalize!!(Env,site-1)
         Alg.GCsite && @timeit localto "GC" GC.gc()
+
+        merge!(localinfo, bondinfo)
         merge!(info,localinfo)
         Alg.verbose && vbshow(site,time₀,localinfo,Alg)
     end
