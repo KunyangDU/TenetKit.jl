@@ -222,3 +222,4 @@ end
 Base.length(::SparseMPOTensor{DL,D,DR,T}) where {DL,D,DR,T} = D
 Base.eachindex(h::SparseMPOTensor) = Base.OneTo(length(h))
 Base.getindex(obj::SparseMPOTensor, i::Int64) = obj.A[i]
+Base.adjoint(A::SparseMPOTensor) = return SparseMPOTensor(adjoint.(A.A), A.left, A.right)

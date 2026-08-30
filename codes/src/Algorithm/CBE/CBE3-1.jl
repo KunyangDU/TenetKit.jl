@@ -23,10 +23,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,1}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[1][site] = CBEenv.tL
-    env.layer[3][site] = CBEenv.tL'
-    env.layer[1][site+1] = CBEenv.tR
-    env.layer[3][site+1] = CBEenv.tR'
+    env.layer[1][site:site+1] = CBEenv.tL,CBEenv.tR
 
     @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
@@ -56,10 +53,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{randSVD,struc,1}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[1][site-1] = CBEenv.tL
-    env.layer[3][site-1] = CBEenv.tL'
-    env.layer[1][site] = CBEenv.tR
-    env.layer[3][site] = CBEenv.tR'
+    env.layer[1][site-1:site] = CBEenv.tL, CBEenv.tR
 
     @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
     return to
@@ -74,10 +68,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,1}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[1][site] = CBEenv.tL
-    env.layer[3][site] = CBEenv.tL'
-    env.layer[1][site+1] = CBEenv.tR
-    env.layer[3][site+1] = CBEenv.tR'
+    env.layer[1][site:site+1] = CBEenv.tL,CBEenv.tR
 
     @timeit to "pushleft" env.envs[site+1] = pushleft(map(x -> env.layer[x],1:3)...,env.envs[site+2],site+1)
     return to
@@ -93,10 +84,7 @@ function CBE!(env::Environment{3}, alg::CBEalgo{fullSVD,struc,1}, info::CBEinfo{
     @timeit to "CBE!" localto = CBE!(CBEenv,alg,info)
 
     merge!(to,localto;tree_point = ["CBE!"])
-    env.layer[1][site-1] = CBEenv.tL
-    env.layer[3][site-1] = CBEenv.tL'
-    env.layer[1][site] = CBEenv.tR
-    env.layer[3][site] = CBEenv.tR'
+    env.layer[1][site-1:site] = CBEenv.tL,CBEenv.tR
 
     @timeit to "pushright" env.envs[site] = pushright(map(x -> env.layer[x],1:3)...,env.envs[site-1],site-1)
     return to

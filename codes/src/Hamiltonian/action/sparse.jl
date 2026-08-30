@@ -99,3 +99,14 @@ function actionb(O::SparseProjectiveHamiltonian{2}, A1::DenseMPOTensor{4}, A2::D
     !iszero(O.E₀) && (x = axpy!(-O.E₀, composite(A1, A2), x))
     return x
 end
+
+function actionb(O::SparseProjectiveHamiltonian{2}, A1::AdjointMPOTensor{4}, A2::AdjointMPOTensor{4})
+    x = _sparse_actionb_sum(O.validinds) do ind
+        l_inds, (j, k), r_inds, wl, w_mid, wr = ind
+        tmp1 = contract(_wsum(O.EnvL, l_inds, wl), O.H[1][j], A1)
+        tmp2 = contract(O.H[2][k], A2, _wsum(O.EnvR, r_inds, wr))
+        w_mid * contract(tmp1, tmp2)
+    end
+    !iszero(O.E₀) && (x = axpy!(-O.E₀, composite(A1, A2), x))
+    return x
+end

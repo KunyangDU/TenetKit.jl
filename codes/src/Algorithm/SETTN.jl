@@ -8,7 +8,7 @@ function SETTN1!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     isdisk = get(kwargs,:isdisk,IS_DISK[])
     # algo = get(kwargs,:algo,CBEalgo(dynamicSVD(1.2,2),NoStruc(),0,_getdim(trunc),isnothing(_getcutoff(trunc)) ? tol : _getcutoff(trunc)))
     algo = get(kwargs,:algo,CBEalgo(dynamicSVD(ceil(Int64,_getdim(trunc) * 1.25)),DSA(),3,_getdim(trunc)))
-    multol = get(kwargs,:tol,1e-12)
+    multol = get(kwargs,:multol,1e-12)
     verbose = get(kwargs,:verbose,false)
     Alg = SETTNalgo(SingleSite(),Algebraalgo(SingleSite(),algo,trunc,3,multol,verbose,isdisk),trunc,N,tol)
     return SETTN!(β, H, ρ, Alg)
@@ -21,7 +21,7 @@ function SETTN2!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     tol = get(kwargs,:tol,1e-12)
     isdisk = get(kwargs,:isdisk,IS_DISK[])
     verbose = get(kwargs,:verbose,false)
-    multol = get(kwargs,:tol,1e-12)
+    multol = get(kwargs,:multol,1e-12)
     alg = SETTNalgo(DoubleSite(),Algebraalgo(DoubleSite(),NoAlgorithm(),trunc,3,multol,verbose,isdisk),trunc,N,tol)
     return SETTN!(β, H, ρ, alg)
 end
@@ -90,7 +90,7 @@ function SETTN!(β::Number,H::SparseMPO{L},Hn::DenseMPO,ρ::DenseMPO,order::Int6
     info = SETTNsweepinfo()
     
     _merge_io!(to)
-    @timeit to "mul!" ~,multo,minfo = mul!(Hn,Hn,H,1,Alg.alg)
+    @timeit to "mul!" ~,multo,minfo = mul!(Hn,deepcopy(Hn),H,1,Alg.alg)
     _merge_io!(to)
     # @timeit to "axpy!" ~,axpyto,ainfo = axpy!((-β) ^ order / factorial(order),Hn ,ρ , Alg.alg)
     @timeit to "axpy!" ~,axpyto,ainfo = axpy!((-β) ^ order / factorial(order),Hn ,ρ ; trunc = Alg.trunc, tol = Alg.tol, verbose = Alg.alg.verbose, isdisk = Alg.alg.isdisk)

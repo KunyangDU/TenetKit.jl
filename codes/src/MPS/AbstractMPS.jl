@@ -83,7 +83,7 @@ function cleanup!(obj::T) where T <: Union{DenseMPS,AdjointMPS}
 end
 
 mutable struct RefMPS{L} <: AbstractMPS
-    ts::AbstractVector
+    ts::Vector{MPSTensor}
     center::Vector{Int64}
     mapping::Function
     pointer::DenseMPS
@@ -95,9 +95,9 @@ isadjoint(::AdjointMPS) = true
 isadjoint(::RefMPS) = true
 isref(::RefMPS) = true
 isref(::AbstractMPS) = false
+ref(::Type{DenseMPS{L}}) where L = RefMPS
 
 cleanup!(::RefMPS) = nothing
-
 
 
 

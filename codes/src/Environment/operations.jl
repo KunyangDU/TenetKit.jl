@@ -28,6 +28,7 @@ function canonicalize!(env::Environment{N},sl::Int64,sr::Int64) where N
 end
 
 function canonicalize!!(env::Environment{N},sl::Int64,sr::Int64) where N
+    # push env only
     @assert 1 ≤ sl ≤ sr ≤ env.L + 1
 
     for i in 1:N 
@@ -77,9 +78,10 @@ function setdefault!(env::Environment{3},A::T₁,H::DenseMPO{L},B::T₃;kwargs..
     env.envs[end] = DenseRightEnvironmentTensor(ones(ars[1] ⊗ als[2], ars[3]))
 end
 
-auxspace(A::T) where T <: Union{DenseMPS,DenseMPO,AdjointMPS,AdjointMPO,RefMPS,RefMPO} = left_auxspace(A[1]),right_auxspace(A[end])
+auxspace(A::T) where T <: Union{DenseMPS,DenseMPO,AdjointMPS,AdjointMPO} = left_auxspace(A[1]),right_auxspace(A[end])
 auxspace(A::InteractionTunnel) = left_auxspace(A.A[1]),right_auxspace(A.A[end])
 auxspace(A::SparseMPO) = A.auxspace
+auxspace(A::T) where T <: Union{RefMPS,RefMPO} = auxspace(A.pointer)
 
 left_auxspace(A::MPSTensor{3}) = space(A,1)
 left_auxspace(A::AdjointMPSTensor{3}) = space(A,2)'
