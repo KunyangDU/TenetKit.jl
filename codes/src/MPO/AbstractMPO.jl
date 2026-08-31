@@ -99,19 +99,17 @@ isadjoint(::DenseMPO) = false
 isadjoint(::AdjointMPO) = true
 
 mutable struct RefMPO{L} <: AbstractMPO
-    ts::Union{Vector{DenseMPOTensor},Vector{SparseMPOTensor}}
+    ts::Vector{DenseMPOTensor}
     center::Vector{Int64}
     mapping::Function
-    pointer::Union{DenseMPO{L},SparseMPO{L}}
+    pointer::DenseMPO{L}
     RefMPO(A::DenseMPO{L},mapping::Function = identity) where L = new{L}(A.ts,A.center,mapping,A)
-    RefMPO(A::SparseMPO{L},mapping::Function = identity) where L = new{L}(A.ts,[0,0],mapping,A)
 end
 
-issparse(A::RefMPO) = issparse(A.pointer)
+issparse(A::RefMPO) = false
 isadjoint(::RefMPO) = false
 isref(::RefMPO) = true
 ref(::Type{DenseMPO{L}}) where L = RefMPO
-ref(::Type{SparseMPO{L}}) where L = RefMPO
 cleanup!(::RefMPO) = nothing
 
 # Fallback for non-RefMPO types

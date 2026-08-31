@@ -4,9 +4,8 @@ function mul!(C::Union{DenseMPO{L₁},DenseMPS{L₁}}, A::T₁, B::T₂, α::Num
     to = TimerOutput()
     __init_io__()
     A′ = ref(T₁)(A,adjoint)
-    B′ = ref(T₂)(B,adjoint)
     @timeit to "initialize ABC Env" begin
-        EnvAB = Environment([C,B′,A′];isdisk=Alg.isdisk)
+        EnvAB = Environment([C,B,A′];isdisk=Alg.isdisk)
         initialize!(EnvAB;kwargs...)
     end
 

@@ -22,20 +22,19 @@ end
 
 # ---------- {3,1} 三体环境，中间 DenseMPO / AdjointMPO ----------
 
-function actionb(O::DenseProjectiveHamiltonian{3,1}, obj::DenseMPOTensor{4})
-    x = _actionb1_mpo(O.EnvL.A.A, O.H[1], obj, O.EnvR.A.A)
+function actionb(O::DenseProjectiveHamiltonian{3,1}, obj::T) where T <: Union{DenseMPOTensor{4},AdjointMPOTensor{4}}
+    x = _actionb1_mpo(O.EnvL.A, O.H[1], obj, O.EnvR.A)
     !iszero(O.E₀) && (x = axpy!(-O.E₀, obj, x))
     return x
 end
 
-function _actionb1_mpo(El, h::DenseMPOTensor{4}, obj, Er)
-    @tensor x[-1,-2;-3,-4] ≔ El[-2,1,2] * h.A[-1,1,5,3] * obj.A[3,2,4,-4] * Er[4,5,-3]
+function _actionb1_mpo(El::LeftEnvironmentTensor{3}, h::DenseMPOTensor{4}, obj::DenseMPOTensor{4}, Er::RightEnvironmentTensor{3})
+    @tensor x[-1,-2;-3,-4] ≔ El.A[-2,1,2] * h.A[-1,1,5,3] * obj.A[3,2,4,-4] * Er.A[4,5,-3]
     return DenseMPOTensor(x)
 end
 
-function _actionb1_mpo(El, h::AdjointMPOTensor{4}, obj, Er)
-    Erp = permute(Er, ((1,), (2,3)))
-    @tensor x[-1,-2;-3,-4] ≔ El[-2,1,2] * h.A[3,-1,4,1] * obj.A[4,2,5,-4] * Erp[5,3,-3]
+function _actionb1_mpo(El::LeftEnvironmentTensor{3}, h::AdjointMPOTensor{4}, obj::DenseMPOTensor{4}, Er::RightEnvironmentTensor{3})
+    @tensor x[-1,-2;-3,-4] ≔ El.A[-2,1,2] * h.A[3,-1,4,1] * obj.A[4,2,5,-4] * Er.A[5,3,-3]
     return DenseMPOTensor(x)
 end
 

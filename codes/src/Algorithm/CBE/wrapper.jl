@@ -21,5 +21,3 @@ end
 CBE!(env::CBEenvironment, alg::CBEalgo{randSVD}, info::CBEinfo;kwargs...) = randSVD!(env,alg,info)
 CBE!(env::CBEenvironment, alg::CBEalgo{fullSVD}, info::CBEinfo;kwargs...) = fullSVD!(env,alg,info)
 
-
-
